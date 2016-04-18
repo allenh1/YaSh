@@ -21,7 +21,7 @@
 #include <fstream>
 #include <cstring>
 
-#include "command.h"
+#include "command.hpp"
 
 std::vector<int> m_background;
 
