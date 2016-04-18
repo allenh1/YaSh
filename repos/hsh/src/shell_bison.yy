@@ -30,8 +30,8 @@
 #include <cstring>
 #include <iostream>
 #include <algorithm>
-#include "command.h"
-#include "shell-readline.h"
+#include "command.hpp"
+#include "shell-readline.hpp"
 
 #define MAXLEN 2048
   void yyerror(const char * s);

@@ -10,10 +10,10 @@
 %{
 
 #include <string.h>
-#include "y.tab.h"
+#include "shell_bison.hh"
 
 /******************* Input From read-shell ************************/
-#include "shell-readline.h"
+#include "shell-readline.hpp"
 #include <thread>
 #include <unistd.h>
 static char * lastLine = NULL;
@@ -59,6 +59,7 @@ void myunputc(int c) {
 
 %}
 
+%option noyywrap
 %%
 
 \n { return NEWLINE; }
