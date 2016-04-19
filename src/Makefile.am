@@ -10,7 +10,7 @@ CLEAN_FILES = *~
 
 # targets
 bin_PROGRAMS = hsh
-PARSER = shell_bison.yy shell_flex.ll
+PARSER = shell_bison.yy shell_flex.ll wildcard.inl
 READLINE = shell-readline.hpp
 hsh_SOURCES = command.cpp command.hpp $(PARSER)
 

@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include "shell-readline.hpp"
+//#include "shell-readline.hpp"
 
 // Command Data Structure
 struct SimpleCommand
@@ -25,7 +25,7 @@ struct SimpleCommand
 
 class Command
 {
- public:
+public:
   Command();
 
   void prompt();
@@ -55,7 +55,8 @@ class Command
   static std::shared_ptr<SimpleCommand> currentSimpleCommand;
   
   std::vector<std::string> wc_collector;// Wild card collection tool
- private:
+  
+private:
   std::unique_ptr<char> outFile;
   std::unique_ptr<char> inFile;
   std::unique_ptr<char> errFile;

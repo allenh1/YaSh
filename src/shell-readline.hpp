@@ -11,25 +11,48 @@
 
 #include <functional>
 #include <termios.h>
+#include <algorithm>
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <fstream>
+#include <sstream>
 #include <stdio.h>
+#include <regex.h>
+#include <fcntl.h>
 #include <vector>
 #include <cctype>
 #include <mutex>
 #include <stack>
 
+/** Include wildcards for tab completion **/
+#include "command.hpp"
+
 #define SOURCE 5053
 #define STANDARD 572
+#define MAXLEN 1024
 
 static int get_file = 0;
 // static readLine reader;
 
+inline std::vector<std::string> &split(const std::string &s, char delim,
+				       std::vector<std::string> &elems) {
+  std::stringstream ss(s);
+  std::string item;
+  for (;std::getline(ss, item, delim);) elems.push_back(item);
+  return elems;
+}
+
+inline std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> elems;
+  split(s, delim, elems);
+  return elems;
+}
+
 static class readLine
 {
- public:
+public:
   readLine() { m_get_mode = 1; }
 
   void operator() () {
@@ -158,10 +181,58 @@ static class readLine
 	  _line.pop_back();
 	}
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
-      } else if (input == '\t') {
+      } else if (input == 9) {
 	/**
 	 * @todo complete tab complete
 	 */
+	// Part 0: Remove tab
+	char ch = '\b';
+	result = write(1, &ch, 1);
+	ch = ' ';
+	result = write(1, &ch, 1);
+	ch = '\b';
+	result = write(1, &ch, 1);
+	// Part 1: add a '*' to the end of the stream.
+	std::string _temp;
+	std::cerr<<std::endl;
+	std::vector<std::string> _split;
+	if (_line.size()) {
+	  _split = split(_line, ' ');
+	  _temp = _split.back() + "*";
+	} else _temp = "*";
+
+	char * _complete_me = strndup(_temp.c_str(), _temp.size());
+	
+	// Part 2: Invoke wildcard expand
+	wildcard_expand(NULL, _complete_me);
+
+	// Part 3: If wc_collector.size() <= 1, then complete the tab.
+	//         otherwise, run "echo <text>*"
+	std::string * array = Command::currentCommand.wc_collector.data();
+	std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
+
+	Command::currentSimpleCommand->insertArgument(strdup("echo"));
+
+	if (Command::currentCommand.wc_collector.size() == 1) {
+	  _line = "";
+	  for (int x = 0; x < _split.size() - 1; _line += _split[x++] + " ");
+	  _line += Command::currentCommand.wc_collector[0];
+	} else {
+	  unsigned short x = 0;
+	  for (auto && arg : Command::currentCommand.wc_collector) {
+	    char * temp = strdup(arg.c_str());
+	    std::cerr<<temp<<std::endl;
+	    Command::currentSimpleCommand->insertArgument(temp);
+	    free(temp); x = x % 2;
+	  }
+	}
+	
+	Command::currentCommand.wc_collector.clear();
+	Command::currentCommand.wc_collector.shrink_to_fit();
+	Command::currentCommand.execute();
+	
+	free(_complete_me);
+	write(1, _line.c_str(), _line.size());
       } else if (input == '!') {
 	/**
 	 * @todo complete the bang-bang
@@ -302,8 +373,87 @@ static class readLine
     //std::cerr<<"mode: "<<m_get_mode<<std::endl;
     //std::cerr<<"stashed: \""<<line<<"\""<<std::endl;
   }
+
+  static void wildcard_expand(char * prefix, char * suffix) {
+    if (!*suffix && prefix && *prefix)
+      { Command::currentCommand.wc_collector.push_back(std::string(strdup(prefix))); return; }
+    else if (!*suffix) return;
+    // Get next slash (skipping first, if necessary)
+    char * slash = strchr((*suffix == '/') ? suffix + 1: suffix, '/');
+    char * next  = (char*) calloc(MAXLEN + 1, sizeof(char));
+    // This line is magic.
+    for (char * temp = next; *suffix && suffix != slash; *(temp++) = *(suffix++));
+
+    // Expand the wildcard
+    char * nextPrefix = (char*) calloc(MAXLEN + 1, sizeof(char));
+    if (!(strchr(next, '*') || strchr(next, '?'))) {
+      // No more wildcards.
+      if (!(prefix && *prefix)) sprintf(nextPrefix, "%s", next);
+      else sprintf(nextPrefix, "%s%s", prefix, next);
+      wildcard_expand(nextPrefix, suffix);
+      free(nextPrefix); free(next); return;
+    }
+
+    // Wildcards were found!
+    // Convert to regex.
+    char * rgx = (char*) calloc(2 * strlen(next) + 3, sizeof(char));
+    char * trx = rgx;
+
+    *(trx++) = '^';
+    for (char * tmp = next; *tmp; ++tmp) {
+      switch (*tmp) {
+      case '*':
+	*(trx++) = '.';
+	*(trx++) = '*';
+	break;
+      case '?':
+	*(trx++) = '.';
+	break;
+      case '.':
+	*(trx++) = '\\';
+	*(trx++) = '.';
+      case '/':
+	break;
+      default:
+	*(trx++) = *tmp;
+      }
+    } *(trx++) = '$'; *(trx++) = 0;
+    // Compile regex.
+    regex_t * p_rgx = new regex_t();
+    if (regcomp(p_rgx, rgx, REG_EXTENDED|REG_NOSUB)) {
+      // Exit with error if regex failed to compile.
+      perror("regex (compile)");
+      exit(1);
+    }
+
+    char * _dir = (prefix) ? strdup(prefix) : strdup(".");
+
+    DIR * dir = opendir(_dir); free(_dir);
+    if (!dir) {
+      free(dir); free(rgx); free(next); free(nextPrefix); delete p_rgx;
+      return; // Return if opendir returned null.
+    }
+
+    dirent * _entry;
+    for (; _entry = readdir(dir);) {
+      // Check for a match!
+      if (!regexec(p_rgx, _entry->d_name, 0, 0, 0)) {
+	if (!(prefix && *prefix)) sprintf(nextPrefix, "%s", _entry->d_name);
+	else sprintf(nextPrefix, "%s/%s", prefix, _entry->d_name);
+
+	if (_entry->d_name[0] == '.' && *rgx == '.') wildcard_expand(nextPrefix, suffix);
+	else if (_entry->d_name[0] == '.') continue;
+	else wildcard_expand(nextPrefix, suffix);
+      }
+    }
+
+    // Be kind to malloc. Malloc is bae.
+    free(next); free(nextPrefix); free(rgx); free(dir);
+    // This one was allocated with new.
+    delete p_rgx;
+  }
   
- private:
+private:
   std::string m_current_path;
   std::string m_current_line_copy;
   std::string m_stashed;
