@@ -182,16 +182,16 @@ public:
 	}
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
       } else if (input == 9) {
-	/**
-	 * @todo complete tab complete
-	 */
+	Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());	
 	// Part 0: Remove tab
-	char ch = '\b';
-	result = write(1, &ch, 1);
-	ch = ' ';
-	result = write(1, &ch, 1);
-	ch = '\b';
-	result = write(1, &ch, 1);
+	if (_line.size()) {
+	  char ch = '\b';
+	  result = write(1, &ch, 1);
+	  ch = ' ';
+	  result = write(1, &ch, 1);
+	  ch = '\b';
+	  result = write(1, &ch, 1);
+	}
 	// Part 1: add a '*' to the end of the stream.
 	std::string _temp;
 	std::cerr<<std::endl;
