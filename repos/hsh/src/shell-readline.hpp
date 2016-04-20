@@ -58,7 +58,7 @@ public:
   void operator() () {
     // Raw mode
     char input; int result;
-    std::string _line;
+    std::string _line = "";
 
     // Read in the next character
     for (; true ;) {
