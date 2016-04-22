@@ -203,9 +203,8 @@ public:
 	std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
 
 	if (Command::currentCommand.wc_collector.size() == 1) {
-	  char ch = '\b';
+	  char ch = '\b'; char sp =  ' ';
 	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
-	  char sp =  ' ';
 	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &sp, 1), ++x);
 	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
 	  _line = "";
@@ -221,7 +220,7 @@ public:
 	    char * temp = strdup(arg.c_str());
 	    std::cerr<<temp<<std::endl;
 	    Command::currentSimpleCommand->insertArgument(temp);
-	    free(temp); x = x % 2;
+	    free(temp); x = x & 1;
 	  }
 	
 	  Command::currentSimpleCommand->insertArgument(strdup("echo"));
