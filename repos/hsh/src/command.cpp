@@ -104,12 +104,16 @@ void SimpleCommand::insertArgument(char * argument)
       temp[index++] = '\"'; ++str;
     } else if (*str == '\\' && *(str + 1) == '&') {
       temp[index++] = '&'; ++str;
+    } else if (*str == '\\' && *(str + 1) == '#') {
+      temp[index++] = '#'; ++str;
     } else if (*str == '\\' && *(str + 1) == '<') {
       temp[index++] = '<'; ++str;
     } else if (*str == '\\' && *(str + 1) == '\\' && *(str+2) == '\\') {
       temp[index++] = '\\'; ++str; ++str;
     } else if (*str == '\\' && *(str + 1) == '\\'){
       temp[index++] = '\\'; ++str;
+    } else if (*str == '\\' && *(str + 1) == ' ') {
+      temp[index++] = ' '; ++str;
     } else {
       temp[index++] = *str;
     }
@@ -125,10 +129,9 @@ void Command::subShell(char * arg)
 {
   auto changedir = [] (std::string s) {
     std::vector<std::string> dir_structure;
-
     if (*s.c_str() && *s.c_str() != '/') {
       // we need to append the current directory.
-      s = std::string(getenv("PWD")) + "/" + s;
+      s = std::string(getenv("PWD")) + ((s.back() == '/') ? "/" : "") + s;
       //std::cerr<<"Directory changed: "<<s<<std::endl;
     } else if (!*s.c_str()) {
       passwd * _passwd = getpwuid(getuid());
@@ -232,18 +235,18 @@ void Command::execute()
     return;
   }
 
-  auto changedir = [] (std::string s) {
+  auto changedir = [] (std::string & s) {
     std::vector<std::string> dir_structure;
-
     if (*s.c_str() && *s.c_str() != '/') {
       // we need to append the current directory.
+      for (;s.back() == '/'; s.pop_back());
       s = std::string(getenv("PWD")) + "/" + s;
-      //std::cerr<<"Directory changed: "<<s<<std::endl;
     } else if (!*s.c_str()) {
+      for (;s.back() == '/'; s.pop_back());
       passwd * _passwd = getpwuid(getuid());
       std::string user_home = _passwd->pw_dir;
       return chdir(user_home.c_str());
-    }
+    } for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
     return chdir(s.c_str());
   };
 
@@ -328,7 +331,8 @@ void Command::execute()
       std::string curr_dir = std::string(getenv("PWD"));
       int cd; std::string new_dir;
       if (curr.size() < 2) {
-	cd = changedir(std::string(""));
+	std::string _empty = "";
+	cd = changedir(_empty);
 	setenv("PWD", getenv("HOME"), 1);
       } else {
 	if (d_args[1] == std::string("pwd") ||
@@ -337,11 +341,13 @@ void Command::execute()
 	  clear();
 	  prompt();
 	  return;
-	} else if (*d_args[1] != '/') {
+	} else if (*d_args[1] != '/') { 
 	  new_dir = std::string(getenv("PWD"));
+	  for (;new_dir.back() == '/'; new_dir.pop_back());
 	  new_dir += "/" + std::string(d_args[1]);
 	} else new_dir = std::string(d_args[1]);
 
+	for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back());
 	cd = changedir(new_dir);
 	setenv("PWD", new_dir.c_str(), 1);
       }
