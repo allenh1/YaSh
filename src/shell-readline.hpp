@@ -183,18 +183,9 @@ public:
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
       } else if (input == 9) {
 	Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());	
-	// Part 0: Remove tab
-	if (_line.size()) {
-	  char ch = '\b';
-	  result = write(1, &ch, 1);
-	  ch = ' ';
-	  result = write(1, &ch, 1);
-	  ch = '\b';
-	  result = write(1, &ch, 1);
-	}
 	// Part 1: add a '*' to the end of the stream.
 	std::string _temp;
-	std::cerr<<std::endl;
+	// std::cerr<<std::endl;
 	std::vector<std::string> _split;
 	if (_line.size()) {
 	  _split = split(_line, ' ');
@@ -211,26 +202,33 @@ public:
 	std::string * array = Command::currentCommand.wc_collector.data();
 	std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
 
-	Command::currentSimpleCommand->insertArgument(strdup("echo"));
-
 	if (Command::currentCommand.wc_collector.size() == 1) {
+	  char ch = '\b';
+	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
+	  char sp =  ' ';
+	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &sp, 1), ++x);
+	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
 	  _line = "";
+	  
 	  for (int x = 0; x < _split.size() - 1; _line += _split[x++] + " ");
 	  _line += Command::currentCommand.wc_collector[0];
+
+	  Command::currentCommand.wc_collector.clear();
+	  Command::currentCommand.wc_collector.shrink_to_fit();
 	} else {
-	  unsigned short x = 0;
+	  unsigned short x = 0; std::cerr<<std::endl;
 	  for (auto && arg : Command::currentCommand.wc_collector) {
 	    char * temp = strdup(arg.c_str());
 	    std::cerr<<temp<<std::endl;
 	    Command::currentSimpleCommand->insertArgument(temp);
 	    free(temp); x = x % 2;
 	  }
+	
+	  Command::currentSimpleCommand->insertArgument(strdup("echo"));
+	  Command::currentCommand.wc_collector.clear();
+	  Command::currentCommand.wc_collector.shrink_to_fit();
+	  Command::currentCommand.execute();
 	}
-	
-	Command::currentCommand.wc_collector.clear();
-	Command::currentCommand.wc_collector.shrink_to_fit();
-	Command::currentCommand.execute();
-	
 	free(_complete_me);
 	write(1, _line.c_str(), _line.size());
       } else if (input == '!') {
@@ -357,21 +355,16 @@ public:
   void setMode(const int & _mode) { m_mode = _mode; }
 
   void setFile(const std::string & _filename) {
-    //std::cerr<<"Read mode set!"<<std::endl;
-    //std::cerr<<"mode = "<<m_mode<<std::endl;
     m_filename = _filename;
     m_ifstream = new std::ifstream(m_filename);
     std::string line; std::string _line;
     for (; !m_ifstream->eof();) {
       std::getline(*m_ifstream, _line);
-      //      std::cerr<<"line: \""<<line<<"\""<<std::endl;
       line += _line + (char) 10;
-    } //std::cerr<<"End of loop"<<std::endl;
+    }
     m_get_mode = 2;
     m_stashed = line;
     get_file = 1; delete m_ifstream;
-    //std::cerr<<"mode: "<<m_get_mode<<std::endl;
-    //std::cerr<<"stashed: \""<<line<<"\""<<std::endl;
   }
 
   static void wildcard_expand(char * prefix, char * suffix) {
