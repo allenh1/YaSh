@@ -50,6 +50,19 @@ inline std::vector<std::string> split(const std::string &s, char delim) {
   return elems;
 }
 
+inline char * longest_substring(const std::vector<std::string> & _vct) {
+  unsigned short alphas[256]; std::vector<char*> vct;
+  // n
+  for(auto && x : _vct) vct.push_back(strndup(x.c_str(), x.size()));
+  // 2n (length of the string is constant wrt each vector's length
+  for(auto && x : vct) for(const char * t = x;*t;++alphas[static_cast<size_t>(*t)]);;
+
+  // Check for the first letter, as we only know how many times it will occur.
+  int x; char * s = vct[0], ch = vct[0][0]; char buffer[100];
+  for (x = 0; *s && (alphas[*s] >= alphas[ch]); ++s, buffer[x++] = *s);
+  return strndup(buffer, x);
+}
+
 static class readLine
 {
 public:
@@ -216,6 +229,7 @@ public:
 	  Command::currentCommand.wc_collector.shrink_to_fit();
 	} else {
 	  unsigned short x = 0; std::cerr<<std::endl;
+	  char * _str = longest_substring(Command::currentCommand.wc_collector);
 	  for (auto && arg : Command::currentCommand.wc_collector) {
 	    char * temp = strdup(arg.c_str());
 	    std::cerr<<temp<<std::endl;
@@ -227,6 +241,7 @@ public:
 	  Command::currentCommand.wc_collector.clear();
 	  Command::currentCommand.wc_collector.shrink_to_fit();
 	  Command::currentCommand.execute();
+	  free(_str);
 	}
 	free(_complete_me);
 	write(1, _line.c_str(), _line.size());
