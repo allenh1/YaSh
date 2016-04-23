@@ -243,8 +243,30 @@ public:
 	// Read the next two chars
 	result = read(0, &ch1, 1);
 	result = read(0, &ch2, 1);
+	if (ch1 == 91 && ch2 == 51) {
+	  // Maybe a delete key?
+	  char ch3; result = read(0, &ch3, 1);
+	  if (ch3 == 126) {
+	    if (!_line.size()) continue;
 
-	if (ch1 == 91 && ch2 == 65) {
+	    if (m_buff.size()) {
+	      // Buffer!
+	      std::stack<char> temp = m_buff;
+	      temp.pop();
+	      for (char d = 0; temp.size(); ) {
+		d = temp.top(); temp.pop();
+		result = write(1, &d, 1);
+	      }
+	      char b = ' ';
+	      result = write(1, &b, 1); b = '\b';
+	      result = write(1, &b, 1); m_buff.pop();
+	      // Move cursor to current position.
+	      for (int x = 0; x < m_buff.size(); ++x)
+		result = write(1, &b, 1);
+	    } else continue;
+	    if (history_index == m_history.size()) m_current_line_copy.pop_back();
+	  }
+	} if (ch1 == 91 && ch2 == 65) {
 	  // This was an up arrow.
 	  // We will print the line prior from history.
           if (!m_history.size()) continue;
