@@ -3,11 +3,13 @@
 #include <functional>
 #include <typeinfo>
 #include <vector>
+#include <sstream>
 #include <memory>
 
-//#include "shell-readline.hpp"
+#include "split.hpp"
 
 // Command Data Structure
+
 struct SimpleCommand
 {
   SimpleCommand();
