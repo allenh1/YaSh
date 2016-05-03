@@ -36,20 +36,6 @@
 static int get_file = 0;
 // static readLine reader;
 
-inline std::vector<std::string> &split(const std::string &s, char delim,
-				       std::vector<std::string> &elems) {
-  std::stringstream ss(s);
-  std::string item;
-  for (;std::getline(ss, item, delim);) elems.push_back(item);
-  return elems;
-}
-
-inline std::vector<std::string> split(const std::string &s, char delim) {
-  std::vector<std::string> elems;
-  split(s, delim, elems);
-  return elems;
-}
-
 struct Lensort {
   bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
 };
@@ -206,7 +192,7 @@ public:
 	// std::cerr<<std::endl;
 	std::vector<std::string> _split;
 	if (_line.size()) {
-	  _split = split(_line, ' ');
+	  _split = string_split(_line, ' ');
 	  _temp = _split.back() + "*";
 	} else _temp = "*";
 
@@ -245,9 +231,12 @@ public:
 	  Command::currentCommand.wc_collector.clear();
 	  Command::currentCommand.wc_collector.shrink_to_fit();
 	  Command::currentCommand.execute();
+	} free(_complete_me);
+
+	if (write(1, _line.c_str(), _line.size()) != _line.size()) {
+	  perror("write");
+	  std::cerr<<"I.E. STAHP!\n"<<std::endl;
 	}
-	free(_complete_me);
-	write(1, _line.c_str(), _line.size());
       } else if (input == '!') {
 	/**
 	 * @todo complete the bang-bang
