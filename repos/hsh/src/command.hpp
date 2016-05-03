@@ -6,8 +6,6 @@
 #include <sstream>
 #include <memory>
 
-#include "split.hpp"
-
 // Command Data Structure
 
 struct SimpleCommand
@@ -59,6 +57,12 @@ public:
   std::vector<std::string> wc_collector;// Wild card collection tool
   
 private:
+  std::vector<std::string> string_split(std::string s, char delim) {
+    std::vector<std::string> elems; std::stringstream ss(s);
+    for (std::string item;std::getline(ss, item, delim); elems.push_back(item));
+    return elems;
+  }
+  
   std::unique_ptr<char> outFile;
   std::unique_ptr<char> inFile;
   std::unique_ptr<char> errFile;
