@@ -7,11 +7,10 @@
 #include <memory>
 
 // Command Data Structure
-
 struct SimpleCommand
 {
   SimpleCommand();
-
+  ~SimpleCommand() { release(); }
   std::vector<std::shared_ptr<char> > arguments;
   void insertArgument(char * argument);
   ssize_t numOfArguments = 0;
