@@ -181,7 +181,9 @@ WORD {
 command_word:
 WORD {
   Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
-  Command::currentSimpleCommand->insertArgument($1);
+  char * _ptr = strdup($1);
+  Command::currentSimpleCommand->insertArgument(_ptr);
+  free(_ptr);
 }
 ;
 

@@ -116,8 +116,7 @@ void SimpleCommand::insertArgument(char * argument)
       temp[index++] = *str;
     }
   } free(t_str);
-  // char * toPush = (char*) calloc(index + 1, sizeof(char));
-  char * toPush = new char[index + 1]; memset(toPush, 0, index + 1);
+  char * toPush = (char*) calloc(index + 1, sizeof(char));
   strcpy(toPush, temp);
   arguments.push_back(std::shared_ptr<char>(toPush)), ++numOfArguments;
   free(temp);
@@ -160,6 +159,8 @@ void Command::subShell(char * arg)
     perror("subshell");
     return;
   } Command::currentSimpleCommand->insertArgument(buff);
+  for (int x = 0; x < _split.size(); free(_args[x]), ++x);
+  free(buff); free(arg);
 }
 
   Command::Command()
@@ -469,7 +470,7 @@ void Command::subShell(char * arg)
 	std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
 	std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
 	fflush(stdout);
-      }
+      } free(_curr_dur);
     }
   }
 
