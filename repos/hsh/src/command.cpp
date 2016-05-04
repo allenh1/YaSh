@@ -142,9 +142,8 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
   else {
     /** Parent Process: read from the pipe **/
     close(fdpipe[1]);   // close unused write end
-    for (;x = read(fdpipe[0], outBuff, buffSize););
+    for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
     if (x == buffSize) return -1;
-    outBuff[x - 3] = '\0';
     waitpid(pid, NULL, 0);
   } return 0;
 }
@@ -451,20 +450,24 @@ void Command::subShell(char * arg)
       if (!gethostname(buffer, 100)) _host = std::string(buffer);
       else _host = std::string("localhost");
       char * _wd = NULL, * _hme = NULL;
-      std::string _cdir = std::string( _wd = getenv("PWD"));
+      char cdirbuff[2048]; char * const _pwd[3] = { (char*) "pwd", (char*) NULL };
+      eval_to_buffer(_pwd, cdirbuff, 2048);
+      std::string _cdir = std::string(cdirbuff);
+      char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
+      if (setenv("PWD", _curr_dur, 1)) perror("setenv");
       std::string _home = std::string(_hme = getenv("HOME"));
 
       // Replace the user home with ~
-      if (strstr(_wd, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
+      if (strstr(cdirbuff, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
 
       if (_user != std::string("root")) {
 	std::cout<<"\x1b[36;1m"<<_user<<"@"<<_host<<" ";
-	std::cout<<"\x1b[33;1m"<<_cdir<<std::endl<<"$ "<<"\x1b[0m";
+	std::cout<<"\x1b[33;1m"<<_cdir<<"$ "<<"\x1b[0m";
 	fflush(stdout);
       } else {
 	// Root prompt is cooler than you
-	std::cout<<"\x1b[91;1m"<<_user<<"@"<<_host<<" ";
-	std::cout<<"\x1b[95;1m"<<_cdir<<std::endl<<"# "<<"\x1b[0m";
+	std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
+	std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
 	fflush(stdout);
       }
     }
@@ -478,6 +481,7 @@ void Command::subShell(char * arg)
   void ctrlc_handler(int signum)
   {
     /** kill my kids **/
+    kill(signum, SIGINT);
     // std::cout<<std::endl;
     // Command::currentCommand.clear();
     // Command::currentCommand.prompt();
