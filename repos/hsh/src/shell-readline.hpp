@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-
 #include <functional>
 #include <termios.h>
 #include <algorithm>

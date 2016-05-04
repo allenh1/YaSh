@@ -142,8 +142,9 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
   else {
     /** Parent Process: read from the pipe **/
     close(fdpipe[1]);   // close unused write end
-    for (memset(outBuff, 0, buffSize);read(fdpipe[0], outBuff, buffSize););
-    if (!buffSize) return -1;
+    for (;x = read(fdpipe[0], outBuff, buffSize););
+    if (x == buffSize) return -1;
+    outBuff[x - 3] = '\0';
     waitpid(pid, NULL, 0);
   } return 0;
 }
@@ -152,16 +153,14 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
 void Command::subShell(char * arg)
 {
   std::vector<std::string> _split = string_split(std::string(arg), ' ');
-  char * _args[_split.size() + 1]; char * buff = new char[SUBSH_MAX_LEN];
+  char * _args[_split.size() + 1];
+  char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
   for (int x=0;x<_split.size()||(_args[x]=NULL);
        _args[x]=strndup(_split[x].c_str(), _split[x].size()),++x);
   if (eval_to_buffer(_args, buff, SUBSH_MAX_LEN) < -1) {
     perror("subshell");
     return;
-  } std::string temp = std::string(buff); free(buff); // deallocate mega buffer
-  std::vector<std::string> subsh = string_split(temp, ' ');
-  for(auto && _arg:subsh)
-    Command::currentSimpleCommand->insertArgument(strndup(_arg.c_str(),_arg.size()));
+  } Command::currentSimpleCommand->insertArgument(buff);
 }
 
   Command::Command()
@@ -229,7 +228,8 @@ void Command::subShell(char * arg)
     };
 
     // Print contents of Command data structure
-    //  print();
+    char * dbg = getenv("SHELL_DBG");
+    if (dbg && !strcmp(dbg, "YES")) print();
 
     // Add execution here
     // For every simple command fork a new process
