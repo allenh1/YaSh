@@ -1,20 +1,9 @@
-
-/*
- *
- * CS-252 Spring 2016
- * shell.l: lexical analyzer for shell
- * You have to extend it.
- *
- */
-
 %{
-
 #include <string.h>
 #include "shell_bison.hh"
 
 /******************* Input From read-shell ************************/
 #include "shell-readline.hpp"
-#include <thread>
 #include <unistd.h>
 static char * lastLine = NULL;
 // extern FILE * yyin;
