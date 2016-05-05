@@ -116,9 +116,9 @@ void SimpleCommand::insertArgument(char * argument)
       temp[index++] = *str;
     }
   } free(t_str);
-  char * toPush = (char*) calloc(index + 1, sizeof(char));
+  char * toPush = new char[index + 1]; memset(toPush, 0, index + 1);
   strcpy(toPush, temp);
-  arguments.push_back(std::shared_ptr<char>(toPush)), ++numOfArguments;
+  arguments.push_back(toPush), ++numOfArguments;
   free(temp);
 }
 
@@ -158,9 +158,11 @@ void Command::subShell(char * arg)
   if (eval_to_buffer(_args, buff, SUBSH_MAX_LEN) < -1) {
     perror("subshell");
     return;
-  } Command::currentSimpleCommand->insertArgument(buff);
+  } char * _cpy = strdup(buff); free(buff);
+  _cpy[strlen(_cpy) - 1] = '\0';
+  Command::currentSimpleCommand->insertArgument(_cpy);
   for (int x = 0; x < _split.size(); free(_args[x]), ++x);
-  free(buff); free(arg);
+  free(arg);
 }
 
   Command::Command()
@@ -190,7 +192,7 @@ void Command::subShell(char * arg)
     for (int i = 0; i < numOfSimpleCommands; i++) {
       printf("  %-3d ", i);
       for (int j = 0; j < simpleCommands[i]->numOfArguments; j++) {
-	std::cout<<"\""<< simpleCommands[i]->arguments[j].get() <<"\" \t";
+	std::cout<<"\""<< simpleCommands[i]->arguments[j] <<"\" \t";
       }
     }
 
@@ -270,10 +272,10 @@ void Command::subShell(char * arg)
     dup2(fderr, 2);
     close(fderr);
     for (int x = 0; x < numOfSimpleCommands; ++x) {
-      std::vector<std::shared_ptr<char> > curr = simpleCommands.at(x).get()->arguments;
+      std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
       char ** d_args = new char*[curr.size() + 1];
       for (int y = 0; y < curr.size(); ++y) {
-	d_args[y] = strdup(curr[y].get());
+	d_args[y] = strdup(curr[y]);
       } // ... still better than managing myself!
       d_args[curr.size()] = NULL;
       // output redirection
@@ -341,7 +343,7 @@ void Command::subShell(char * arg)
       } else if (d_args[0] == std::string("ls")) {
 	char ** temp = new char*[curr.size() + 2];
 	for (int y = 2; y <= curr.size(); ++y) {
-	  temp[y] = strdup(curr[y - 1].get());
+	  temp[y] = strdup(curr[y - 1]);
 	} // ... still better than managing myself!
 	temp[0] = strdup("ls");
 	temp[1] = strdup("--color=auto");
@@ -374,7 +376,7 @@ void Command::subShell(char * arg)
       } else if (d_args[0] == std::string("grep")) {
 	char ** temp = new char*[curr.size() + 2];
 	for (int y = 1; y < curr.size(); ++y) {
-	  temp[y] = strdup(curr[y].get());
+	  temp[y] = strdup(curr[y]);
 	} // ... still better than managing myself!
 	temp[0] = strdup("grep");
 	temp[curr.size()] = strdup("--color");

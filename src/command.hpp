@@ -11,11 +11,11 @@ struct SimpleCommand
 {
   SimpleCommand();
   ~SimpleCommand() { release(); }
-  std::vector<std::shared_ptr<char> > arguments;
+  std::vector<char* > arguments;
   void insertArgument(char * argument);
   ssize_t numOfArguments = 0;
   void release() {
-    for (int x = 0; x < arguments.size(); ++x) delete arguments[x].get();
+    for (int x = 0; x < arguments.size(); ++x) delete arguments[x];
     arguments.clear();
     arguments.shrink_to_fit();
     numOfArguments = 0;
