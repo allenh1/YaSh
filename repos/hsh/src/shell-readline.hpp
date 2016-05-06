@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <alloca.h>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
@@ -68,17 +69,55 @@ public:
       // Echo the character to the screen
       if (input >= 32 && input != 127) {
 	// Character is printable
+	if (input == '!') {
+	  result = write(0, "!", 1);
+	  //Check for "!!" and "!-<n>"
+	  if (!m_history.size()) continue;
 
+	  char ch1, ch2;
+	  result = read(0, &ch1, 1);
+	  if (ch1 == '!') {
+	    // "!!" = run prior command
+	    result =  write(1, "!", 1);
+	    _line += m_history[m_history.size() - 1];
+	    _line.pop_back();
+	    m_show_line = true;
+	  } else if (ch1 == '-') {
+	    result = write(1, "-", 1);
+	    auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+	    // "!-<n>" = run what I did n commands ago.
+	    char * buff = (char*) alloca(20); char * b;
+	    for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
+	    int n = atoi(buff); bool run_cmd = false;
+	    if (*b=='\n') run_cmd = true;
+	    if (n > 0) {
+	      _line += m_history[m_history.size() - n];
+	      _line.pop_back();
+	      m_show_line = true;
+	      if (run_cmd) {
+		if (m_buff.size()) {
+		  char ch;
+		  for (; m_buff.size();) {
+		    ch = m_buff.top(); m_buff.pop();
+		    _line += ch;
+		    result = write(1, &ch, 1);
+		  }
+		}
+		result = write(1, &input, 1);
+		history_index = m_history.size();
+		break;
+	      }
+	    }
+	  }
+	  continue;
+	}
+	
 	if (m_buff.size()) {
 	  /**
 	   * If the buffer has contents, they are
 	   * in the middle of a line.
 	   */
-	  if (input == '>') {
-	    _line += ' ';
-	    _line += input;
-	    _line += ' ';
-	  } else _line += input;
+	  _line += input;
 	  
 	  // Write current character
 	  result = write(1, &input, 1);
@@ -94,11 +133,7 @@ public:
 	  for (int x = 0, b = '\b'; x < m_buff.size(); ++x)
 	    result = write(1, &b, 1);
 	} else {
-	  if (input == '>') {
-	    _line += ' ';
-	    _line += input;
-	    _line += ' ';
-	  } else _line += input;
+	  _line += input;
 	  if (history_index == m_history.size())
 	    m_current_line_copy += input;
 	  // Write to screen
@@ -106,6 +141,7 @@ public:
 	}
       } else if (input == 10) {
 	// Enter was typed
+      enter:
 	if (m_buff.size()) {
 	  char ch;
 	  for (; m_buff.size();) {
@@ -236,10 +272,6 @@ public:
 	  perror("write");
 	  std::cerr<<"I.E. STAHP!\n"<<std::endl;
 	}
-      } else if (input == '!') {
-	/**
-	 * @todo complete the bang-bang
-	 */
       } else if (input == 27) {
 	/**
 	 * @todo escape sequences
@@ -492,6 +524,7 @@ private:
   std::ifstream * m_ifstream;
   volatile int m_mode = STANDARD;
   int m_get_mode;
+  bool m_show_line = false;
   termios oldtermios;
 } reader;
 #endif

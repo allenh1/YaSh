@@ -24,7 +24,7 @@
 
     void wildcard_expand(char * prefix, char * suffix) {
 	if (!*suffix && prefix && *prefix)
-	    { Command::currentCommand.wc_collector.push_back(std::string(strdup(prefix))); return; }
+	{ Command::currentCommand.wc_collector.push_back(std::string(strdup(prefix))); return; }
 	else if (!*suffix) return;
 	// Get next slash (skipping first, if necessary)
 	char * slash = strchr((*suffix == '/') ? suffix + 1: suffix, '/');
@@ -152,7 +152,8 @@ argument:
 WORD {
     wildcard_expand(0, $1);
     std::string * array = Command::currentCommand.wc_collector.data();
-    std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
+    std::sort(array, array + Command::currentCommand.wc_collector.size(),
+	      Comparator());
 
     for (auto && arg : Command::currentCommand.wc_collector) {
 	char * temp = strdup(arg.c_str());
