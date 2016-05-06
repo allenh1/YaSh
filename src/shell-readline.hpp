@@ -92,7 +92,8 @@ public:
 	    int n = atoi(buff); bool run_cmd = false;
 	    if (*b=='\n') run_cmd = true;
 	    if (n > 0) {
-	      _line += m_history[m_history.size() - n];
+	      int _idx = m_history.size() - n;
+	      _line += m_history[(_idx >= 0) ? _idx : 0];
 	      _line.pop_back();
 	      m_show_line = true;
 	      if (run_cmd) {
@@ -109,6 +110,7 @@ public:
 		break;
 	      }
 	    }
+	    result = write(1, &ch1, 1);
 	    continue;
 	  }
 	}
@@ -142,7 +144,6 @@ public:
 	}
       } else if (input == 10) {
 	// Enter was typed
-      enter:
 	if (m_buff.size()) {
 	  char ch;
 	  for (; m_buff.size();) {
