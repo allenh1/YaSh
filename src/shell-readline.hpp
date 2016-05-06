@@ -82,6 +82,7 @@ public:
 	    _line += m_history[m_history.size() - 1];
 	    _line.pop_back();
 	    m_show_line = true;
+	    continue;
 	  } else if (ch1 == '-') {
 	    result = write(1, "-", 1);
 	    auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
@@ -108,8 +109,8 @@ public:
 		break;
 	      }
 	    }
+	    continue;
 	  }
-	  continue;
 	}
 	
 	if (m_buff.size()) {
