@@ -12,8 +12,7 @@ CLEAN_FILES = *~
 bin_PROGRAMS = hsh
 PARSER = shell_bison.yy shell_flex.ll
 READLINE = shell-readline.hpp
-DIR_STRUCTURE = path.hpp
 hsh_SOURCES = command.cpp command.hpp $(PARSER)
 
 # don't forget the readline!
-EXTRA_DIST = $(READLINE) $(DIR_STRUCTURE)
+EXTRA_DIST = $(READLINE)
