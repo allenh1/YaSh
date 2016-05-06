@@ -72,8 +72,11 @@ public:
 	if (input == '!') {
 	  result = write(0, "!", 1);
 	  //Check for "!!" and "!-<n>"
-	  if (!m_history.size()) continue;
-
+	  if (!m_history.size()) {
+	    _line += input;
+	    continue;
+	  }
+	  
 	  char ch1, ch2;
 	  result = read(0, &ch1, 1);
 	  if (ch1 == '!') {
@@ -105,12 +108,13 @@ public:
 		    result = write(1, &ch, 1);
 		  }
 		}
-		result = write(1, &input, 1);
 		history_index = m_history.size();
 		break;
 	      }
 	    }
+	  } else {
 	    result = write(1, &ch1, 1);
+	    _line += "!"; _line += ch1;
 	    continue;
 	  }
 	}
