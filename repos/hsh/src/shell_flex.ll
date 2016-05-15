@@ -78,19 +78,22 @@ void myunputc(int c) {
 ^"source" { return SRC; }
 
 `(\\.|[^`])*` {
-    yylval.string_val = (char*) calloc(strlen(yytext) - 1, sizeof(char));
+    yylval.string_val = new char[strlen(yytext) - 1];
+    memset(yylval.string_val, 0, strlen(yytext) - 1);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
     return BACKTIK;
 }
 
 \"(\\.|[^"])*\" {
-    yylval.string_val = (char*) calloc(strlen(yytext) - 1, sizeof(char));
+    yylval.string_val = new char[strlen(yytext) - 1];
+    memset(yylval.string_val, 0, strlen(yytext) - 1);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1); 
     return WORD;
 }
 
 [^ ^|\t\n>]*[^ ^|\t\n>]*  {
-    yylval.string_val = (char*) calloc(strlen(yytext) + 1, sizeof(char));
+    yylval.string_val = new char[strlen(yytext) + 1];
+    memset(yylval.string_val, 0, strlen(yytext) + 1);
     strcpy(yylval.string_val, yytext);
     return WORD;
 }

@@ -248,10 +248,12 @@ public:
 	std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
 
 	if (Command::currentCommand.wc_collector.size() == 1) {
-	  char ch = '\b'; char sp =  ' ';
-	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
-	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &sp, 1), ++x);
-	  for (int x = 0, y = 0; x < _line.size(); y = write(1, &ch, 1), ++x);
+	  char ch[_line.size() + 1]; char sp[_line.size() + 1];
+	  ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
+	  memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
+	  int x = write(1, ch, _line.size());
+	  x = write(1, sp, _line.size());
+	  x = write(1, ch, _line.size());
 	  _line = "";
 	  
 	  for (int x = 0; x < _split.size() - 1; _line += _split[x++] + " ");
@@ -421,15 +423,9 @@ public:
 
   void setFile(const std::string & _filename) {
     m_filename = _filename;
-    m_ifstream = new std::ifstream(m_filename);
-    std::string line; std::string _line;
-    for (; !m_ifstream->eof();) {
-      std::getline(*m_ifstream, _line);
-      line += _line + (char) 10;
-    }
-    m_get_mode = 2;
-    m_stashed = line;
-    get_file = 1; delete m_ifstream;
+    char * _name = strndup(_filename.c_str(), _filename.size());
+    int _fd = open(_name, O_RDONLY); fdin = dup(_fd);
+    dup2(_fd, 0); close(_fd); free(_name);
   }
 
   static void wildcard_expand(char * prefix, char * suffix) {
@@ -510,7 +506,7 @@ public:
     // This one was allocated with new.
     delete p_rgx;
   }
-  
+    
 private:
   std::vector<std::string> string_split(std::string s, char delim) {
     std::vector<std::string> elems; std::stringstream ss(s);
@@ -526,6 +522,7 @@ private:
   std::vector<std::string> m_path;
   std::vector<std::string> m_history;
   ssize_t history_index = 0;
+  int fdin = 0;
   std::string m_filename;
   std::ifstream * m_ifstream;
   volatile int m_mode = STANDARD;
