@@ -132,7 +132,7 @@ simple_command:
 pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
-| SRC WORD { reader.setMode(SOURCE); reader.setFile(std::string($2)); }
+| SRC WORD { reader.setFile(std::string($2)); }
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
 ;
