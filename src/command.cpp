@@ -481,7 +481,7 @@ void Command::subShell(char * arg)
     if (pmt) PROMPT = std::string(pmt);
     else PROMPT = std::string("default");
 
-    if (isatty(0) || PROMPT == std::string("default")) {
+    if (isatty(0) && PROMPT == std::string("default")) {
       std::string _user = std::string(getenv("USER"));
       char buffer[100]; std::string _host;
       if (!gethostname(buffer, 100)) _host = std::string(buffer);
@@ -507,6 +507,9 @@ void Command::subShell(char * arg)
 	std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
 	fflush(stdout);
       } free(_curr_dur);
+    } else {
+      std::cout<<PROMPT;
+      fflush(stdout);
     }
   }
 
