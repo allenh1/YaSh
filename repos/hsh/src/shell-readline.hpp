@@ -168,8 +168,16 @@ public:
 	} 
       } else if (input == 4) {
 	// Control D
-	if (!_line.size()) continue;
-
+	if (!m_buff.size()) continue;
+	if (!_line.size()) {
+	  m_buff.pop();
+	  std::stack<char> temp = m_buff;
+	  for (char d = 0; temp.size();) if (write(1, &(d = (temp.top())), 1)) temp.pop();;
+	  if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
+	  for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
+	  continue;
+	}
+	
 	if (m_buff.size()) {
 	  // Buffer!
 	  std::stack<char> temp = m_buff;
@@ -254,12 +262,6 @@ public:
 	  Command::currentCommand.wc_collector.shrink_to_fit();
 	} else {
 	  unsigned short x = 0; std::cerr<<std::endl;
-	  /**for (auto && arg : Command::currentCommand.wc_collector) {
-	    char * temp = strdup(arg.c_str());
-	    std::cout<<temp<<std::endl;
-	    Command::currentSimpleCommand->insertArgument(temp);
-	    free(temp); x = x & 1;
-	    }*/
 	  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
 	  printEvenly(_wcd); char * _echo = strdup("echo");
 	  Command::currentSimpleCommand->insertArgument(_echo);
@@ -285,7 +287,15 @@ public:
 	  // Maybe a delete key?
 	  char ch3; result = read(0, &ch3, 1);
 	  if (ch3 == 126) {
-	    if (!_line.size()) continue;
+	    if (!m_buff.size()) continue;
+	    if (!_line.size()) {
+	      m_buff.pop();
+	      std::stack<char> temp = m_buff;
+	      for (char d = 0; temp.size();) if (write(1, &(d = (temp.top())), 1)) temp.pop();;
+	      if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
+	      for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
+	      continue;
+	    }
 
 	    if (m_buff.size()) {
 	      // Buffer!
