@@ -5,6 +5,7 @@
  * This example implements a more
  * C++-y version of read-line.c.
  */
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -36,23 +37,6 @@
 static int get_file = 0;
 // static readLine reader;
 
-struct Lensort {
-  bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
-};
-
-inline char * longest_substring(const std::vector<std::string> & _vct) {
-  char * _substr = NULL; std::vector<char*> vct;
-  for (auto && x : _vct) vct.push_back(strndup(x.c_str(), x.size()));
-  std::sort(vct.begin(), vct.end(), Lensort());
-  size_t minlen = strlen(vct[0]); char * last = NULL; int y = 1;
-  for (char * s = strndup(vct[0],1); y < minlen; s = strndup(vct[0], y++)) {
-    register volatile unsigned short count = 0;
-    for (auto && x : vct) if (!strncmp(x, s, minlen)) ++count;
-    if (count == vct.size()) free(last), last = s;
-    else free(s);
-  } return last;
-}
-
 static class readLine
 {
 public:
@@ -65,7 +49,14 @@ public:
 
     // Read in the next character
     for (; true ;) {
-      result = read(0, &input,  1);
+      if (!read(0, &input,  1)) {
+	Command::currentCommand.printPrompt = true;
+	std::cerr<<"Got sourced EOF!";
+	// Change back to standard in!
+	dup2(fdin, 0), close(fdin);
+	continue;
+      }
+
       // Echo the character to the screen
       if (input >= 32 && input != 127) {
 	// Character is printable
@@ -158,7 +149,7 @@ public:
 	}
 	result = write(1, &input, 1);
 	history_index = m_history.size();
-        break;
+	break;
       } else if (input == 1) {
 	// Control A
 	if (!_line.size()) continue;
@@ -197,7 +188,7 @@ public:
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
       } else if (input == 8 || input == 127) {
 	// backspace
-        if (!_line.size()) continue;
+	if (!_line.size()) continue;
 
 	if (m_buff.size()) {
 	  // Buffer!
@@ -263,17 +254,18 @@ public:
 	  Command::currentCommand.wc_collector.shrink_to_fit();
 	} else {
 	  unsigned short x = 0; std::cerr<<std::endl;
-	  for (auto && arg : Command::currentCommand.wc_collector) {
+	  /**for (auto && arg : Command::currentCommand.wc_collector) {
 	    char * temp = strdup(arg.c_str());
-	    std::cerr<<temp<<std::endl;
+	    std::cout<<temp<<std::endl;
 	    Command::currentSimpleCommand->insertArgument(temp);
 	    free(temp); x = x & 1;
-	  }
-	
-	  Command::currentSimpleCommand->insertArgument(strdup("echo"));
+	    }*/
+	  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
+	  printEvenly(_wcd); char * _echo = strdup("echo");
+	  Command::currentSimpleCommand->insertArgument(_echo);
 	  Command::currentCommand.wc_collector.clear();
 	  Command::currentCommand.wc_collector.shrink_to_fit();
-	  Command::currentCommand.execute();
+	  Command::currentCommand.execute(); free(_echo);
 	} free(_complete_me);
 
 	if (write(1, _line.c_str(), _line.size()) != _line.size()) {
@@ -315,15 +307,14 @@ public:
 	} if (ch1 == 91 && ch2 == 65) {
 	  // This was an up arrow.
 	  // We will print the line prior from history.
-          if (!m_history.size()) continue;
+	  if (!m_history.size()) continue;
 	  // if (history_index == -1) continue;
 	  // Clear input so far
-	  for (int x = 0, bsp ='\b'; x < _line.size(); ++x)
-	    result = write(1, &bsp, 1);
-          for (int x = 0, sp = ' '; x < _line.size(); ++x)
-	    result = write(1, &sp, 1);
-          for (int x = 0, bsp ='\b'; x < _line.size(); ++x)
-	    result = write(1, &bsp, 1);
+	  char ch[_line.size() + 1]; char sp[_line.size() + 1];
+	  memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
+	  result = write(1, ch, _line.size());
+	  result = write(1, sp, _line.size());
+	  result = write(1, ch, _line.size());
 
 	  if (history_index == m_history.size()) --history_index;
 	  // Only decrement if we are going beyond the first command (duh).
@@ -336,14 +327,14 @@ public:
 	  // This was a down arrow.
 	  // We will print the line prior from history.
 	  
-          if (!m_history.size()) continue;
+	  if (!m_history.size()) continue;
 	  if (history_index == m_history.size()) continue;
 	  // Clear input so far
 	  for (int x = 0, bsp ='\b'; x < _line.size(); ++x)
 	    result = write(1, &bsp, 1);
-          for (int x = 0, sp = ' '; x < _line.size(); ++x)
+	  for (int x = 0, sp = ' '; x < _line.size(); ++x)
 	    result = write(1, &sp, 1);
-          for (int x = 0, bsp ='\b'; x < _line.size(); ++x)
+	  for (int x = 0, bsp ='\b'; x < _line.size(); ++x)
 	    result = write(1, &bsp, 1);
 	  
 	  history_index = (history_index == m_history.size()) ? m_history.size()
@@ -424,9 +415,16 @@ public:
   void setFile(const std::string & _filename) {
     m_filename = _filename;
     char * _name = strndup(_filename.c_str(), _filename.size());
-    int _fd = open(_name, O_RDONLY); fdin = dup(_fd);
-    dup2(_fd, 0); close(_fd); free(_name);
+    int _fd = open(_name, O_RDONLY); fdin = dup(0);
+    dup2(_fd, 0); close(_fd);
+    Command::currentCommand.printPrompt = false;
   }
+
+  // std::vector<std::string> * parse_path() {
+  //   char * _path = getenv("PATH"); // get system path
+  //   if (!_path) std::cerr<<"Error: Could not read PATH variable! Please verify it is set!"<<std::endl;
+    
+  // }
 
   static void wildcard_expand(char * prefix, char * suffix) {
     if (!*suffix && prefix && *prefix)

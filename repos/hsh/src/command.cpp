@@ -33,6 +33,40 @@ SimpleCommand::SimpleCommand() { /** Used to call malloc for five stuffs here **
  * @param      argument  argument to insert.
  */
 
+char * longest_substring(const std::vector<std::string> & _vct) {
+  char * _substr = NULL; std::vector<char*> vct;
+  for (auto && x : _vct) vct.push_back(strndup(x.c_str(), x.size()));
+  std::sort(vct.begin(), vct.end(), Lensort());
+  size_t minlen = strlen(vct[0]); char * last = NULL; int y = 1;
+  for (char * s = strndup(vct[0],1); y < minlen; s = strndup(vct[0], y++)) {
+    register volatile unsigned short count = 0;
+    for (auto && x : vct) if (!strncmp(x, s, minlen)) ++count;
+    if (count == vct.size()) free(last), last = s;
+    else free(s);
+  } return last;
+}
+
+size_t size_of_longest(const std::vector<std::string> & _vct) {
+  size_t max = 0;
+  for (auto && x : _vct) max = (x.size() > max) ? x.size() : max;
+  return max;
+}
+
+void printEvenly(std::vector<std::string> & _vct) {
+  size_t longst = size_of_longest(_vct); std::string * y;
+  struct winsize w; ioctl(1, TIOCGWINSZ, &w);
+  for(; w.ws_col % longst; ++longst);
+  int inc = _vct.size() / longst;
+  for (size_t x = 0; x < _vct.size();) {
+    for (size_t width = 0; width != w.ws_col; width += longst) {
+      if (x == _vct.size()) break;
+      y = new std::string(_vct[x++]);
+      for(;y->size() < longst; *y += " ");
+      std::cerr<<*y;
+    } std::cerr<<std::endl;
+  }
+}
+
 inline std::string tilde_expand(std::string input)
 {
   std::string substr = input.substr(0, input.find_first_of('/'));
@@ -442,6 +476,7 @@ void Command::subShell(char * arg)
 
   void Command::prompt()
   {
+    if (!printPrompt) return;
     std::string PROMPT; char * pmt = getenv("PROMPT");
     if (pmt) PROMPT = std::string(pmt);
     else PROMPT = std::string("default");
