@@ -3,6 +3,8 @@
 #include <functional>
 #include <typeinfo>
 #include <vector>
+#include <sys/ioctl.h>
+#include <algorithm>
 #include <sstream>
 #include <memory>
 
@@ -54,7 +56,8 @@ public:
   static std::shared_ptr<SimpleCommand> currentSimpleCommand;
   
   std::vector<std::string> wc_collector;// Wild card collection tool
-  
+
+  bool printPrompt = true;
 private:
   std::vector<std::string> string_split(std::string s, char delim) {
     std::vector<std::string> elems; std::stringstream ss(s);
@@ -102,4 +105,15 @@ struct Comparator {
     return s1.size() < s2.size();
   }
 };
+#endif
+
+#ifndef __STRING_STUFF__
+#define __STRING_STUFF__
+struct Lensort {
+  bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
+};
+
+char * longest_substring(const std::vector<std::string> & _vct);
+size_t size_of_longest(const std::vector<std::string> & _vct);
+void printEvenly(std::vector<std::string> & _vct);
 #endif

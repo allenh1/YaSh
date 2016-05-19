@@ -1,5 +1,4 @@
 %{#include <memory>%}
-%{#include <memory>%}
 
 %token	<string_val> WORD
 %token  <string_val> BACKTIK
@@ -21,8 +20,9 @@
 #include "shell-readline.hpp"
     void yyerror(const char * s);
     int yylex();
+    void wildcard_expand (char *, char*);
 
-    void wildcard_expand(char * prefix, char * suffix) {
+    void wildcard_expand (char * prefix, char * suffix) {
 	if (!*suffix && prefix && *prefix)
 	{ Command::currentCommand.wc_collector.push_back(std::string(strdup(prefix))); return; }
 	else if (!*suffix) return;
@@ -100,7 +100,6 @@
 	// This one was allocated with new.
 	delete p_rgx;
     }
-
   
 
     %}
