@@ -260,14 +260,18 @@ public:
 	  m_current_line_copy = _line;
 	  Command::currentCommand.wc_collector.clear();
 	  Command::currentCommand.wc_collector.shrink_to_fit();
+	} else if (Command::currentCommand.wc_collector.size() == 0) {
+	  continue;
 	} else {
 	  unsigned short x = 0; std::cerr<<std::endl;
 	  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
-	  printEvenly(_wcd); char * _echo = strdup("echo");
-	  Command::currentSimpleCommand->insertArgument(_echo);
-	  Command::currentCommand.wc_collector.clear();
-	  Command::currentCommand.wc_collector.shrink_to_fit();
-	  Command::currentCommand.execute(); free(_echo);
+	  if (_wcd.size()) {
+	    printEvenly(_wcd); char * _echo = strdup("echo");
+	    Command::currentSimpleCommand->insertArgument(_echo);
+	    Command::currentCommand.wc_collector.clear();
+	    Command::currentCommand.wc_collector.shrink_to_fit();
+	    Command::currentCommand.execute(); free(_echo);
+	  } else { free(_complete_me); continue; }
 	} free(_complete_me);
 
 	if (write(1, _line.c_str(), _line.size()) != _line.size()) {
@@ -291,7 +295,9 @@ public:
 	    if (!_line.size()) {
 	      m_buff.pop();
 	      std::stack<char> temp = m_buff;
-	      for (char d = 0; temp.size();) if (write(1, &(d = (temp.top())), 1)) temp.pop();;
+	      for (char d = 0; temp.size();)
+		if (write(1, &(d = (temp.top())), 1)) temp.pop();
+
 	      if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
 	      for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
 	      continue;

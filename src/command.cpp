@@ -7,19 +7,19 @@
  * NOTE: You are responsible for fixing any bugs this code may have!
  *
  */
-#include <stdio.h>
-#include <unistd.h>
+#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/signal.h>
-#include <fcntl.h>
+#include <unistd.h>
 #include <signal.h>
-#include <vector>
-#include <pwd.h>
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <stdio.h>
+#include <fcntl.h>
+#include <vector>
+#include <pwd.h>
 
 #include "command.hpp"
 
