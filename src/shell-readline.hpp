@@ -30,12 +30,11 @@
 /** Include wildcards for tab completion **/
 #include "command.hpp"
 
-#define SOURCE 5053
 #define STANDARD 572
+#define SOURCE 5053
 #define MAXLEN 1024
 
 static int get_file = 0;
-// static readLine reader;
 
 static class readLine
 {
@@ -172,7 +171,9 @@ public:
 	if (!_line.size()) {
 	  m_buff.pop();
 	  std::stack<char> temp = m_buff;
-	  for (char d = 0; temp.size();) if (write(1, &(d = (temp.top())), 1)) temp.pop();;
+	  for (char d = 0; temp.size();)
+	    if (write(1, &(d = (temp.top())), 1)) temp.pop();
+	  
 	  if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
 	  for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
 	  continue;
@@ -225,7 +226,8 @@ public:
 	}
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
       } else if (input == 9) {
-	Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
+	Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>
+	  (new SimpleCommand());
 	
 	// Part 1: add a '*' to the end of the stream.
 	std::string _temp;
@@ -244,7 +246,8 @@ public:
 	// Part 3: If wc_collector.size() <= 1, then complete the tab.
 	//         otherwise, run "echo <text>*"
 	std::string * array = Command::currentCommand.wc_collector.data();
-	std::sort(array, array + Command::currentCommand.wc_collector.size(), Comparator());
+	std::sort(array, array + Command::currentCommand.wc_collector.size(),
+		  Comparator());
 
 	if (Command::currentCommand.wc_collector.size() == 1) {
 	  char ch[_line.size() + 1]; char sp[_line.size() + 1];
