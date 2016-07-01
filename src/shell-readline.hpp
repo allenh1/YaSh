@@ -281,16 +281,36 @@ public:
 	  perror("write");
 	  std::cerr<<"I.E. STAHP!\n"<<std::endl;
 	}
-      } else if (input == 27) {
-	/**
-	 * @todo escape sequences
-	 */
-	
+      } else if (input == 27) {	
 	char ch1, ch2;
 	// Read the next two chars
 	result = read(0, &ch1, 1);
 	result = read(0, &ch2, 1);
-	if (ch1 == 91 && ch2 == 51) {
+	if (ch1 == 91 && ch2 == 49) {
+	  /// Control + arrow key?
+	  char ch3[4]; memset(ch3, 0, 4 * sizeof(char));
+	  const char * right = "\59\53\67";
+	  const char * left  = "\59\53\68";
+	  result = read(0, ch3, 3);
+	  if (ch3[0] == 59 && ch3[1] == 53 && ch3[2] == 67) {
+	    /// control + right arrow
+	    /// If the stack is empty, we are done.
+	    if (!(m_buff.size())) continue;
+	    for (;(m_buff.size() &&
+		   ((_line += m_buff.top(), m_buff.pop(),_line.back()) != ' ') &&
+		   (write(1, &_line.back(), 1) == 1)) ||
+		   ((_line.back() == ' ') ? !(write(1, " ", 1)) : 0););
+	    
+	  } else if (ch3[0] == 59 && ch3[1] == 53 && ch3[2] == 68) {
+	    /// control + left arrow
+	    if (!_line.size()) continue;
+	    for (;(_line.size() &&
+		   ((m_buff.push(_line.back()),
+		     _line.pop_back(), m_buff.top()) != ' ') &&
+		   (write(1, "\b", 1) == 1)) ||
+		   ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0););
+	  }
+	} else if (ch1 == 91 && ch2 == 51) {
 	  // Maybe a delete key?
 	  char ch3; result = read(0, &ch3, 1);
 	  if (ch3 == 126) {
