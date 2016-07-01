@@ -40,7 +40,9 @@ In hSh, one can...
  * tab to do tab completion
  * ctrl + c to send a kill signal to a process
  * ctrl + d to delete a character (backspace and delete keys also work)
- * use arrow keys to move through history
+ * ctrl + <right arrow> to go to the next space
+ * ctrl + <left arrow>  to go to the previous space. 
+* use arrow keys to move through history
 
 History:
 ========
