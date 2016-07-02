@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <regex.h>
 #include <fcntl.h>
+#include <thread>
 #include <vector>
 #include <cctype>
 #include <mutex>
@@ -195,6 +196,23 @@ public:
 	    result = write(1, &b, 1);
 	} else continue;
 	if (history_index == m_history.size()) m_current_line_copy.pop_back();
+      } else if (input == 11) {
+	/// Control K
+	if (!m_buff.size()) continue;
+	size_t count = m_buff.size() + 1;
+	/// Clear the stack. On its own thread.
+	std::thread stack_killer([this](){
+	    for(;m_buff.size();m_buff.pop());
+	  }); stack_killer.detach();
+        char * spaces = (char*) malloc(count + 1);
+	char * bspaces = (char*) malloc(count + 1);
+	memset(spaces, ' ', count); spaces[count] = '\0';
+	memset(bspaces, '\b', count); bspaces[count] = '\0';
+	if (write(1, spaces, count) != count) {
+	  std::cerr<<"Could not write spaces to stdout"<<std::endl;
+	} else if (write(1, bspaces, count) != count) {
+	  std::cerr<<"count not write backspaces to stdout!"<<std::endl;
+	}
       } else if (input == 8 || input == 127) {
 	// backspace
 	if (!_line.size()) continue;
