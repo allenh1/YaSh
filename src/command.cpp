@@ -297,7 +297,8 @@ void Command::execute()
     lul->insertArgument(_ptr);
     free(_ptr);
     if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
-	strcmp(simpleCommands.back().get()->arguments[0], "clear")) {
+	strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
+	strcmp(simpleCommands.back().get()->arguments[0], "ssh")) {
       this->insertSimpleCommand(lul);
     }
   }
