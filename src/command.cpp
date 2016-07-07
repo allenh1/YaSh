@@ -289,6 +289,19 @@ void Command::execute()
   char * dbg = getenv("SHELL_DBG");
   if (dbg && !strcmp(dbg, "YES")) print();
 
+  char * lolz = getenv("LOLZ");
+  if (lolz && !strcmp(lolz, "YES")) {
+    /// Because why not?
+    std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
+    char * _ptr = strdup("lolcat");
+    lul->insertArgument(_ptr);
+    free(_ptr);
+    if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
+	strcmp(simpleCommands.back().get()->arguments[0], "clear")) {
+      this->insertSimpleCommand(lul);
+    }
+  }
+  
   // Add execution here
   // For every simple command fork a new process
   int pid = -1;
