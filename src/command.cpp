@@ -56,15 +56,23 @@ size_t size_of_longest(const std::vector<std::string> & _vct) {
 void printEvenly(std::vector<std::string> & _vct) {
   size_t longst = size_of_longest(_vct); std::string * y;
   struct winsize w; ioctl(1, TIOCGWINSZ, &w);
-  for(; w.ws_col % longst; ++longst);
+
+  /* If the length is too long, print on its own line */
+  if (longst >= w.ws_col) {
+    for (auto && x : _vct) std::cout<<x<<std::endl;
+    return;
+  }
+
+  /* Otherwise, print the strings evenly. */
+  for(; longst < w.ws_col && (w.ws_col % longst); ++longst);
   int inc = _vct.size() / longst;
   for (size_t x = 0; x < _vct.size();) {
     for (size_t width = 0; width != w.ws_col; width += longst) {
       if (x == _vct.size()) break;
       y = new std::string(_vct[x++]);
       for(;y->size() < longst; *y += " ");
-      std::cerr<<*y;
-    } std::cerr<<std::endl;
+      std::cout<<*y;
+    } std::cout<<std::endl;
   }
 }
 
