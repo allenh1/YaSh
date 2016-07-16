@@ -1,0 +1,25 @@
+stages:
+  - build
+  - deploy
+
+hsh:
+  stage: build
+  script:
+    - ./autogen.sh
+    - automake
+    - autoconf
+    - ./configure
+    - make -j5
+
+distribute:
+  stage: deploy
+  script:
+    - ./autogen.sh
+    - ./configure
+    - make -j5
+    - make dist
+    - mv *.tar.gz hsh-$(date +%Y-%m-%d-%H-%M-%S).tar.gz
+  artifacts:
+    paths:
+      - ./*.tar.gz
+    expire_in: 1 week
