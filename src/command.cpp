@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <iostream>
+#include <dirent.h>
 #include <fstream>
 #include <cstring>
 #include <stdio.h>
@@ -279,7 +280,21 @@ void Command::execute()
   }
 
   auto changedir = [] (std::string & s) {
-    std::vector<std::string> dir_structure;
+    /* verify that the directory exists */
+    char * cpy = strndup(s.c_str(), s.size()); 
+    DIR * _dir;
+
+    if (_dir = opendir(cpy)) {
+      /* directory is there */
+      closedir(_dir);
+    } else if (errno == ENOENT) {
+      /* directory doesn't exist! */
+      return -1;
+    } else {
+      /* cd failed because... ¯\_(ツ)_/¯ */
+      return -1;
+    }
+    
     if (*s.c_str() && *s.c_str() != '/') {
       // we need to append the current directory.
       for (;s.back() == '/'; s.pop_back());
@@ -391,6 +406,11 @@ void Command::execute()
       if (curr.size() < 2) {
 	std::string _empty = "";
 	cd = changedir(_empty);
+	if (cd != 0) {
+	  perror("cd");
+	  clear();
+	  prompt();
+	}
 	setenv("PWD", getenv("HOME"), 1);
       } else {
 	if (d_args[1] == std::string("pwd") ||
@@ -407,11 +427,12 @@ void Command::execute()
 
 	for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back());
 	cd = changedir(new_dir);
-	setenv("PWD", new_dir.c_str(), 1);
+	if (cd == 0) setenv("PWD", new_dir.c_str(), 1);
       }
 
       if (cd != 0) {
-	perror("cd failed");
+	const char * msg = "cd failed: No such file or directory\n";
+	write(2, msg, strlen(msg));
 	setenv("PWD", curr_dir.c_str(), 1);
       }
       // Regardless of errors, cd has finished.
