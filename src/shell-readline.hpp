@@ -270,8 +270,9 @@ public:
 	if (Command::currentCommand.wc_collector.size() == 1) {
 	  /* First check if the line has any spaces! */
 	  /*     If so, we will wrap in quotes!      */
-	  bool quote_wrap = false;
-	  if (Command::currentCommand.wc_collector[0].find(" ")) {
+	  bool quote_wrap = false; 
+	  if (Command::currentCommand.wc_collector[0].find(" ")
+	      != std::string::npos) {
 	    Command::currentCommand.wc_collector[0].insert(0, "\"");
 	    quote_wrap = true;
 	  }
