@@ -223,8 +223,7 @@ GREAT WORD {
 }
 ;
 
-background_optional:
-AMPERSAND {
+background_optional: AMPERSAND {
     Command::currentCommand.setBackground(true);
 }
 | /** Accept empty **/
@@ -232,7 +231,5 @@ AMPERSAND {
 %%
 
 void yyerror(const char * s)
-{
-    fprintf(stderr,"%s", s);
-}
+{ fprintf(stderr,"%s", s); }
 

@@ -268,6 +268,13 @@ public:
 		  Comparator());
 
 	if (Command::currentCommand.wc_collector.size() == 1) {
+	  /* First check if the line has any spaces! */
+	  /*     If so, we will wrap in quotes!      */
+	  bool quote_wrap = false;
+	  if (Command::currentCommand.wc_collector[0].find(" ")) {
+	    Command::currentCommand.wc_collector[0].insert(0, "\"");
+	    quote_wrap = true;
+	  }
 	  char ch[_line.size() + 1]; char sp[_line.size() + 1];
 	  ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
 	  memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
@@ -278,6 +285,7 @@ public:
 	  
 	  for (int x = 0; x < _split.size() - 1; _line += _split[x++] + " ");
 	  _line += Command::currentCommand.wc_collector[0];
+	  if (quote_wrap) _line = _line + "\"";
 	  m_current_line_copy = _line;
 	  Command::currentCommand.wc_collector.clear();
 	  Command::currentCommand.wc_collector.shrink_to_fit();
