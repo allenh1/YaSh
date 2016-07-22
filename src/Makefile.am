@@ -9,7 +9,7 @@ AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 CLEAN_FILES = *~
 
 # targets
-bin_PROGRAMS = hsh
+bin_PROGRAMS = yash
 PARSER = shell_bison.yy shell_flex.ll
 READLINE = shell-readline.hpp
 hsh_SOURCES = command.cpp command.hpp $(PARSER)
