@@ -5,9 +5,8 @@ stages:
 yash:
   stage: build
   script:
-    - libtoolize --install
+    - ./autogen.sh
     - automake --add-missing
-    - autoreconf --install
     - autoconf
     - ./configure
     - make -j5
