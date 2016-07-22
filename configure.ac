@@ -38,17 +38,6 @@ AC_CHECK_FUNCS([dup2 gethostname memset regcomp setenv strchr strdup strstr])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 
-# Documentation
-DX_HTML_FEATURE(ON)
-DX_CHM_FEATURE(OFF)
-DX_CHI_FEATURE(OFF)
-DX_MAN_FEATURE(ON)
-DX_RTF_FEATURE(OFF)
-DX_XML_FEATURE(OFF)
-DX_PDF_FEATURE(OFF)
-DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN(bcc, Doxyfile, doc)
-
 # Output
 AC_OUTPUT
 
