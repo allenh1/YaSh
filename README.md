@@ -1,7 +1,6 @@
-hSh:
+YaSh:
 ====
-hSh is an sh-like shell. It's my personal favorite, for obvious reasons (when
-it's working, that is).
+YaSh is yet another Sh clone. It's my personal favorite, for obvious reasons (when it's working, that is).
 
 Installation:
 =============
@@ -28,12 +27,12 @@ Usage:
 To run the installed shell, just type "hsh" in your terminal.
 
 ```
- $ hsh
+ $ yash
 ```
 
 Line Editing:
 =============
-In hSh, one can...
+In YaSh, one can...
 
  * ctrl + a to go to the beginning of the line
  * ctrl + e to go to the end of a line
@@ -57,7 +56,7 @@ the PROMPT variable.
 So, if you want to be boring, you can do the following.
 
 ```
- $ setenv PROMPT "hSh => "
+ $ setenv PROMPT "YaSh => "
 ```
 
 

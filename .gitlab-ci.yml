@@ -2,11 +2,12 @@ stages:
   - build
   - deploy
 
-hsh:
+yash:
   stage: build
   script:
-    - ./autogen.sh
-    - automake
+    - libtoolize --install
+    - automake --add-missing
+    - autoreconf --install
     - autoconf
     - ./configure
     - make -j5
@@ -18,7 +19,7 @@ distribute:
     - ./configure
     - make -j5
     - make dist
-    - mv *.tar.gz hsh-$(date +%Y-%m-%d-%H-%M-%S).tar.gz
+    - mv *.tar.gz yash-$(date +%Y-%m-%d-%H-%M-%S).tar.gz
   artifacts:
     paths:
       - ./*.tar.gz
