@@ -284,14 +284,16 @@ void Command::execute()
     char * cpy = strndup(s.c_str(), s.size()); 
     DIR * _dir;
 
-    if (_dir = opendir(cpy)) {
+    if (!s.empty() && (_dir = opendir(cpy))) {
       /* directory is there */
       closedir(_dir);
-    } else if (errno == ENOENT) {
+    } else if (!s.empty() && errno == ENOENT) {
       /* directory doesn't exist! */
+      std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
       return -1;
-    } else {
+    } else if (!s.empty()) {
       /* cd failed because... ¯\_(ツ)_/¯ */
+      std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
       return -1;
     }
     
@@ -432,7 +434,9 @@ void Command::execute()
 
       if (cd != 0) {
 	const char * msg = "cd failed: No such file or directory\n";
-	write(2, msg, strlen(msg));
+	if (!write(2, msg, strlen(msg))) {
+	  perror("write");
+	}
 	setenv("PWD", curr_dir.c_str(), 1);
       }
       // Regardless of errors, cd has finished.
@@ -491,7 +495,7 @@ void Command::execute()
 	free(temp[x]); temp[x] = NULL;
       } delete[] temp;
     } else {
-      // Time for a nice fork
+      // Time for a good hot fork
       pid = fork();
 
       if (pid == 0) {
@@ -506,7 +510,7 @@ void Command::execute()
 	_exit(1);
       }
     }
-    //delete d_args;
+
     for (int x = 0; x < curr.size(); ++x) {
       free(d_args[x]); d_args[x] = NULL;
     } delete[] d_args;

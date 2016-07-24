@@ -4,7 +4,7 @@
 %token  <string_val> BACKTIK
 
 %token 	NOTOKEN GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND PIPE AMPERSAND
-%token GREATAND TAB SRC ANDAND
+%token GREATAND TAB SRC ANDAND ALIAS GETS 
 %union	{
     char * string_val;
 }
@@ -132,6 +132,9 @@ pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
 | SRC WORD { reader.setFile(std::string($2)); }
+| ALIAS WORD GETS WORD {
+    std::cerr<<"Aliasing \""<<$2<<"\" for \""<<$4<<"\""<<std::endl;
+    }
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
 ;
