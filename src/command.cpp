@@ -137,7 +137,15 @@ std::string env_expand(std::string s)
 
 void SimpleCommand::insertArgument(char * argument)
 {
-  std::string arga = tilde_expand(std::string(argument));
+  std::string as_string(argument);
+
+  auto exists = Command::currentCommand.m_aliases.find(as_string);
+
+  std::string make_me_fatter = (exists == Command::currentCommand.m_aliases.end())
+    ? as_string
+    : Command::currentCommand.m_aliases[as_string];
+  
+  std::string arga = tilde_expand(make_me_fatter);
   std::string arg  = env_expand(arga);
   char * str = strdup(arg.c_str()); int index; char * t_str = str;
   char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
@@ -612,6 +620,20 @@ void sigchld_handler(int signum)
       Command::currentCommand.prompt();
     }
   } errno = saved_errno;
+}
+
+void Command::setAlias(const char * _from, const char * _to)
+{
+  std::string from(_from); std::string to(_to);
+
+  /**
+   * We really don't care if the alias has been
+   * set. We should just overwrite the current
+   * alias. So, we just use the [] operator
+   * in map.
+   */
+
+  m_aliases[from] = to;
 }
 
 int main()

@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <sstream>
 #include <memory>
+#include <map>
 
-// Command Data Structure
-struct SimpleCommand
-{
+/* Command Data Structure */
+struct SimpleCommand {
   SimpleCommand();
   ~SimpleCommand() { release(); }
   std::vector<char* > arguments;
@@ -43,6 +43,8 @@ public:
   void setOutFile(char * fd) { outFile = std::unique_ptr<char>(fd); outSet = true; }
   void setErrFile(char * fd) { errFile = std::unique_ptr<char>(fd); errSet = true; }
 
+  void setAlias(const char * _from, const char * _to);
+
   void subShell(char * arg);
 
   const bool & outIsSet() { return outSet; }
@@ -54,6 +56,8 @@ public:
 
   static Command currentCommand;
   static std::shared_ptr<SimpleCommand> currentSimpleCommand;
+
+  std::map<std::string, std::string> m_aliases;
   
   std::vector<std::string> wc_collector;// Wild card collection tool
 
@@ -76,7 +80,7 @@ private:
   bool outSet = false;
   bool errSet = false;
   bool inSet  = false;
-
+  
   std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
   std::vector<std::string> m_history;
 };

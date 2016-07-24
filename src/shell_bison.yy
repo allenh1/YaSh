@@ -133,8 +133,9 @@ pipe_list iomodifier_list background_optional NEWLINE {
 }
 | SRC WORD { reader.setFile(std::string($2)); }
 | ALIAS WORD GETS WORD {
-    std::cerr<<"Aliasing \""<<$2<<"\" for \""<<$4<<"\""<<std::endl;
-    }
+    Command::currentCommand.setAlias((const char*) $2,
+				     (const char*) $4);
+}
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
 ;
