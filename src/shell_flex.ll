@@ -57,6 +57,8 @@ void myunputc(int c) {
 
 \t { /* tabs */ return TAB; }
 
+"=" return GETS;
+
 ">" return GREAT;
 
 ">&" return GREATAND;
@@ -77,21 +79,23 @@ void myunputc(int c) {
 
 ^"source" { return SRC; }
 
-`(\\.|[^`])*` {
+^"alias" { return ALIAS; }
+
+`(\\.|[^`=])*` {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
     return BACKTIK;
 }
 
-\"(\\.|[^"])*\" {
+\"(\\.|[^"=])*\" {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1); 
     return WORD;
 }
 
-[^ ^|\t\n>]*[^ ^|\t\n>]*  {
+[^ ^|\t\n>=]*[^ ^|\t\n>=]*  {
     yylval.string_val = new char[strlen(yytext) + 1];
     memset(yylval.string_val, 0, strlen(yytext) + 1);
     strcpy(yylval.string_val, yytext);
