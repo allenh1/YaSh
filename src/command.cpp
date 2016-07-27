@@ -38,7 +38,7 @@ std::string longest_substring(const std::vector<std::string> & _vct) {
 		return _vct[x].substr(0, len);
 	  }
 	}
-  }
+  } return _vct[0];
 }
 
 size_t size_of_longest(const std::vector<std::string> & _vct) {

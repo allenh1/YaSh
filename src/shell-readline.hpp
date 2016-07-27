@@ -295,8 +295,7 @@ public:
 		  unsigned short x = 0; std::cout<<std::endl;
 		  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
 		  std::vector<std::string> cpyd = Command::currentCommand.wc_collector;
-		  std::string longest_common = "";
-		  longest_common = (longest_substring(cpyd));
+		  std::string longest_common((longest_substring(cpyd)));
 		  
 		  if (_wcd.size()) {
 			printEvenly(_wcd); char * _echo = strdup("echo");
@@ -309,12 +308,11 @@ public:
 			 * Now we add the largest substring of
 			 * the above to the current string so
 			 * that the tab completion isn't "butts."
+			 *
+			 * ~ Ana-Gabriel Perez
 			 */
-			//if (!longest_common.size()) std::cerr<<"Longest is empty!"<<std::endl;
 
 			if (longest_common.size()) {
-			  //std::cerr<<"Longest common: "<<std::endl;
-
 			  char * to_add = strndup(longest_common.c_str() + strlen(_complete_me) - 1,
 									  longest_common.size() - strlen(_complete_me) + 1);
 			  _line += to_add; free(to_add);
