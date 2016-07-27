@@ -117,7 +117,7 @@ struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
 };
 
-char * longest_substring(const std::vector<std::string> & _vct);
+std::string longest_substring(const std::vector<std::string> & _vct);
 size_t size_of_longest(const std::vector<std::string> & _vct);
 void printEvenly(std::vector<std::string> & _vct);
 #endif
