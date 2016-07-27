@@ -20,23 +20,25 @@ std::vector<int> m_background;
 
 SimpleCommand::SimpleCommand() { /** Used to call malloc for five stuffs here **/ }
 
-/**
- * @brief      Inserts an argument to the current list of args.
- *
- * @param      argument  argument to insert.
+/** 
+ * Returns the longest string common to many strings.
+ * 
+ * @param _vct Vector of strings.
+ * 
+ * @return The longest substring common to all strings.
  */
+std::string longest_substring(const std::vector<std::string> & _vct) {
+  if (!_vct.size()) return std::string(""); /* return an empty string */
 
-char * longest_substring(const std::vector<std::string> & _vct) {
-  char * _substr = NULL; std::vector<char*> vct;
-  for (auto && x : _vct) vct.push_back(strndup(x.c_str(), x.size()));
-  std::sort(vct.begin(), vct.end(), Lensort());
-  size_t minlen = strlen(vct[0]); char * last = NULL; int y = 1;
-  for (char * s = strndup(vct[0],1); y < minlen; s = strndup(vct[0], y++)) {
-	register volatile unsigned short count = 0;
-	for (auto && x : vct) if (!strncmp(x, s, minlen)) ++count;
-	if (count == vct.size()) free(last), last = s;
-	else free(s);
-  } return last;
+  for (size_t len = 0; len < _vct[0].size(); ++len) {
+	register char c = _vct[0][len];
+
+	for (size_t x = 1; x < _vct.size(); ++x) {
+	  if (len >= _vct[x].size() || _vct[x][len] != c) {
+		return _vct[x].substr(0, len);
+	  }
+	}
+  }
 }
 
 size_t size_of_longest(const std::vector<std::string> & _vct) {
