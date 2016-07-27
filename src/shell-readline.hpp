@@ -570,7 +570,7 @@ public:
     // This one was allocated with new.
     delete p_rgx;
   }
-    
+
 private:
   std::vector<std::string> string_split(std::string s, char delim) {
     std::vector<std::string> elems; std::stringstream ss(s);
@@ -578,7 +578,6 @@ private:
     for (;std::getline(ss, item, delim); elems.push_back(std::move(item)));
     return elems;
   }
-  
   std::string m_current_path;
   std::string m_current_line_copy;
   std::string m_stashed;

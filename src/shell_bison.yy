@@ -132,9 +132,19 @@ pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
 | SRC WORD { reader.setFile(std::string($2)); }
-| ALIAS WORD GETS WORD {
-    Command::currentCommand.setAlias((const char*) $2,
-				     (const char*) $4);
+| ALIAS WORD WORD {
+	char * alias, * word, * equals;
+	if (!(equals = strchr($2, '='))) {
+		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
+	} else {	
+		alias = strndup($2, strlen($2) - 1);
+		/* word = WORD + length before '=' + 1 (for '='). */
+		word  = strdup($3);
+
+		Command::currentCommand.setAlias(alias, word);
+
+		free(alias); free(word);
+	}
 }
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
