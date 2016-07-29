@@ -11,7 +11,8 @@ static char * lastLine = NULL;
 int mygetc (FILE * f) {
 static readLine reader;
 static char * p = NULL;
-char ch;
+ static int get_file = 0;
+ char ch;
 
 if (!isatty(0)) return getc(f);
 
@@ -79,7 +80,7 @@ void myunputc(int c) {
 
 ^"alias" { return ALIAS; }
 
-`(\\.|[^`])*` {
+`(\\.|[^`"])*` {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
@@ -99,8 +100,3 @@ void myunputc(int c) {
     strcpy(yylval.string_val, yytext);
     return WORD;
 }
-
-.  {
-    return NOTOKEN;
-}
-
