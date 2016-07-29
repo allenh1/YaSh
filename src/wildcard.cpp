@@ -61,7 +61,7 @@ void wildcard_expand(char * prefix, char * suffix) {
   }
 
   dirent * _entry;
-  for (; _entry = readdir(dir);) {
+  for (; (_entry = readdir(dir));) {
 	// Check for a match!
 	if (!regexec(p_rgx, _entry->d_name, 0, 0, 0)) {
 	  if (!(prefix && *prefix)) sprintf(nextPrefix, "%s", _entry->d_name);
