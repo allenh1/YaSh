@@ -59,6 +59,7 @@ void printEvenly(std::vector<std::string> & _vct) {
 
   /* Otherwise, print the strings evenly. */
   for(; longst < w.ws_col && (w.ws_col % longst); ++longst);
+  int inc = _vct.size() / longst;
   for (size_t x = 0; x < _vct.size();) {
 	for (size_t width = 0; width != w.ws_col; width += longst) {
 	  if (x == _vct.size()) break;
@@ -189,7 +190,7 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
   } else {
 	/** Parent Process: read from the pipe **/
 	close(fdpipe[1]);   // close unused write end
-	for (memset(outBuff, 0, buffSize);(x = read(fdpipe[0], outBuff, buffSize)););
+	for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
 	if (x == buffSize) return -1;
 	waitpid(pid, NULL, 0);
   } return 0;
@@ -224,7 +225,7 @@ void Command::subShell(char * arg)
 	  }); _thread1.join();
 	std::thread _thread2([outBuff, buffSize, fdpipe]() {
 		size_t x = 0;
-		for (memset(outBuff, 0, buffSize);(x = read(fdpipe[0], outBuff, buffSize)););
+		for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
 	  }); _thread2.join();
 	if (x == buffSize) return;
 	waitpid(pid, NULL, 0);
@@ -336,7 +337,8 @@ void Command::execute()
   // Add execution here
   // For every simple command fork a new process
   int pid = -1;
-  int fderr, fdout, fdin;
+  int fdpipe [2]; //for de pipes
+  int fderr, fdout, fdin; char * blak;
   int tmpin  = dup(0);
   int tmpout = dup(1);
   int tmperr = dup(2);
@@ -373,7 +375,7 @@ void Command::execute()
   for (int x = 0; x < numOfSimpleCommands; ++x) {
 	std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
 	char ** d_args = new char*[curr.size() + 1];
-	for (size_t y = 0; y < curr.size(); ++y) {
+	for (int y = 0; y < curr.size(); ++y) {
 	  d_args[y] = strdup(curr[y]);
 	} // ... still better than managing myself!
 	d_args[curr.size()] = NULL;
@@ -395,6 +397,7 @@ void Command::execute()
 
 	else {
 	  int fdpipe[2];
+	  int pipe_res = pipe(fdpipe);
 	  // perror("pipe");
 	  fdout = fdpipe[1];
 	  fdin  = fdpipe[0];
@@ -446,7 +449,7 @@ void Command::execute()
 	  return;
 	} else if (d_args[0] == std::string("ls")) {
 	  char ** temp = new char*[curr.size() + 2];
-	  for (size_t y = 2; y <= curr.size(); ++y) {
+	  for (int y = 2; y <= curr.size(); ++y) {
 		temp[y] = strdup(curr[y - 1]);
 	  } // ... still better than managing myself!
 	  temp[0] = strdup("ls");
@@ -460,7 +463,7 @@ void Command::execute()
 		perror("execvp");
 		exit(2);
 	  } 
-	  for (size_t x = 0; x < curr.size() + 2; ++x) {
+	  for (int x = 0; x < curr.size() + 2; ++x) {
 		free(temp[x]);
 		temp[x] = NULL;
 	  } delete[] temp;
@@ -479,7 +482,7 @@ void Command::execute()
 	  return;
 	} else if (d_args[0] == std::string("grep")) {
 	  char ** temp = new char*[curr.size() + 2];
-	  for (size_t y = 1; y < curr.size(); ++y) {
+	  for (int y = 1; y < curr.size(); ++y) {
 		temp[y] = strdup(curr[y]);
 	  } // ... still better than managing myself!
 	  temp[0] = strdup("grep");
@@ -492,7 +495,7 @@ void Command::execute()
 		execvp (temp[0], temp);
 		perror("execvp");
 		exit(2);
-	  } for (size_t x = 0; x < curr.size() + 2; ++x) {
+	  } for (int x = 0; x < curr.size() + 2; ++x) {
 		free(temp[x]); temp[x] = NULL;
 	  } delete[] temp;
 	} else {
@@ -512,7 +515,7 @@ void Command::execute()
 	  }
 	}
 
-	for (size_t x = 0; x < curr.size(); ++x) {
+	for (int x = 0; x < curr.size(); ++x) {
 	  free(d_args[x]); d_args[x] = NULL;
 	} delete[] d_args;
   }
@@ -557,7 +560,7 @@ void Command::prompt()
 	char buffer[100]; std::string _host;
 	if (!gethostname(buffer, 100)) _host = std::string(buffer);
 	else _host = std::string("localhost");
-	char * _hme = NULL;
+	char * _wd = NULL, * _hme = NULL;
 	char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
 	eval_to_buffer(_pwd, cdirbuff, 2048);
 	std::string _cdir = std::string(cdirbuff);
@@ -598,7 +601,7 @@ void ctrlc_handler(int signum)
 void sigchld_handler(int signum)
 {
   int saved_errno = errno; int pid = -1;
-  for(; (pid = waitpid(-1, NULL, WNOHANG)) > 0;) {
+  for(; pid = waitpid(-1, NULL, WNOHANG) > 0;) {
 	bool found = false;
 	for (auto && a : m_background) {
 	  if (a == pid) {

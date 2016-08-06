@@ -22,6 +22,4 @@ src/shell_flex.o
 src/yash
 stamp-h1
 *~
-*.o
 src/*~
-src/*.o
