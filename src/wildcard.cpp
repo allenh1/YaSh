@@ -1,80 +1,126 @@
 #include "wildcard.hpp"
 
-void wildcard_expand(char * prefix, char * suffix) {
-  if (!*suffix && prefix && *prefix)
-	{ Command::currentCommand.wc_collector.push_back(std::string(strdup(prefix))); return; }
-  else if (!*suffix) return;
-  // Get next slash (skipping first, if necessary)
-  char * slash = strchr((*suffix == '/') ? suffix + 1: suffix, '/');
-  char * next  = (char*) calloc(MAXLEN + 1, sizeof(char));
-  // This line is magic.
-  for (char * temp = next; *suffix && suffix != slash; *(temp++) = *(suffix++));
+void wildcard_expand(char * arg) {
+  // return if arg does not contain * or ?
+  if(!strchr(arg, '*') && !strchr(arg, '?'))
+    {Command::_currentSimpleCommand->insertArgument(arg); return;}
 
-  // Expand the wildcard
-  char * nextPrefix = (char*) calloc(MAXLEN + 1, sizeof(char));
-  if (!(strchr(next, '*') || strchr(next, '?'))) {
-	// No more wildcards.
-	if (!(prefix && *prefix)) sprintf(nextPrefix, "%s", next);
-	else sprintf(nextPrefix, "%s%s", prefix, next);
-	wildcard_expand(nextPrefix, suffix);
-	free(nextPrefix); free(next); return;
-  }
+  char * reg = (char *)calloc(strlen(arg) << 1 + 10, sizeof(char));
+  char * a = arg;
+  char * r = reg;
 
-  // Wildcards were found!
-  // Convert to regex.
-  char * rgx = (char*) calloc(2 * strlen(next) + 3, sizeof(char));
-  char * trx = rgx;
+  bool beginsExpression = false;
+  bool openFirst = false;
+  bool hidden = false;
 
-  *(trx++) = '^';
-  for (char * tmp = next; *tmp; ++tmp) {
-	switch (*tmp) {
-	case '*':
-	  *(trx++) = '.';
-	  *(trx++) = '*';
-	  break;
-	case '?':
-	  *(trx++) = '.';
-	  break;
-	case '.':
-	  *(trx++) = '\\';
-	  *(trx++) = '.';
-	case '/':
-	  break;
-	default:
-	  *(trx++) = *tmp;
+  int dirs = 0;
+  int index = 0;
+
+  std::vector<std::string> directories;
+  std::vector<std::string> subs;
+  std::vector<std::string> files;
+  std::queue<char *> regStrings;
+
+  std::string root ("/");
+  std::string curr(".");
+
+  *(r++)= '^';                            // match beginning of line
+  for (;*a;a++, index++) {
+    switch(*a) {
+    case '*':
+      *(r++) = '.';
+      *(r++) = '*';
+      break;
+    case '?':
+      *(r++) = '.';
+      break;
+    case '.':
+      hidden = true;
+      *(r++) = '\\';
+      *(r++) = '.';
+      break;
+    case '/':
+      if (!dirs && !index) {
+	beginsExpression = true;
+	directories.push_back(root);
+	dirs++;
+      } else {
+	*(r++)='$'; *(r++)='\0';         // end regex string pattern
+	regStrings.push(strdup(reg));    // copy of pattern and push to queue
+	r=reg; *(r++)='^'; dirs++;       // reset regex string pattern
+      }
+      break;
+    default:
+      *(r++) = *a;
+    }
+  } *(r++)='$'; *(r++)='\0';             // match end of line and add null char
+  openFirst = true;
+
+  // adds last regex string pattern to queue
+  if (!beginsExpression || (beginsExpression && dirs)) {
+    regStrings.push(strdup(reg));
+    if (!dirs || (!beginsExpression && dirs)) dirs++;
+  } if (!beginsExpression) {directories.push_back((char*)curr.c_str());}
+
+  // de-queue patterns and compile
+  int size = (int)regStrings.size();
+  for (int i=0; i < size; i++) {
+    // regex pattern type compilation
+    regex_t re; char * str = regStrings.front();
+    int result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
+    if (result) {perror("regcomp"); return;}
+    if (dirs) dirs--;
+
+    // open directory and get entries to compare
+    DIR * dir;
+    for (auto && di : directories) {
+      dir = opendir((char*)di.c_str());
+      if (dir == NULL) {perror("opendir"); return;}
+
+      // get all directory entries and add to files vector
+      for (struct dirent * entry = readdir(dir); entry != NULL; entry = readdir(dir)) {
+	std::string e(strdup((char*)entry->d_name)); files.push_back(e);
+      } std::sort(files.begin(), files.end());
+
+      for(auto && f : files) {
+	regmatch_t match; std::string e (f);
+	if ((!hidden) && (e.front() == '.')) {/* do nothing */}
+	else {
+	  // re-compile bc regex cleans up memory -_-
+	  result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
+	  if (result) {perror("regcomp"); return;}
+
+	  // match regexp w/ entry
+	  int r = regexec(&re, (char *)e.c_str(), 1, &match, 0);
+	  if(r) {/* doesn't match */}
+	  else {
+	    // just trying to add correct file/dir to arguments
+	    if(beginsExpression) {
+	      if(openFirst) e = di + e;
+	      else {e = di + root + e;}
+	      if (!dirs) {Command::_currentSimpleCommand->insertArgument(strdup((char*)e.c_str()));}
+	      else {DIR * d = opendir((char*)e.c_str()); if (d) subs.push_back(e); closedir(d);}
+	    } else {
+	      if (!openFirst) e = di + root + e;
+	      if (!dirs) {Command::_currentSimpleCommand->insertArgument(strdup((char*)e.c_str()));}
+	      else {DIR * d = opendir((char*)e.c_str()); if (d) subs.push_back(e); closedir(d);}
+	    }
+	  }
 	}
-  } *(trx++) = '$'; *(trx++) = 0;
-  // Compile regex.
-  regex_t * p_rgx = new regex_t();
-  if (regcomp(p_rgx, rgx, REG_EXTENDED|REG_NOSUB)) {
-	// Exit with error if regex failed to compile.
-	perror("regex (compile)");
-	exit(1);
+      }
+      // clear files
+      size_t fileSize = files.size();
+      for (size_t s = 0; s < fileSize; s++) {files.pop_back();}
+      openFirst = false;
+      regfree(&re);
+      closedir(dir);
+    }
+    // remove current regex
+    regStrings.pop(); size_t s = directories.size();
+    // clear old directories
+    for(size_t i = 0; i < s; i++) {directories.pop_back();} s = subs.size();
+    // add new directories from subs vector
+    for(size_t i = 0; i < s; i++) {directories.push_back(subs.at(i));}
+    for(size_t i = 0; i < s; i++) {subs.pop_back();}
   }
-
-  char * _dir = (prefix) ? strdup(prefix) : strdup(".");
-
-  DIR * dir = opendir(_dir); free(_dir);
-  if (!dir) {
-	free(dir); free(rgx); free(next); free(nextPrefix); delete p_rgx;
-	return; // Return if opendir returned null.
-  }
-
-  dirent * _entry;
-  for (; (_entry = readdir(dir));) {
-	// Check for a match!
-	if (!regexec(p_rgx, _entry->d_name, 0, 0, 0)) {
-	  if (!(prefix && *prefix)) sprintf(nextPrefix, "%s", _entry->d_name);
-	  else sprintf(nextPrefix, "%s/%s", prefix, _entry->d_name);
-
-	  if (_entry->d_name[0] == '.' && *rgx == '.') wildcard_expand(nextPrefix, suffix);
-	  else if (_entry->d_name[0] == '.') continue;
-	  else wildcard_expand(nextPrefix, suffix);
-	}
-  }
-
-  // Be kind to malloc. Malloc is bae.
-  free(next); free(nextPrefix); free(rgx); free(dir);
-  // This one was allocated with new.
-  delete p_rgx;
 }
