@@ -386,7 +386,7 @@ public:
 		char * _complete_me = strndup(_temp.c_str(), _temp.size());
 	
 		// Part 2: Invoke wildcard expand
-		wildcard_expand(NULL, _complete_me);
+		wildcard_expand(_complete_me);
 
 		// Part 3: If wc_collector.size() <= 1, then complete the tab.
 		//         otherwise, run "echo <text>*"

@@ -84,7 +84,7 @@ argument_list argument
 
 argument:
 WORD {
-    wildcard_expand(0, $1);
+    wildcard_expand($1);
     std::string * array = Command::currentCommand.wc_collector.data();
     std::sort(array, array + Command::currentCommand.wc_collector.size(),
 	      Comparator());

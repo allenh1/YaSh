@@ -3,6 +3,7 @@
 /* STL (C++) includes */
 #include <algorithm>
 #include <iostream>
+#include <queue>
 
 /* C includes */
 #include <string.h>
@@ -14,5 +15,5 @@
 
 #define MAXLEN 1024
 
-extern "C" void wildcard_expand(char * prefix, char * suffix);
+extern "C" void wildcard_expand(char * arg);
 #endif
