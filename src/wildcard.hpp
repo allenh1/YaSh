@@ -3,6 +3,7 @@
 /* STL (C++) includes */
 #include <algorithm>
 #include <iostream>
+#include <queue>
 
 /* C includes */
 #include <string.h>

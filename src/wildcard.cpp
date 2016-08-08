@@ -2,10 +2,12 @@
 
 void wildcard_expand(char * arg) {
   // return if arg does not contain * or ?
-  if(!strchr(arg, '*') && !strchr(arg, '?'))
-    {Command::_currentSimpleCommand->insertArgument(arg); return;}
+  if(!strchr(arg, '*') && !strchr(arg, '?')) {
+	Command::currentSimpleCommand->insertArgument(arg);
+	return;
+  }
 
-  char * reg = (char *)calloc(strlen(arg) << 1 + 10, sizeof(char));
+  char * reg = (char *) calloc(strlen(arg) << 1 + 10, sizeof(char));
   char * a = arg;
   char * r = reg;
 
@@ -13,8 +15,8 @@ void wildcard_expand(char * arg) {
   bool openFirst = false;
   bool hidden = false;
 
-  int dirs = 0;
-  int index = 0;
+  size_t index = 0;
+  size_t dirs = 0;
 
   std::vector<std::string> directories;
   std::vector<std::string> subs;
@@ -41,19 +43,19 @@ void wildcard_expand(char * arg) {
       break;
     case '/':
       if (!dirs && !index) {
-	beginsExpression = true;
-	directories.push_back(root);
-	dirs++;
+		beginsExpression = true;
+		directories.push_back(root);
+		dirs++;
       } else {
-	*(r++)='$'; *(r++)='\0';         // end regex string pattern
-	regStrings.push(strdup(reg));    // copy of pattern and push to queue
-	r=reg; *(r++)='^'; dirs++;       // reset regex string pattern
+		*(r++)='$'; *(r++)='\0';         // end regex string pattern
+		regStrings.push(strdup(reg));    // copy of pattern and push to queue
+		r=reg; *(r++)='^'; dirs++;       // reset regex string pattern
       }
       break;
     default:
       *(r++) = *a;
     }
-  } *(r++)='$'; *(r++)='\0';             // match end of line and add null char
+  } *(r++)='$'; *(r++)='\0';         // match end of line and add null char
   openFirst = true;
 
   // adds last regex string pattern to queue
@@ -79,38 +81,45 @@ void wildcard_expand(char * arg) {
 
       // get all directory entries and add to files vector
       for (struct dirent * entry = readdir(dir); entry != NULL; entry = readdir(dir)) {
-	std::string e(strdup((char*)entry->d_name)); files.push_back(e);
+		std::string e(strdup((char*)entry->d_name)); files.push_back(e);
       } std::sort(files.begin(), files.end());
 
       for(auto && f : files) {
-	regmatch_t match; std::string e (f);
-	if ((!hidden) && (e.front() == '.')) {/* do nothing */}
-	else {
-	  // re-compile bc regex cleans up memory -_-
-	  result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
-	  if (result) {perror("regcomp"); return;}
+		regmatch_t match; std::string e (f);
+		if ((!hidden) && (e.front() == '.')) {/* do nothing */}
+		else {
+		  /* re-compile bc regex cleans up memory -_- */
+		  result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
+		  if (result) {perror("regcomp"); return;}
 
-	  // match regexp w/ entry
-	  int r = regexec(&re, (char *)e.c_str(), 1, &match, 0);
-	  if(r) {/* doesn't match */}
-	  else {
-	    // just trying to add correct file/dir to arguments
-	    if(beginsExpression) {
-	      if(openFirst) e = di + e;
-	      else {e = di + root + e;}
-	      if (!dirs) {Command::_currentSimpleCommand->insertArgument(strdup((char*)e.c_str()));}
-	      else {DIR * d = opendir((char*)e.c_str()); if (d) subs.push_back(e); closedir(d);}
-	    } else {
-	      if (!openFirst) e = di + root + e;
-	      if (!dirs) {Command::_currentSimpleCommand->insertArgument(strdup((char*)e.c_str()));}
-	      else {DIR * d = opendir((char*)e.c_str()); if (d) subs.push_back(e); closedir(d);}
-	    }
-	  }
-	}
+		  /* match regexp w/ entry */
+		  int r = regexec(&re, (char *)e.c_str(), 1, &match, 0);
+		  if(r) {/* doesn't match */}
+		  else {
+			/* just trying to add correct file/dir to arguments */
+			if(beginsExpression) {
+			  if(openFirst) e = di + e;
+			  else {e = di + root + e;}
+			  if (!dirs) Command::currentCommand.wc_collector.push_back(e);
+			  else {
+				DIR * d = opendir((char*)e.c_str());
+				if (d) subs.push_back(e);
+				closedir(d);
+			  }
+			} else {
+			  if (!openFirst) e = di + root + e;
+			  if (!dirs) Command::currentCommand.wc_collector.push_back(e);
+			  else {
+				DIR * d = opendir((char*)e.c_str());
+				if (d) subs.push_back(e);
+				closedir(d);}
+			}
+		  }
+		}
       }
       // clear files
       size_t fileSize = files.size();
-      for (size_t s = 0; s < fileSize; s++) {files.pop_back();}
+      for (size_t s = 0; s < fileSize; s++) files.pop_back();
       openFirst = false;
       regfree(&re);
       closedir(dir);
