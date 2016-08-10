@@ -10,7 +10,8 @@ CLEAN_FILES = *~
 
 # targets
 bin_PROGRAMS = yash
-PARSER = wildcard.hpp wildcard.cpp shell_bison.yy shell_flex.ll 
+UTILS = shell-utils.hpp shell-utils.cpp
+PARSER = wildcard.hpp wildcard.cpp shell_bison.yy shell_flex.ll $(UTILS)
 READLINE = shell-readline.hpp
 yash_SOURCES = command.cpp command.hpp $(PARSER)
 

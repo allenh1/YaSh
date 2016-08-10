@@ -18,6 +18,7 @@
 #include <iostream>
 #include <algorithm>
 #include "shell-readline.hpp"
+#include "shell-utils.hpp"
 #include "wildcard.hpp"
 
     void yyerror(const char * s);
@@ -84,7 +85,10 @@ argument_list argument
 
 argument:
 WORD {
-    wildcard_expand($1);
+	std::string temp = tilde_expand(std::string($1));
+	
+	char * expand_upon_me = strndup(temp.c_str(), temp.size());
+    wildcard_expand(expand_upon_me); free(expand_upon_me);
     std::string * array = Command::currentCommand.wc_collector.data();
     std::sort(array, array + Command::currentCommand.wc_collector.size(),
 	      Comparator());
