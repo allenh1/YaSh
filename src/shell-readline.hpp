@@ -347,7 +347,7 @@ public:
 		  }
 		  // Move cursor to current position.
 		  for (size_t x = 0; x < m_buff.size(); ++x) {
-			if (write(1, &b, 1)) {
+			if (!write(1, &b, 1)) {
 			  perror("write");
 			  continue;
 			}
