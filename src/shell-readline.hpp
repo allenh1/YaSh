@@ -380,7 +380,7 @@ public:
 		std::vector<std::string> _split;
 		if (_line.size()) {
 		  _split = string_split(_line, ' ');
-		  _temp = _split.back() + "*";
+		  _temp = tilde_expand(_split.back()) + "*";
 		} else _temp = "*";
 
 		char * _complete_me = strndup(_temp.c_str(), _temp.size());

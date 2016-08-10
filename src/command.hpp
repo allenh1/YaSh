@@ -1,13 +1,36 @@
-#ifndef command_h
-#define command_h
+#ifndef __COMMAND_HPP__
+#define __COMMAND_HPP__
+/* UNIX Includes */
+#include <sys/signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
+/* Linux Includes */
+#include <unistd.h>
+#include <signal.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <pwd.h>
+
+/* C includes */
+#include <stdio.h>
+
+/* STL (C++) includes */
 #include <functional>
-#include <typeinfo>
-#include <vector>
-#include <sys/ioctl.h>
 #include <algorithm>
+#include <typeinfo>
+#include <iostream>
+#include <fstream>
+#include <cstring>
 #include <sstream>
+#include <thread>
+#include <vector>
 #include <memory>
 #include <map>
+
+/* File Includes */
+#include "shell-utils.hpp"
 
 /* Command Data Structure */
 struct SimpleCommand {
@@ -109,15 +132,4 @@ struct Comparator {
 		return s1.size() < s2.size();
 	}
 };
-#endif
-
-#ifndef __STRING_STUFF__
-#define __STRING_STUFF__
-struct Lensort {
-	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
-};
-
-std::string longest_substring(const std::vector<std::string> & _vct);
-size_t size_of_longest(const std::vector<std::string> & _vct);
-void printEvenly(std::vector<std::string> & _vct);
 #endif
