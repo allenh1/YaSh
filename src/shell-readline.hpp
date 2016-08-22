@@ -80,8 +80,13 @@ public:
 					 <<" including your input to"
 					 <<" allen-software.com!"<<std::endl;
 			continue;
+		  } if (ch1 == '\n') {
+			if (!write(1, "\n", 1)) {
+			  perror("write");
+			  continue;
+			} break;
 		  }
-		  if (ch1 == '!') {
+		  else if (ch1 == '!') {
 			// "!!" = run prior command
 			if (!write(1, "!", 1)) {
 			  perror("write");
