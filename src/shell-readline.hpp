@@ -621,7 +621,31 @@ public:
 		  _line += wrt; m_buff.pop();
 		} if (ch1 == 91 && ch2 == 68) {
 		  if (!_line.size()) continue;
-		  // Left Arrow
+		  /* Left Arrow Key */
+
+		  /* grab width of terminal */
+		  struct winsize w;
+		  ioctl(1, TIOCGWINSZ, &w);
+		  size_t term_width = w.ws_col;
+
+		  /* check if we need to go up a line */
+		  /*  The plus 2 comes from the "$ "  */
+		  if (_line.size() == (term_width - 2)) {
+			/* need to go up a line */		   
+			const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
+
+			/* now we print the string */
+			if (!write(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) {
+			  /**
+			   * @todo Make sure you print the correct prompt!
+			   */
+			  perror("write");
+			  continue;
+			} else if (!write(1, _line.c_str(), term_width - 2)) {
+			  perror("write");
+			  continue;
+			}
+		  }
 		  m_buff.push(_line.back());
 		  char bsp = '\b';
 		  if (!write(1, &bsp, 1)) {
