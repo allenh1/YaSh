@@ -611,8 +611,9 @@ public:
 			continue;
 		  }
 		} if (ch1 == 91 && ch2 == 67) {
-		  // Right Arrow
+		  /* Right Arrow Key */
 		  if (!m_buff.size()) continue;
+
 		  char wrt = m_buff.top();
 		  if (!write(1, &wrt, 1)) {
 			perror("write");
@@ -630,7 +631,7 @@ public:
 
 		  /* check if we need to go up a line */
 		  /*  The plus 2 comes from the "$ "  */
-		  if (_line.size() == (term_width - 2)) {
+		  if ((_line.size() == (term_width - 2))) {
 			/* need to go up a line */		   
 			const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
 
@@ -642,6 +643,13 @@ public:
 			  perror("write");
 			  continue;
 			} else if (!write(1, _line.c_str(), term_width - 2)) {
+			  perror("write");
+			  continue;
+			}
+		  } else if (!((_line.size() + 2) % (term_width))) {
+			/* This case is for more than one line of backtrack */
+			if (!write(1, "\033[1A \b", strlen("\033[1A \b"))) perror("write");
+			else if (!write(1, _line.c_str() - 2 + (term_width  * ((_line.size() - 2) / term_width)), term_width)) {
 			  perror("write");
 			  continue;
 			}
