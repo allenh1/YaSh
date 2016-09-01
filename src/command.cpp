@@ -205,7 +205,9 @@ void Command::execute()
 	free(_ptr);
 	if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
 		strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
-		strcmp(simpleCommands.back().get()->arguments[0], "ssh")) {
+		strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "unsetenv")) {
 	  this->insertSimpleCommand(lul);
 	}
   }
@@ -352,9 +354,10 @@ void Command::execute()
 	  clear(); prompt(); free(temp); free(pemt);
 	  return;
 	} else if (d_args[0] == std::string("unsetenv")) {
-	  int result = unsetenv(d_args[1]);
-	  if (result) perror("unsetenv");
-	  clear(); prompt();
+	  char * temp = (char*) calloc(strlen(d_args[1]) + 1, sizeof(char));
+	  strcpy(temp, d_args[1]);
+	  if (unsetenv(temp) == -1) perror("unsetenv");
+	  clear(); prompt(); free(temp);
 	  return;
 	} else if (d_args[0] == std::string("grep")) {
 	  char ** temp = new char*[curr.size() + 2];
