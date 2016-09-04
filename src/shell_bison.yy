@@ -10,21 +10,27 @@
 }
 
 %{
-#include <stdio.h>
+/* STL (C++) Includes */
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+
+/* C Includes */
 #include <dirent.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <regex.h>
-#include <cstring>
-#include <iostream>
-#include <algorithm>
+
+/* File Includes */
 #include "shell-readline.hpp"
 #include "shell-utils.hpp"
 #include "wildcard.hpp"
 
-    void yyerror(const char * s);
-    int yylex();  
+int yylex();  
+int yyparse();
 
-    %}
+void yyerror(const char * s);
+%}
 
 %%
  /**

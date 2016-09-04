@@ -516,31 +516,84 @@ void Command::setAlias(const char * _from, const char * _to)
   m_aliases[from] = split;
 }
 
-int main()
+void Command::readShellRC()
 {
-  struct sigaction ctrl_action;
-  ctrl_action.sa_handler = ctrlc_handler;
-  sigemptyset(&ctrl_action.sa_mask);
-  ctrl_action.sa_flags = SA_RESTART;
+  /* Check for existence */
+  auto file_exists = [](std::string filename) {
+	struct stat buffer;
+	return (!stat(filename.c_str(), &buffer));
+  };
 
-  if (sigaction(SIGINT, &ctrl_action, NULL)) {
-	perror("sigint");
-	_exit(6);
+  /* If file doesn't exist, return */
+  if (!file_exists(tilde_expand(std::string("~/.yashrc")))) return;
+
+  /* Otherwise, read file (line-by-line). */
+  std::ifstream infile(tilde_expand(std::string("~/.yashrc")));
+
+  if (!infile.good()) {
+	std::cerr<<"Could not open ~/.yashrc file! Check permissions!"<<std::endl;
+	return;
   }
 
-  struct sigaction chld;
-  chld.sa_handler = sigchld_handler;
-  sigemptyset(&chld.sa_mask);
-  chld.sa_flags   = SA_RESTART | SA_NOCLDSTOP;
+  size_t line_num = 0; /* store line number for output */
+  
+  for (std::string line; std::getline(infile, line); ++line_num) {
+	std::istringstream in_stream(line); /* read into line */
 
-  if (sigaction(SIGCHLD, &chld, NULL) == -1) {
-	perror("sigchild");
-	_exit(7);
-  } 
-  Command::currentCommand.prompt();
-  yyparse();
+	if (!line.length()) continue; /* ignore blank lines */
+	else if (line[0] == '#') std::cerr<<"comment"<<std::endl;/* detected a comment */
+	else if (line.size() > strlen("alias") &&
+			   !strncmp(line.c_str(), "alias", strlen("alias"))) {
+	  /* detected an alias */
+	  char * varname = (char*) calloc(line.size(), sizeof(char));
+	  char *   value = (char*) calloc(line.size(), sizeof(char));
+	  char * c_line = strndup(line.c_str() + strlen("alias"),
+							  line.size()  - strlen("alias"));
+	  char * org_pointer = c_line;
+	  char * c;
+	  /* iterate past the first '=' */
+	  for (c = varname; *c_line && *c_line != '=';) {
+		if (*c_line == ' ') ++c_line;
+		else *(c++) = *(c_line++);
+	  }
+	  
+	  if (!*c_line) {
+		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
+				 <<" is invalid!a"<<std::endl;
+		free(varname); free(value); free(c_line);
+		continue;
+	  }
+	  /* while c_line is a space, increment. */
+	  for (++c_line; *c_line && *c_line == ' '; ++c_line);
+	  if (!*c_line) {
+		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
+				 <<" is invalid!b"<<std::endl;
+		free(varname); free(value); free(org_pointer);
+		continue;
+	  }
 
-  return 0;
+	  /* add terminal char */
+	  *c = '\0';
+	  
+	  /* now we take the value up to the next '"'*/
+	  for (c = value, ++c_line; *c_line && *c_line != '\"';
+		   *(c++) = *(c_line++));
+	  if (*c_line != '\"') {
+		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
+				 <<" is invalid!c"<<std::endl;
+		free(varname); free(value); free(org_pointer);
+		continue;
+	  } *c = '\0';
+
+	  /* set the alias */
+	  this->setAlias((const char *) varname, (const char *) value);
+	  free(varname); free(value); free(org_pointer);
+	} else {
+	  /* detected an environment variable */
+	  
+	}
+  }
 }
+
 
 

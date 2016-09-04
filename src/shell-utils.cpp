@@ -83,6 +83,11 @@ std::string tilde_expand(std::string input)
 	std::string user = substr.substr(1, substr.size());
 	if (user.size() > 0) {
 	  passwd * _passwd = getpwnam(user.c_str());
+	  if (_passwd == NULL) {
+		  /* user wasn't found. */
+		  std::cerr<<"User \""<<user.c_str()<<"\" not found!"<<std::endl;
+		  return input;
+	  }
 	  std::string _home = _passwd->pw_dir;
 	  input.replace(0, substr.size(), _home);
 	  return input;
@@ -149,3 +154,4 @@ std::string env_expand(std::string s)
   free(temp);
   return ret;
 }
+
