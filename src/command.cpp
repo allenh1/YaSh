@@ -538,15 +538,15 @@ void Command::readShellRC()
   size_t line_num = 0; /* store line number for output */
   
   for (std::string line; std::getline(infile, line); ++line_num) {
-	std::istringstream in_stream(line); /* read into line */
+	std::cerr<<"line: \""<<line<<"\""<<std::endl;
 
-	if (!line.length()) continue; /* ignore blank lines */
-	else if (line[0] == '#') std::cerr<<"comment"<<std::endl;/* detected a comment */
+	//if (!line.length()) continue; /* ignore blank lines */
+	if (line[0] == '#') std::cerr<<"comment"<<std::endl;/* detected a comment */
 	else if (line.size() > strlen("alias") &&
 			   !strncmp(line.c_str(), "alias", strlen("alias"))) {
 	  /* detected an alias */
-	  char * varname = (char*) calloc(line.size(), sizeof(char));
-	  char *   value = (char*) calloc(line.size(), sizeof(char));
+	  char * varname = (char*) calloc(line.size() + 1, sizeof(char));
+	  char *   value = (char*) calloc(line.size() + 1, sizeof(char));
 	  char * c_line = strndup(line.c_str() + strlen("alias"),
 							  line.size()  - strlen("alias"));
 	  char * org_pointer = c_line;
@@ -559,7 +559,7 @@ void Command::readShellRC()
 	  
 	  if (!*c_line) {
 		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
-				 <<" is invalid!a"<<std::endl;
+				 <<" is invalid!"<<std::endl;
 		free(varname); free(value); free(c_line);
 		continue;
 	  }
@@ -567,7 +567,7 @@ void Command::readShellRC()
 	  for (++c_line; *c_line && *c_line == ' '; ++c_line);
 	  if (!*c_line) {
 		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
-				 <<" is invalid!b"<<std::endl;
+				 <<" is invalid!"<<std::endl;
 		free(varname); free(value); free(org_pointer);
 		continue;
 	  }
@@ -580,7 +580,7 @@ void Command::readShellRC()
 		   *(c++) = *(c_line++));
 	  if (*c_line != '\"') {
 		std::cerr<<"WARNING: alias in ~/.yashrc line "<<line_num
-				 <<" is invalid!c"<<std::endl;
+				 <<" is invalid!"<<std::endl;
 		free(varname); free(value); free(org_pointer);
 		continue;
 	  } *c = '\0';
@@ -588,11 +588,56 @@ void Command::readShellRC()
 	  /* set the alias */
 	  this->setAlias((const char *) varname, (const char *) value);
 	  free(varname); free(value); free(org_pointer);
-	} else {
+	} else if (line.length() > 2) {
 	  /* detected an environment variable */
+	  char * varname = (char*) calloc(line.size() + 1, sizeof(char));
+	  char *   value = (char*) calloc(line.size() + 1, sizeof(char));
+	  char * c;
 	  
+	  char * c_line = strndup(line.c_str(), line.size());
+	  char * org_pointer = c_line;
+	  std::cerr<<"line: "<<line<<std::endl;
+	  
+	  /* copy variable's name into varname. */
+	  for (c = varname; *c_line && *c_line != '=';) {
+		if (*c_line == ' ') { ++c_line; continue; }
+		*(c++) = *(c_line++);
+	  } if (!*c_line) {
+		std::cerr<<"WARNING: variable in ~/.yashrc line "<<line_num
+				 <<" is invalid!"<<std::endl;
+		free(varname); free(value); free(org_pointer);
+	  } std::cerr<<"Read varname: \""<<varname<<"\""<<std::endl;
+
+	  /* add terminal char */
+	  *c = '\0';
+	  
+	  /* increment until you see a '"' */
+	  for (; *c_line && *c_line != '"'; ++c_line);
+
+	  std::cerr<<"copying value...";
+	  /* copy into value until you see a '"' */
+	  for (c = value, ++c_line; *c_line && *c_line != '"'; *(c++) = *(c_line++));
+	  if (!*c_line == '"') {
+		std::cerr<<"WARNING: variable in ~/.yashrc line "<<line_num
+				 <<" is invalid!"<<std::endl;
+		free(varname); free(value); free(org_pointer);
+	  } *c = '\0'; /* terminal char */
+
+	  std::cerr<<" done!"<<std::endl;
+	  std::cerr<<"value: \""<<value<<"\""<<std::endl;
+	  if (setenv((const char*) varname, (const char *) value, 1)) {
+		std::cerr<<"var:   \""<<varname<<"\""<<std::endl;
+		std::cerr<<"value: \""<<value<<"\""<<std::endl;
+		std::cerr<<"~/.yashrc:"<<line_num<<":";
+		perror("setenv");
+		free(varname); free(value); free(org_pointer);
+		continue;
+	  }
+
+	  free(varname); free(value); free(org_pointer);
+	  std::cerr<<"wtf setenv?"<<std::endl;
 	}
-  }
+  } infile.close();
 }
 
 

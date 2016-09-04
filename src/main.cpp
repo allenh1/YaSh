@@ -22,7 +22,6 @@ int main()
 	perror("sigchild");
 	_exit(7);
   }
-  Command::currentCommand.readShellRC();
   Command::currentCommand.prompt();
   yyparse();
 
