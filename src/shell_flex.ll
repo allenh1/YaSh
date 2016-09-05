@@ -11,8 +11,8 @@ static char * lastLine = NULL;
 int mygetc (FILE * f) {
 static readLine reader;
 static char * p = NULL;
- static int get_file = 0;
- char ch;
+static int get_file = 0;
+char ch;
 
 if (!isatty(0)) return getc(f);
  Command::currentCommand.readShellRC();
@@ -50,6 +50,8 @@ void myunputc(int c) {
 %}
 
 %option noyywrap
+
+%x LINE_COMMENT
 %%
 
 \n { return NEWLINE; }
@@ -57,6 +59,10 @@ void myunputc(int c) {
 [ ] 	{ /* Discard spaces */ }	
 
 \t { /* tabs */ return TAB; }
+
+<INITIAL>"#" BEGIN(LINE_COMMENT);
+<LINE_COMMENT>[\n] BEGIN(INITIAL);
+<LINE_COMMENT>[.]+ { /* Ignore anything in a line comment */ }
 
 ">" return GREAT;
 
