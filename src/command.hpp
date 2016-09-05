@@ -85,6 +85,10 @@ public:
 	std::vector<std::string> wc_collector;// Wild card collection tool
 
 	bool printPrompt = true;
+
+	bool rcFile = false;
+
+    void readShellRC();
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
 		std::vector<std::string> elems; std::stringstream ss(s);
@@ -132,4 +136,8 @@ struct Comparator {
 		return s1.size() < s2.size();
 	}
 };
+
+/* Signal Handlers */
+void sigchld_handler(int signum);
+void ctrlc_handler(int signum);
 #endif
