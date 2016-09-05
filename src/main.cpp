@@ -1,6 +1,10 @@
 #include "shell_bison.hh"
 #include "command.hpp"
 
+extern "C" FILE * yyin;
+extern "C" FILE * yyout;
+extern void yyrestart (FILE * in);
+
 int main()
 {
   struct sigaction ctrl_action;
@@ -22,6 +26,24 @@ int main()
 	perror("sigchild");
 	_exit(7);
   }
+
+  std::string expanded_home = tilde_expand("~/.yashrc");
+
+  char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
+
+  yyin = fopen(rcfile, "r");
+
+  /* From Brian P. Hays */
+  if (yyin != NULL) {
+	Command::currentCommand.printPrompt = false;
+	yyparse();
+	fclose(yyin);
+
+	yyin = stdin;
+	yyrestart(yyin);
+	Command::currentCommand.printPrompt = true;
+  }
+  
   Command::currentCommand.prompt();
   yyparse();
 

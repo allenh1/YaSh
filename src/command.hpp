@@ -86,6 +86,8 @@ public:
 
 	bool printPrompt = true;
 
+	bool rcFile = false;
+
     void readShellRC();
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
