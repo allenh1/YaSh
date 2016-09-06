@@ -692,7 +692,7 @@ public:
 
 	char * file = strndup(expanded_home.c_str(), expanded_home.size());
 
-	yyin = fopen(file, "r");
+	yyin = fopen(file, "r"); free(file);
 
 	if (yyin != NULL) {
 	  Command::currentCommand.printPrompt = false;
