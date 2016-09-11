@@ -200,6 +200,7 @@ void Command::execute()
 	} else if (!s.empty() && errno == ENOENT) {
 	  /* directory doesn't exist! */
 	  std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
+	  std::cerr<<"No such file or directory"<<std::endl;
 	  free(cpy);
 	  return -1;
 	} else if (!s.empty()) {
@@ -321,16 +322,21 @@ void Command::execute()
 		cd = changedir(_empty);
 		if (cd != 0) {
 		  perror("cd");
-		  clear();
-		  prompt();
+		  
+		  dup2(tmpin, 0);
+		  dup2(tmpout, 1);
+		  dup2(tmperr, 2);
+		  close(tmpin);
+		  close(tmpout);
+		  close(tmperr);
+
+		  clear(); prompt();
 		}
+		
 		setenv("PWD", getenv("HOME"), 1);
 	  } else {
 		if (d_args[1] == std::string("pwd") ||
 			d_args[1] == std::string("/bin/pwd")) {
-		  // Nothing to be done.
-		  clear(); prompt();
-		  return;
 		} else if (*d_args[1] != '/') { 
 		  new_dir = std::string(getenv("PWD"));
 		  for (;new_dir.back() == '/'; new_dir.pop_back());
@@ -343,9 +349,6 @@ void Command::execute()
 	  }
 	  setenv("PWD", curr_dir.c_str(), 1);
 	  // Regardless of errors, cd has finished.
-
-	  clear(); prompt();
-	  return;
 	} else if (d_args[0] == std::string("ls")) {
 	  char ** temp = new char*[curr.size() + 2];
 	  for (int y = 2; y < curr.size(); ++y) {
@@ -381,13 +384,12 @@ void Command::execute()
 	  clear(); prompt(); free(temp);
 	  return;
 	} else if (d_args[0] == std::string("grep")) {
-	  char ** temp = new char*[curr.size() + 2];
-	  for (int y = 1; y < curr.size(); ++y) {
+	  char ** temp = new char*[curr.size() + 1];
+	  for (int y = 0; y < curr.size() - 1; ++y) {
 		temp[y] = strdup(curr[y]);
 	  } // ... still better than managing myself!
-	  temp[0] = strdup("grep");
-	  temp[curr.size()] = strdup("--color");
-	  temp[curr.size() + 1] = NULL;
+	  temp[curr.size() - 1] = strdup("--color");
+	  temp[curr.size()] = NULL;
 
 	  pid = fork();
 
@@ -395,9 +397,9 @@ void Command::execute()
 		execvp (temp[0], temp);
 		perror("execvp");
 		exit(2);
-	  } for (int x = 0; x < curr.size() + 2; ++x) {
+	  } for (int x = 0; x < curr.size(); ++x) {
 		free(temp[x]); temp[x] = NULL;
-	  } delete[] temp;
+	  }
 	} else {
 	  // Time for a good hot fork
 	  pid = fork();

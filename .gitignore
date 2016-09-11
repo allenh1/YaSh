@@ -27,3 +27,7 @@ src/*~
 src/*.o
 test/shell-out
 test/testall.out
+test/csh-out
+test/hello world
+test/*.out
+test/*-out

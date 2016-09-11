@@ -115,3 +115,9 @@ echo   "--------------------------------------------------"
 printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax
 printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax > testall.out
 
+if [ $total -ne $totalmax ]; then
+	exit 1
+else
+	exit 0
+fi
+
