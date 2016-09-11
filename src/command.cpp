@@ -20,8 +20,11 @@ void SimpleCommand::insertArgument(char * argument)
   } else {
 	std::string arga = tilde_expand(as_string);
 	std::string arg  = env_expand(arga);
-	char * str = strdup(arg.c_str()); int index; char * t_str = str;
+
+	char * str = strndup(arg.c_str(), arg.size());
+	int index; char * t_str = str;
 	char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
+
 	for (index = 0; *str; ++str) {
 	  if (*str == '\\' && *(str + 1) == '\"') {
 		temp[index++] = '\"'; ++str;
@@ -197,10 +200,12 @@ void Command::execute()
 	} else if (!s.empty() && errno == ENOENT) {
 	  /* directory doesn't exist! */
 	  std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
+	  free(cpy);
 	  return -1;
 	} else if (!s.empty()) {
 	  /* cd failed because... ¯\_(ツ)_/¯ */
 	  std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
+	  free(cpy);
 	  return -1;
 	}
     
@@ -212,8 +217,10 @@ void Command::execute()
 	  for (;s.back() == '/'; s.pop_back());
 	  passwd * _passwd = getpwuid(getuid());
 	  std::string user_home = _passwd->pw_dir;
+	  free(cpy);
 	  return chdir(user_home.c_str());
 	} for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
+	free(cpy);
 	return chdir(s.c_str());
   };
 
@@ -277,14 +284,12 @@ void Command::execute()
   close(fderr);
   for (int x = 0; x < numOfSimpleCommands; ++x) {
 	std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
-	char ** d_args = new char*[curr.size() + 1];
-	for (int y = 0; y < curr.size(); ++y) {
-	  d_args[y] = strdup(curr[y]);
-	} // ... still better than managing myself!
-	d_args[curr.size()] = NULL;
-	// output redirection
+	curr.push_back((char*) NULL);
+	char ** d_args = curr.data();
+	
 	dup2(fdin, 0);
 	close(fdin);
+	
 	/** output direction **/
 	if (x == numOfSimpleCommands - 1) {
 	  if (outFile.get()) {
@@ -301,10 +306,9 @@ void Command::execute()
 	else {
 	  int fdpipe[2];
 	  int pipe_res = pipe(fdpipe);
-	  // perror("pipe");
 	  fdout = fdpipe[1];
 	  fdin  = fdpipe[0];
-	} // direct to input of next command
+	}
 
 	dup2(fdout, 1);
 	close(fdout);
@@ -312,7 +316,7 @@ void Command::execute()
 	if (d_args[0] == std::string("cd")) {
 	  std::string curr_dir = std::string(getenv("PWD"));
 	  int cd; std::string new_dir;
-	  if (curr.size() < 2) {
+	  if (curr.size() == 2) {
 		std::string _empty = "";
 		cd = changedir(_empty);
 		if (cd != 0) {
@@ -325,8 +329,7 @@ void Command::execute()
 		if (d_args[1] == std::string("pwd") ||
 			d_args[1] == std::string("/bin/pwd")) {
 		  // Nothing to be done.
-		  clear();
-		  prompt();
+		  clear(); prompt();
 		  return;
 		} else if (*d_args[1] != '/') { 
 		  new_dir = std::string(getenv("PWD"));
@@ -338,26 +341,19 @@ void Command::execute()
 		cd = changedir(new_dir);
 		if (cd == 0) setenv("PWD", new_dir.c_str(), 1);
 	  }
-
-	  if (cd != 0) {
-		const char * msg = "cd failed: No such file or directory\n";
-		if (!write(2, msg, strlen(msg))) {
-		  perror("write");
-		}
-		setenv("PWD", curr_dir.c_str(), 1);
-	  }
+	  setenv("PWD", curr_dir.c_str(), 1);
 	  // Regardless of errors, cd has finished.
-	  clear();
-	  prompt();
+
+	  clear(); prompt();
 	  return;
 	} else if (d_args[0] == std::string("ls")) {
 	  char ** temp = new char*[curr.size() + 2];
-	  for (int y = 2; y <= curr.size(); ++y) {
+	  for (int y = 2; y < curr.size(); ++y) {
 		temp[y] = strdup(curr[y - 1]);
 	  } // ... still better than managing myself!
 	  temp[0] = strdup("ls");
 	  temp[1] = strdup("--color=auto");
-	  temp[curr.size() + 1] = NULL;
+	  temp[curr.size()] = NULL;
 
 	  pid = fork();
 
@@ -366,7 +362,7 @@ void Command::execute()
 		perror("execvp");
 		exit(2);
 	  } 
-	  for (int x = 0; x < curr.size() + 2; ++x) {
+	  for (int x = 0; x < curr.size() + 1; ++x) {
 		free(temp[x]);
 		temp[x] = NULL;
 	  } delete[] temp;
@@ -418,10 +414,6 @@ void Command::execute()
 		_exit(1);
 	  }
 	}
-
-	for (int x = 0; x < curr.size(); ++x) {
-	  free(d_args[x]); d_args[x] = NULL;
-	} delete[] d_args;
   }
 
   // Restore I/O defaults
@@ -433,21 +425,14 @@ void Command::execute()
   close(tmpout);
   close(tmperr);
 
-  if (!background) {
-	// We are not running in the backround,
-	// so we should wait for the final command
-	// to execute.
+  if (!background) waitpid(pid, NULL, 0);
+  else m_background.push_back(pid);
 
-	waitpid(pid, NULL, 0);
-  } else m_background.push_back(pid);
-
-  // Clear to prepare for next command
+  /* Clear to prepare for next command */
   clear();
 
-  // Print new prompt if we are in a terminal.
-  if (isatty(0)) {
-	prompt();
-  }
+  /* Print new prompt if we are in a terminal. */
+  if (isatty(0)) prompt();
 }
 
 // Shell implementation
@@ -538,10 +523,6 @@ void Command::setAlias(const char * _from, const char * _to)
   m_aliases[from] = split;
 }
 
-void Command::readShellRC()
-{
-
-}
 
 
 

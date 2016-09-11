@@ -92,15 +92,14 @@ argument_list argument
 argument:
 WORD {
 	std::string temp = tilde_expand(std::string($1));
-	
+	delete[] $1;
 	char * expand_upon_me = strndup(temp.c_str(), temp.size());
     wildcard_expand(expand_upon_me); free(expand_upon_me);
-    std::string * array = Command::currentCommand.wc_collector.data();
 
     for (auto && arg : Command::currentCommand.wc_collector) {
-	char * temp = strdup(arg.c_str());
-	Command::currentSimpleCommand->insertArgument(temp);
-	free(temp);
+		char * temp = strndup(arg.c_str(), arg.size());
+		Command::currentSimpleCommand->insertArgument(temp);
+		free(temp);
     }
     Command::currentCommand.wc_collector.clear();
     Command::currentCommand.wc_collector.shrink_to_fit();
@@ -113,7 +112,7 @@ WORD {
 command_word:
 WORD {
   Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
-  char * _ptr = strdup($1);
+  char * _ptr = strdup($1); delete[] $1;
   Command::currentSimpleCommand->insertArgument(_ptr);
   free(_ptr);
 }
