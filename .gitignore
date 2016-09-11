@@ -25,3 +25,5 @@ stamp-h1
 *.o
 src/*~
 src/*.o
+test/shell-out
+test/testall.out
