@@ -12,7 +12,7 @@ yash:
     - ./configure
     - make -j5
 
-unit-tests:
+tests:
   stage: test
   script:
     - ./autogen.sh
@@ -21,7 +21,7 @@ unit-tests:
 	- ln -sf $(pwd)/src/yash $(pwd)/shell
 	- cd test
 	- ./testall
-	
+
 distribute:
   stage: deploy
   script:
