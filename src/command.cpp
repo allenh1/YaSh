@@ -75,6 +75,7 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
 #define SUBSH_MAX_LEN 4096
 void Command::subShell(char * arg)
 {
+  std::cerr<<"Running subshell cmd: \""<<arg<<"\""<<std::endl;
   int cmd_pipe[2]; int out_pipe[2]; pid_t pid;
   int tmpin = dup(0); int tmpout = dup(1); int tmperr = dup(2);
   
@@ -84,7 +85,12 @@ void Command::subShell(char * arg)
   } else if (pipe(out_pipe) == -1) {
 	perror("out_pipe");
 	return;
-  } else if ((pid = fork()) == -1) {
+  }
+
+  dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
+  dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
+  
+  if ((pid = fork()) == -1) {
 	perror("subshell fork");
 	return;
   } else if (pid == 0) {
@@ -95,29 +101,36 @@ void Command::subShell(char * arg)
 	dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
 	dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
 
-	execlp("/proc/self/exe", "/proc/self/exe", NULL);
+	execlp("yash", "yash", NULL);
 	perror("subshell exec");
 	_exit(1);
   } else if (pid != 0) {
-	char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
-	register char * c = NULL;
-	
 	/* Parent Process */
+	char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
+	char * c = NULL;
+	
 	close(out_pipe[1]); /* close the write end of the out pipe */
 	close(cmd_pipe[0]); /* close the read end of the cmd pipe */
 
 	/* write the command to the write end of the cmd pipe */
 	for (c = arg; *c && write(cmd_pipe[1], c++, 1););
 
-	waitpid(pid, NULL, 0);
+	/* Close pipe so subprocess isn't waiting */
+	dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
+	
+	waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
+
+	//std::cerr<<"Child rage quit"<<std::endl;
 	
 	/* read from the out pipe and store in a buffer */
 	for (c = buff; read(out_pipe[0], c++, 1););
-	
+
+	std::cerr<<"Read from buffer"<<std::endl;
 	size_t buff_len = c - buff; /* this is the number of characters read */
 
 	/* Push the buffer onto stdin */
-	for (int b = 0; (ungetc(buff[b++], stdin) != EOF) && buff_len--;);
+	for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
+	free(buff); /* release the buffer */
   }
 
   /* restore default IO */
@@ -472,10 +485,7 @@ void Command::prompt()
 	  std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
 	  fflush(stdout);
 	} free(_curr_dur);
-  } else {
-	std::cout<<PROMPT;
-	fflush(stdout);
-  }
+  } else fflush(stdout);
 }
 
 Command Command::currentCommand;
