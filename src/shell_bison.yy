@@ -96,8 +96,6 @@ WORD {
 	char * expand_upon_me = strndup(temp.c_str(), temp.size());
     wildcard_expand(expand_upon_me); free(expand_upon_me);
     std::string * array = Command::currentCommand.wc_collector.data();
-    std::sort(array, array + Command::currentCommand.wc_collector.size(),
-	      Comparator());
 
     for (auto && arg : Command::currentCommand.wc_collector) {
 	char * temp = strdup(arg.c_str());
