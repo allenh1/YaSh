@@ -426,7 +426,7 @@ public:
 		  Command::currentCommand.wc_collector.clear();
 		  Command::currentCommand.wc_collector.shrink_to_fit();
 		} else if (Command::currentCommand.wc_collector.size() == 0) {
-		  continue;
+			free(_complete_me); continue;
 		} else {
 		  std::cout<<std::endl;
 		  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;

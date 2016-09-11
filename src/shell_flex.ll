@@ -15,7 +15,6 @@ static int get_file = 0;
 char ch;
 
 if (!isatty(0)) return getc(f);
- Command::currentCommand.readShellRC();
 if (p == NULL || *p == 0) {
 if (lastLine != NULL) free(lastLine);
 if (get_file) {
@@ -177,7 +176,7 @@ void myunputc(int c) {
 \"(\\.|[^"])*\" {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
-    strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1); 
+    strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
     return WORD;
 }
 

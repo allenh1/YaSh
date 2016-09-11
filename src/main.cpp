@@ -31,7 +31,7 @@ int main()
 
   char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
 
-  yyin = fopen(rcfile, "r");
+  yyin = fopen(rcfile, "r"); free(rcfile);
 
   /* From Brian P. Hays */
   if (yyin != NULL) {

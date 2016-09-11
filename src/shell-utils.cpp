@@ -135,7 +135,7 @@ std::string env_expand(std::string s)
   const char * str = s.c_str();
   char * temp = (char*) calloc(1024, sizeof(char));
   int index;
-  for (index = 0; *str; ++str) {
+  for (index = 0; str - s.c_str() < s.size(); ++str) {
 	// aight. Let's just do it.
 	if (*str == '$') {
 	  // begin expansion
@@ -147,7 +147,7 @@ std::string env_expand(std::string s)
 		++str; char * out = getenv(temp2);
 		if (out == NULL) continue;;
 		for (char * t = out; *t; temp[index++] = *(t++));
-	  } delete[] temp2;
+	  } free(temp2);
 	}// if not a variable, don't expand.
 	temp[index++] = *str;
   } std::string ret = std::string((char*)temp);

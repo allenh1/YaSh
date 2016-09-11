@@ -81,7 +81,7 @@ void wildcard_expand(char * arg) {
 
       // get all directory entries and add to files vector
       for (struct dirent * entry = readdir(dir); entry != NULL; entry = readdir(dir)) {
-		std::string e(strdup((char*)entry->d_name)); files.push_back(e);
+		std::string e((char*)entry->d_name); files.push_back(e);
       } std::sort(files.begin(), files.end());
 
       for(auto && f : files) {
@@ -91,7 +91,7 @@ void wildcard_expand(char * arg) {
 		  /* re-compile bc regex cleans up memory -_- */
 		  result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
 		  if (result) {perror("regcomp"); return;}
-
+		  
 		  /* match regexp w/ entry */
 		  int r = regexec(&re, (char *)e.c_str(), 1, &match, 0);
 		  if(r) {/* doesn't match */}
@@ -125,7 +125,9 @@ void wildcard_expand(char * arg) {
       closedir(dir);
     }
     // remove current regex
-    regStrings.pop(); size_t s = directories.size();
+    char * top = regStrings.front();
+	free(top); regStrings.pop();
+	size_t s = directories.size();
     // clear old directories
     for(size_t i = 0; i < s; i++) {directories.pop_back();} s = subs.size();
     // add new directories from subs vector
