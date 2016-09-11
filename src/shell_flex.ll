@@ -78,8 +78,6 @@ void myunputc(int c) {
 
 "&" return AMPERSAND;
 
-"`" return BACKTIK;
-
 "exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
 
 ^"source" { return SRC; }
@@ -87,11 +85,94 @@ void myunputc(int c) {
 ^"alias" { return ALIAS; }
 
 `(\\.|[^`"])*` {
-    yylval.string_val = new char[strlen(yytext) - 1];
-    memset(yylval.string_val, 0, strlen(yytext) - 1);
-    strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
-    return BACKTIK;
+  /* Subshell, by Drew Barthel */
+
+  /* Remove backticks */
+  char* string = strdup(yytext+1);
+  string[strlen(string)-1]='\n';
+
+  /* Set up temp string and pipes */
+  char buffer[1024];
+  int pipeOne[2], pipeTwo[2]; //Double the pipes? double the fun!
+  if (pipe(pipeOne) == -1) {
+    perror("subshell pipe");
+    free(string);
+    return 1;
+  } else if (pipe(pipeTwo) == -1) {
+    perror("subshell pipe");
+    free(string);
+    return 1;
+  }
+		
+  /* Housekeeping shit */
+  int tempIn  = dup(0);
+  int tempOut = dup(1);
+  dup2(pipeOne[1], 1); close(pipeOne[1]);
+  dup2(pipeTwo[0], 0); close(pipeTwo[0]);
+		
+  // Get ready world.
+  pid_t ret = fork(); //Deekeeds
+  switch(ret) {
+  case(-1): {
+	perror("fork-subshell");
+	exit(1);
+  } case (0): {
+
+	  //Housekeeping
+	  dup2(pipeOne[0], 0);
+	  dup2(pipeTwo[1], 1);
+	  close(pipeOne[0]);
+	  close(pipeTwo[1]);
+				
+	  // Set up for self call
+	  char* args[2];
+	  args[0] = strdup("/proc/self/exe"); //Call self
+	  args[1] = NULL;
+
+	  // Call self
+	  execvp(args[0], args);
+
+	  // You shouldn't be around these parts boy
+	  perror("execvp-subshell");
+	  exit(1);
+
+	} default: {
+
+		/* Write to pipe. */
+		size_t length = strlen(string), i = 0;
+		for(;i < length && write(1, string + i,1); i++);
+				
+		//Housekeeping
+		dup2(tempOut, 1);
+		close(tempOut);
+		close(pipeTwo[1]);
+				
+		// Read from pipe.
+		char* temp = buffer;
+		char c = 0;
+		while(read(0,&c,1)) {
+
+		  if(c=='\n') *temp = ' ';
+		  else *temp = c;
+		  temp++;
+
+		} temp--;
+				
+		/* Clear uneeded things */
+		while(temp>=buffer){unput(*temp); temp--;}
+				
+		// Final housecleaning
+		dup2(tempIn, 0);
+		close(tempIn);
+		break;
+	  } 
+
+	/* Wait for all processes */
+  } waitpid(ret,NULL,0);
+
+  free(string);
 }
+
 
 \"(\\.|[^"])*\" {
     yylval.string_val = new char[strlen(yytext) - 1];
