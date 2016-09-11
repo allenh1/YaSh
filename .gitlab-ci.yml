@@ -16,11 +16,11 @@ tests:
   stage: test
   script:
     - ./autogen.sh
-	- ./configure
-	- make -j5
-	- ln -sf $(pwd)/src/yash $(pwd)/shell
-	- cd test
-	- ./testall
+    - ./configure
+    - make -j5
+    - ln -sf $(pwd)/src/yash $(pwd)/shell
+    - cd test
+    - ./testall
 
 distribute:
   stage: deploy
