@@ -59,7 +59,7 @@ simple_command:
 pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
-| SRC WORD { reader.setFile(std::string($2)); }
+| SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
 	char * alias, * word, * equals;
 	if (!(equals = strchr($2, '='))) {
@@ -71,7 +71,7 @@ pipe_list iomodifier_list background_optional NEWLINE {
 
 		Command::currentCommand.setAlias(alias, word);
 
-		free(alias); free(word);
+		free(alias); free(word); delete[] $2; delete[] $3;
 	}
 }
 | NEWLINE { Command::currentCommand.prompt(); }
@@ -105,7 +105,7 @@ WORD {
     Command::currentCommand.wc_collector.shrink_to_fit();
 }
 | BACKTIK {
-    Command::currentCommand.subShell($1);
+    Command::currentCommand.subShell($1); delete[] $1;
   }
 ;
 
