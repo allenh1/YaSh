@@ -286,7 +286,8 @@ void Command::execute()
   for (int x = 0; x < numOfSimpleCommands; ++x) {
 	std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
 	curr.push_back((char*) NULL);
-	char ** d_args = curr.data();
+	char ** d_args;
+	d_args = curr.data();
 	
 	dup2(fdin, 0);
 	close(fdin);
@@ -317,7 +318,58 @@ void Command::execute()
 	if (d_args[0] == std::string("cd")) {
 	  std::string curr_dir = std::string(getenv("PWD"));
 	  int cd; std::string new_dir;
-	  if (curr.size() == 2) {
+
+	  if (curr.size() == 4) {
+	    char * to_replace = strdup(d_args[1]);
+		char * replace_to = strdup(d_args[2]);		
+		char * replace_in = strndup(curr_dir.c_str(), curr_dir.size());
+		
+		char * sub = strstr(replace_in, to_replace);
+
+		/* Desired replacement wasn't found, so error and exit */
+		if (sub == NULL) {
+		  perror("cd");
+		  
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		}
+
+		register size_t replace_len     = strlen(to_replace);
+		register size_t replacement_len = strlen(replace_to);
+
+		/* garauntee we have enough space */
+		char * replacement = (char*) calloc(curr_dir.size() -
+											replace_len +
+										    replacement_len,
+											sizeof(char));
+		char * d = replacement;
+		/* copy up to the beginning of the substring */
+		for (char * c = replace_in; c != sub; *(d++) = *(c++));
+		/* copy the replacement */
+		for (char * c = replace_to; *c; *(d++) = *(c++));
+		/* advance past the substring we wanted to replace */
+		char * residual = sub + replace_len;
+		/* copy the residual chars over */
+		for (; *residual; *(d++) = *(residual++));
+		
+		std::cerr<<replacement<<std::endl;
+		
+		free(to_replace); free(replace_to); free(replace_in);
+
+		std::string new_dir(replacement);
+		if (changedir(new_dir)) {
+		  perror("cd");
+		  
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		} free(replacement);
+	  } else if (curr.size() == 2) {
 		std::string _empty = "";
 		cd = changedir(_empty);
 		if (cd != 0) {
