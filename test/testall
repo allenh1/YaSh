@@ -88,13 +88,18 @@ grade11max=10
 echo "--- subshell -- ($grade11max pts)"
 ./test203 && grade11=`expr $grade11 "+" 10`
 
+grade25=0
+grade25max=5
+echo "--- Multi-Arg cd -- ($grade-25max pts)"
+./test-25 && grade25=`expr $grade25 "+" 5`
+
 total=`expr $grade1 + $grade2 + $grade3 + $grade4 + $grade5 + \
             $grade6 + $grade7 + $grade8 + $grade9 + $grade10 + \
-	    $grade11 + $grade12`
+	    $grade11 + $grade12 + $grade25`
 
 totalmax=`expr $grade1max + $grade2max + $grade3max + $grade4max \
             + $grade5max + $grade6max + $grade7max + $grade8max \
-            + $grade9max + $grade10max + $grade11max + $grade12max`
+            + $grade9max + $grade10max + $grade11max + $grade12max + $grade25max`
 
 echo   "-------------------------------------------------"
 echo   "User:  $1 "
@@ -111,13 +116,10 @@ printf "Ctrl-C:                  %-3d%s%-3d\n" $grade9 " of " $grade9max
 printf "Robustness:              %-3d%s%-3d\n" $grade10 " of " $grade10max
 printf "subshell:                %-3d%s%-3d\n" $grade11 " of " $grade11max
 printf "tilde expansion:         %-3d%s%-3d\n" $grade12 " of " $grade12max
+printf "multi-arg cd:            %-3d%s%-3d\n" $grade25 " of " $grade25max
 echo   "--------------------------------------------------"
 printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax
-printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax > testall.out
 
 if [ $total -ne $totalmax ]; then
 	exit 1
-else
-	exit 0
 fi
-

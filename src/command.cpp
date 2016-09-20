@@ -355,11 +355,11 @@ void Command::execute()
 		/* copy the residual chars over */
 		for (; *residual; *(d++) = *(residual++));
 		
-		std::cerr<<replacement<<std::endl;
+		std::cout<<replacement<<std::endl;
 		
 		free(to_replace); free(replace_to); free(replace_in);
 
-		std::string new_dir(replacement);
+		std::string new_dir(replacement); free(replacement);
 		if (changedir(new_dir)) {
 		  perror("cd");
 		  
@@ -368,7 +368,7 @@ void Command::execute()
 		  dup2(tmperr, 2); close(tmperr);
 		  
 		  clear(); prompt();
-		} free(replacement);
+		}
 	  } else if (curr.size() == 2) {
 		std::string _empty = "";
 		cd = changedir(_empty);
