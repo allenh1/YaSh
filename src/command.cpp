@@ -340,6 +340,14 @@ void Command::execute()
 		register size_t replace_len     = strlen(to_replace);
 		register size_t replacement_len = strlen(replace_to);
 
+		if (!(replace_len && replacement_len)) {
+		  std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		}
 		/* garauntee we have enough space */
 		char * replacement = (char*) calloc(curr_dir.size() -
 											replace_len +
