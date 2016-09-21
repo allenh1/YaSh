@@ -111,7 +111,7 @@ std::string tilde_expand(std::string input)
  * 
  * @return String with replacement.
  */
-inline std::string replace(std::string str, const char * sb, const char * rep)
+std::string replace(std::string str, const char * sb, const char * rep)
 {
   std::string sub = std::string(sb);
   size_t pos = str.find(rep);
