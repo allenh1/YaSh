@@ -60,10 +60,7 @@ public:
 		// Character is printable
 		if (input == '!') {
 		  if (!write(0, "!", 1)) {
-			perror("write");
-			std::cerr<<"Please submit a full bug report"
-					 <<" including your input to"
-					 <<" allen-software.com!"<<std::endl;
+			perror("write");		    
 			continue;
 		  }
 		  
@@ -76,9 +73,6 @@ public:
 		  char ch1;
 		  if (!read(0, &ch1, 1)) {
 			perror("read");
-			std::cerr<<"Please submit a full bug report"
-					 <<" including your input to"
-					 <<" allen-software.com!"<<std::endl;
 			continue;
 		  } if (ch1 == '\n') {
 			if (!write(1, "\n", 1)) {
@@ -90,9 +84,6 @@ public:
 			// "!!" = run prior command
 			if (!write(1, "!", 1)) {
 			  perror("write");
-			  std::cerr<<"Please submit a full bug report"
-					   <<" including your input to"
-					   <<" allen-software.com!"<<std::endl;
 			  continue;
 			}
 			_line += m_history[m_history.size() - 1];
@@ -102,9 +93,6 @@ public:
 		  } else if (ch1 == '-') {
 			if (!write(1, "-", 1)) {
 			  perror("write");
-			  std::cerr<<"Please submit a full bug report"
-					   <<" including your input to"
-					   <<" allen-software.com!"<<std::endl;
 			  continue;
 			}
 			auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
@@ -125,10 +113,7 @@ public:
 					ch = m_buff.top(); m_buff.pop();
 					_line += ch;
 					if (!write(1, &ch, 1)) {
-					  perror("write");
-					  std::cerr<<"Please submit a full bug report"
-							   <<" including your input to"
-							   <<" allen-software.com!"<<std::endl;
+					  perror("write");					  
 					  continue;
 					}
 				  }
@@ -140,9 +125,6 @@ public:
 		  } else {
 			if (!write(1, &ch1, 1)) {
 			  perror("write");
-			  std::cerr<<"Please submit a full bug report"
-					   <<" including your input to"
-					   <<" allen-software.com!"<<std::endl;
 			  continue;
 			}
 			_line += "!"; _line += ch1;
@@ -160,9 +142,6 @@ public:
 		  // Write current character
 		  if (!write(1, &input, 1)) {
 			perror("write");
-			std::cerr<<"Please submit a full bug report"
-					 <<" including your input to"
-					 <<" allen-software.com!"<<std::endl;
 			continue;
 		  }
 
@@ -172,20 +151,14 @@ public:
 			d = temp.top(); temp.pop();
 			if (!write(1, &d, 1)) {
 			  perror("write");
-			  std::cerr<<"Please submit a full bug report"
-					   <<" including your input to"
-					   <<" allen-software.com!"<<std::endl;
 			  continue;
 			}
 		  }
 
 		  // Move cursor to current position.
-		  for (size_t x = 0, b = '\b'; x < m_buff.size(); ++x) {
-			if (!write(1, &b, 1)) {
+		  for (size_t x = 0; x < m_buff.size(); ++x) {
+			if (!write(1, "\b", 1)) {
 			  perror ("write");
-			  std::cerr<<"Please submit a full bug report"
-					   <<" including your input to"
-					   <<" allen-software.com!"<<std::endl;
 			  continue;
 			}
 		  }
