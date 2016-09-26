@@ -37,6 +37,7 @@
 
 extern FILE * yyin;
 extern void yyrestart(FILE*);
+extern int yyparse();
 
 static class readLine
 {
@@ -298,7 +299,7 @@ public:
 		  std::cerr<<"count not write backspaces to stdout!"<<std::endl;
 		}
       } else if (input == 8 || input == 127) {
-		// backspace
+		/* backspace */
 		if (!_line.size()) continue;
 
 		if (m_buff.size()) {
@@ -324,11 +325,35 @@ public:
 		  } b = '\b';
 		  
 		  if (!write(1, &b, 1)) {
-			
+			perror("write");
+			continue;
 		  }
-		  // Move cursor to current position.
-		  for (size_t x = 0; x < m_buff.size(); ++x) {
-			if (!write(1, &b, 1)) {
+
+		  /* get terminal width */
+		  struct winsize w;
+		  ioctl(1, TIOCGWINSZ, &w);
+		  register size_t term_width = w.ws_col;
+		  register size_t line_size = _line.size();
+		  
+		  for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
+			/* if the cursor is at the end of a line, print line up */
+			if (line_size && (line_size % term_width == 0)) {
+			  /* need to go up a line */		   
+			  const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
+
+			  /* now we print the string */
+			  if (!write(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) {
+				/**
+				 * @todo Make sure you print the correct prompt!
+				 * this currently is not going to print that prompt.
+				 */
+				perror("write");
+				continue;
+			  } else if (!write(1, _line.c_str(), _line.size())) {
+				perror("write");
+				continue;
+			  } else break;
+			} else if (!write(1, "\b", 1)) {
 			  perror("write");
 			  continue;
 			}
