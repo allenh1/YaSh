@@ -83,6 +83,11 @@ std::string tilde_expand(std::string input)
 	std::string user = substr.substr(1, substr.size());
 	if (user.size() > 0) {
 	  passwd * _passwd = getpwnam(user.c_str());
+	  if (_passwd == NULL) {
+		  /* user wasn't found. */
+		  std::cerr<<"User \""<<user.c_str()<<"\" not found!"<<std::endl;
+		  return input;
+	  }
 	  std::string _home = _passwd->pw_dir;
 	  input.replace(0, substr.size(), _home);
 	  return input;
@@ -106,7 +111,7 @@ std::string tilde_expand(std::string input)
  * 
  * @return String with replacement.
  */
-inline std::string replace(std::string str, const char * sb, const char * rep)
+std::string replace(std::string str, const char * sb, const char * rep)
 {
   std::string sub = std::string(sb);
   size_t pos = str.find(rep);
@@ -130,7 +135,7 @@ std::string env_expand(std::string s)
   const char * str = s.c_str();
   char * temp = (char*) calloc(1024, sizeof(char));
   int index;
-  for (index = 0; *str; ++str) {
+  for (index = 0; str - s.c_str() < s.size(); ++str) {
 	// aight. Let's just do it.
 	if (*str == '$') {
 	  // begin expansion
@@ -142,10 +147,11 @@ std::string env_expand(std::string s)
 		++str; char * out = getenv(temp2);
 		if (out == NULL) continue;;
 		for (char * t = out; *t; temp[index++] = *(t++));
-	  } delete[] temp2;
+	  } free(temp2);
 	}// if not a variable, don't expand.
 	temp[index++] = *str;
   } std::string ret = std::string((char*)temp);
   free(temp);
   return ret;
 }
+

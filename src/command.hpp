@@ -132,4 +132,8 @@ struct Comparator {
 		return s1.size() < s2.size();
 	}
 };
+
+/* Signal Handlers */
+void sigchld_handler(int signum);
+void ctrlc_handler(int signum);
 #endif

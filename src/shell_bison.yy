@@ -10,21 +10,27 @@
 }
 
 %{
-#include <stdio.h>
+/* STL (C++) Includes */
+#include <algorithm>
+#include <iostream>
+#include <cstring>
+
+/* C Includes */
 #include <dirent.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <regex.h>
-#include <cstring>
-#include <iostream>
-#include <algorithm>
+
+/* File Includes */
 #include "shell-readline.hpp"
 #include "shell-utils.hpp"
 #include "wildcard.hpp"
 
-    void yyerror(const char * s);
-    int yylex();  
+int yylex();  
+int yyparse();
 
-    %}
+void yyerror(const char * s);
+%}
 
 %%
  /**
@@ -53,7 +59,7 @@ simple_command:
 pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
-| SRC WORD { reader.setFile(std::string($2)); }
+| SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
 	char * alias, * word, * equals;
 	if (!(equals = strchr($2, '='))) {
@@ -65,7 +71,7 @@ pipe_list iomodifier_list background_optional NEWLINE {
 
 		Command::currentCommand.setAlias(alias, word);
 
-		free(alias); free(word);
+		free(alias); free(word); delete[] $2; delete[] $3;
 	}
 }
 | NEWLINE { Command::currentCommand.prompt(); }
@@ -86,30 +92,27 @@ argument_list argument
 argument:
 WORD {
 	std::string temp = tilde_expand(std::string($1));
-	
+	delete[] $1;
 	char * expand_upon_me = strndup(temp.c_str(), temp.size());
     wildcard_expand(expand_upon_me); free(expand_upon_me);
-    std::string * array = Command::currentCommand.wc_collector.data();
-    std::sort(array, array + Command::currentCommand.wc_collector.size(),
-	      Comparator());
 
     for (auto && arg : Command::currentCommand.wc_collector) {
-	char * temp = strdup(arg.c_str());
-	Command::currentSimpleCommand->insertArgument(temp);
-	free(temp);
+		char * temp = strndup(arg.c_str(), arg.size());
+		Command::currentSimpleCommand->insertArgument(temp);
+		free(temp);
     }
     Command::currentCommand.wc_collector.clear();
     Command::currentCommand.wc_collector.shrink_to_fit();
 }
 | BACKTIK {
-    Command::currentCommand.subShell($1);
+    Command::currentCommand.subShell($1); delete[] $1;
   }
 ;
 
 command_word:
 WORD {
   Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
-  char * _ptr = strdup($1);
+  char * _ptr = strdup($1); delete[] $1;
   Command::currentSimpleCommand->insertArgument(_ptr);
   free(_ptr);
 }

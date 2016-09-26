@@ -35,6 +35,9 @@
 #define STANDARD 572
 #define SOURCE 5053
 
+extern FILE * yyin;
+extern void yyrestart(FILE*);
+
 static class readLine
 {
 public:
@@ -396,7 +399,7 @@ public:
 		  Command::currentCommand.wc_collector.clear();
 		  Command::currentCommand.wc_collector.shrink_to_fit();
 		} else if (Command::currentCommand.wc_collector.size() == 0) {
-		  continue;
+			free(_complete_me); continue;
 		} else {
 		  std::cout<<std::endl;
 		  std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
@@ -690,11 +693,22 @@ public:
   void setMode(const int & _mode) { m_mode = _mode; }
 
   void setFile(const std::string & _filename) {
-    m_filename = _filename;
-    char * _name = strndup(_filename.c_str(), _filename.size());
-    int _fd = open(_name, O_RDONLY); fdin = dup(0);
-    dup2(_fd, 0); close(_fd);
-    Command::currentCommand.printPrompt = false;
+	std::string expanded_home = tilde_expand(_filename.c_str());
+
+	char * file = strndup(expanded_home.c_str(), expanded_home.size());
+
+	yyin = fopen(file, "r"); free(file);
+
+	if (yyin != NULL) {
+	  Command::currentCommand.printPrompt = false;
+	  yyrestart(yyin); yyparse();
+	  fclose(yyin);
+
+	  yyin = stdin;
+	  yyrestart(yyin);
+	  Command::currentCommand.printPrompt = true;
+	} Command::currentCommand.prompt();
+	yyparse();
   }
 
 private:

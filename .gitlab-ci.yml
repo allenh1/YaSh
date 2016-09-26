@@ -1,15 +1,23 @@
 stages:
-  - build
+  - test
   - deploy
 
-yash:
-  stage: build
+compile:
+  stage: test
   script:
     - ./autogen.sh
-    - automake --add-missing
-    - autoconf
     - ./configure
     - make -j5
+
+tests:
+  stage: test
+  script:
+    - ./autogen.sh
+    - ./configure
+    - make -j5
+    - ln -sf $(pwd)/src/yash $(pwd)/shell
+    - cd test
+    - ./testall
 
 distribute:
   stage: deploy

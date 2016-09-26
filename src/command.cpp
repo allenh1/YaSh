@@ -20,8 +20,11 @@ void SimpleCommand::insertArgument(char * argument)
   } else {
 	std::string arga = tilde_expand(as_string);
 	std::string arg  = env_expand(arga);
-	char * str = strdup(arg.c_str()); int index; char * t_str = str;
+
+	char * str = strndup(arg.c_str(), arg.size());
+	int index; char * t_str = str;
 	char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
+
 	for (index = 0; *str; ++str) {
 	  if (*str == '\\' && *(str + 1) == '\"') {
 		temp[index++] = '\"'; ++str;
@@ -75,41 +78,66 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
 #define SUBSH_MAX_LEN 4096
 void Command::subShell(char * arg)
 {
-  int fdpipe[2]; int pid = -1; size_t x = 0;
-  int gdpipe[2]; const size_t buffSize = SUBSH_MAX_LEN;
-  // Run /proc/self/exe with "arg" as input
-  if (pipe(fdpipe) < 0) { perror("pipe"); return; }
-  else if (pipe(gdpipe) < 0) { perror("pipe"); return; }
-  else if ((pid = fork()) < 0) { perror("fork"); return; }
-  else if (pid == 0) {
-	/** Child Process: write into the pipe **/
-	dup2(fdpipe[0], 0); // pipe to stdin
-	close(fdpipe[0]);
-	dup2(fdpipe[1], 1); // stdout to pipe
-	dup2(fdpipe[1], 2); // stderr to pipe
-	close(fdpipe[1]);
-    
-	if (execlp("hsh", "hsh", NULL)) { perror("execlp"); return; }
-	_exit(0);
-  } else {
-	/** Parent Process: read from the pipe **/
-	char * outBuff = (char*) alloca(buffSize);
-	std::string cmd = std::string(arg) + "\nexit";
-	char * _arg = strndup(cmd.c_str(), cmd.size());
-	std::thread _thread1([_arg, fdpipe]() {
-		for (char * a = _arg; *a && write(fdpipe[1], a, 1); ++a);
-	  }); _thread1.join();
-	std::thread _thread2([outBuff, buffSize, fdpipe]() {
-		size_t x = 0;
-		for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
-	  }); _thread2.join();
-	if (x == buffSize) return;
-	waitpid(pid, NULL, 0);
-
-	free(_arg); // free already used command input
-	char * _cpy = strdup(outBuff); _cpy[strlen(_cpy) - 1] = '\0';
-	Command::currentSimpleCommand->insertArgument(_cpy);
+  std::cerr<<"Running subshell cmd: \""<<arg<<"\""<<std::endl;
+  int cmd_pipe[2]; int out_pipe[2]; pid_t pid;
+  int tmpin = dup(0); int tmpout = dup(1); int tmperr = dup(2);
+  
+  if (pipe(cmd_pipe) == -1) {
+	perror("cmd_pipe");
+	return;
+  } else if (pipe(out_pipe) == -1) {
+	perror("out_pipe");
+	return;
   }
+
+  dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
+  dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
+  
+  if ((pid = fork()) == -1) {
+	perror("subshell fork");
+	return;
+  } else if (pid == 0) {
+	/* Child Process */
+	close(out_pipe[0]); /* close the read end of the out pipe */
+	close(cmd_pipe[1]); /* close the write end of the cmd pipe */
+
+	dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
+	dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
+
+	execlp("yash", "yash", NULL);
+	perror("subshell exec");
+	_exit(1);
+  } else if (pid != 0) {
+	/* Parent Process */
+	char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
+	char * c = NULL;
+	
+	close(out_pipe[1]); /* close the write end of the out pipe */
+	close(cmd_pipe[0]); /* close the read end of the cmd pipe */
+
+	/* write the command to the write end of the cmd pipe */
+	for (c = arg; *c && write(cmd_pipe[1], c++, 1););
+
+	/* Close pipe so subprocess isn't waiting */
+	dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
+	
+	waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
+
+	//std::cerr<<"Child rage quit"<<std::endl;
+	
+	/* read from the out pipe and store in a buffer */
+	for (c = buff; read(out_pipe[0], c++, 1););
+
+	std::cerr<<"Read from buffer"<<std::endl;
+	size_t buff_len = c - buff; /* this is the number of characters read */
+
+	/* Push the buffer onto stdin */
+	for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
+	free(buff); /* release the buffer */
+  }
+
+  /* restore default IO */
+  dup2(tmpin, 0); dup2(tmpout, 1); dup2(tmperr, 2);
 }
 
 Command::Command()
@@ -172,10 +200,13 @@ void Command::execute()
 	} else if (!s.empty() && errno == ENOENT) {
 	  /* directory doesn't exist! */
 	  std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
+	  std::cerr<<"No such file or directory"<<std::endl;
+	  free(cpy);
 	  return -1;
 	} else if (!s.empty()) {
 	  /* cd failed because... ¯\_(ツ)_/¯ */
 	  std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
+	  free(cpy);
 	  return -1;
 	}
     
@@ -187,8 +218,10 @@ void Command::execute()
 	  for (;s.back() == '/'; s.pop_back());
 	  passwd * _passwd = getpwuid(getuid());
 	  std::string user_home = _passwd->pw_dir;
+	  free(cpy);
 	  return chdir(user_home.c_str());
 	} for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
+	free(cpy);
 	return chdir(s.c_str());
   };
 
@@ -205,7 +238,9 @@ void Command::execute()
 	free(_ptr);
 	if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
 		strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
-		strcmp(simpleCommands.back().get()->arguments[0], "ssh")) {
+		strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "unsetenv")) {
 	  this->insertSimpleCommand(lul);
 	}
   }
@@ -250,14 +285,13 @@ void Command::execute()
   close(fderr);
   for (int x = 0; x < numOfSimpleCommands; ++x) {
 	std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
-	char ** d_args = new char*[curr.size() + 1];
-	for (int y = 0; y < curr.size(); ++y) {
-	  d_args[y] = strdup(curr[y]);
-	} // ... still better than managing myself!
-	d_args[curr.size()] = NULL;
-	// output redirection
+	curr.push_back((char*) NULL);
+	char ** d_args;
+	d_args = curr.data();
+	
 	dup2(fdin, 0);
 	close(fdin);
+	
 	/** output direction **/
 	if (x == numOfSimpleCommands - 1) {
 	  if (outFile.get()) {
@@ -274,10 +308,9 @@ void Command::execute()
 	else {
 	  int fdpipe[2];
 	  int pipe_res = pipe(fdpipe);
-	  // perror("pipe");
 	  fdout = fdpipe[1];
 	  fdin  = fdpipe[0];
-	} // direct to input of next command
+	}
 
 	dup2(fdout, 1);
 	close(fdout);
@@ -285,22 +318,85 @@ void Command::execute()
 	if (d_args[0] == std::string("cd")) {
 	  std::string curr_dir = std::string(getenv("PWD"));
 	  int cd; std::string new_dir;
-	  if (curr.size() < 2) {
+
+	  if (curr.size() == 4) {
+	    char * to_replace = strdup(d_args[1]);
+		char * replace_to = strdup(d_args[2]);		
+		char * replace_in = strndup(curr_dir.c_str(), curr_dir.size());
+		
+		char * sub = strstr(replace_in, to_replace);
+
+		/* Desired replacement wasn't found, so error and exit */
+		if (sub == NULL) {
+		  perror("cd");
+		  
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		}
+
+		register size_t replace_len     = strlen(to_replace);
+		register size_t replacement_len = strlen(replace_to);
+
+		if (!(replace_len && replacement_len)) {
+		  std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		}
+		/* garauntee we have enough space */
+		char * replacement = (char*) calloc(curr_dir.size() -
+											replace_len +
+										    replacement_len,
+											sizeof(char));
+		char * d = replacement;
+		/* copy up to the beginning of the substring */
+		for (char * c = replace_in; c != sub; *(d++) = *(c++));
+		/* copy the replacement */
+		for (char * c = replace_to; *c; *(d++) = *(c++));
+		/* advance past the substring we wanted to replace */
+		char * residual = sub + replace_len;
+		/* copy the residual chars over */
+		for (; *residual; *(d++) = *(residual++));
+		
+		std::cout<<replacement<<std::endl;
+		
+		free(to_replace); free(replace_to); free(replace_in);
+
+		std::string new_dir(replacement); free(replacement);
+		if (changedir(new_dir)) {
+		  perror("cd");
+		  
+		  dup2(tmpin, 0);  close(tmpin);
+		  dup2(tmpout, 1); close(tmpout);
+		  dup2(tmperr, 2); close(tmperr);
+		  
+		  clear(); prompt();
+		}
+	  } else if (curr.size() == 2) {
 		std::string _empty = "";
 		cd = changedir(_empty);
 		if (cd != 0) {
 		  perror("cd");
-		  clear();
-		  prompt();
+		  
+		  dup2(tmpin, 0);
+		  dup2(tmpout, 1);
+		  dup2(tmperr, 2);
+		  close(tmpin);
+		  close(tmpout);
+		  close(tmperr);
+
+		  clear(); prompt();
 		}
+		
 		setenv("PWD", getenv("HOME"), 1);
 	  } else {
 		if (d_args[1] == std::string("pwd") ||
 			d_args[1] == std::string("/bin/pwd")) {
-		  // Nothing to be done.
-		  clear();
-		  prompt();
-		  return;
 		} else if (*d_args[1] != '/') { 
 		  new_dir = std::string(getenv("PWD"));
 		  for (;new_dir.back() == '/'; new_dir.pop_back());
@@ -311,26 +407,16 @@ void Command::execute()
 		cd = changedir(new_dir);
 		if (cd == 0) setenv("PWD", new_dir.c_str(), 1);
 	  }
-
-	  if (cd != 0) {
-		const char * msg = "cd failed: No such file or directory\n";
-		if (!write(2, msg, strlen(msg))) {
-		  perror("write");
-		}
-		setenv("PWD", curr_dir.c_str(), 1);
-	  }
+	  setenv("PWD", curr_dir.c_str(), 1);
 	  // Regardless of errors, cd has finished.
-	  clear();
-	  prompt();
-	  return;
 	} else if (d_args[0] == std::string("ls")) {
 	  char ** temp = new char*[curr.size() + 2];
-	  for (int y = 2; y <= curr.size(); ++y) {
+	  for (int y = 2; y < curr.size(); ++y) {
 		temp[y] = strdup(curr[y - 1]);
 	  } // ... still better than managing myself!
 	  temp[0] = strdup("ls");
 	  temp[1] = strdup("--color=auto");
-	  temp[curr.size() + 1] = NULL;
+	  temp[curr.size()] = NULL;
 
 	  pid = fork();
 
@@ -339,7 +425,7 @@ void Command::execute()
 		perror("execvp");
 		exit(2);
 	  } 
-	  for (int x = 0; x < curr.size() + 2; ++x) {
+	  for (int x = 0; x < curr.size() + 1; ++x) {
 		free(temp[x]);
 		temp[x] = NULL;
 	  } delete[] temp;
@@ -352,18 +438,18 @@ void Command::execute()
 	  clear(); prompt(); free(temp); free(pemt);
 	  return;
 	} else if (d_args[0] == std::string("unsetenv")) {
-	  int result = unsetenv(d_args[1]);
-	  if (result) perror("unsetenv");
-	  clear(); prompt();
+	  char * temp = (char*) calloc(strlen(d_args[1]) + 1, sizeof(char));
+	  strcpy(temp, d_args[1]);
+	  if (unsetenv(temp) == -1) perror("unsetenv");
+	  clear(); prompt(); free(temp);
 	  return;
 	} else if (d_args[0] == std::string("grep")) {
-	  char ** temp = new char*[curr.size() + 2];
-	  for (int y = 1; y < curr.size(); ++y) {
+	  char ** temp = new char*[curr.size() + 1];
+	  for (int y = 0; y < curr.size() - 1; ++y) {
 		temp[y] = strdup(curr[y]);
 	  } // ... still better than managing myself!
-	  temp[0] = strdup("grep");
-	  temp[curr.size()] = strdup("--color");
-	  temp[curr.size() + 1] = NULL;
+	  temp[curr.size() - 1] = strdup("--color");
+	  temp[curr.size()] = NULL;
 
 	  pid = fork();
 
@@ -371,9 +457,9 @@ void Command::execute()
 		execvp (temp[0], temp);
 		perror("execvp");
 		exit(2);
-	  } for (int x = 0; x < curr.size() + 2; ++x) {
+	  } for (int x = 0; x < curr.size(); ++x) {
 		free(temp[x]); temp[x] = NULL;
-	  } delete[] temp;
+	  }
 	} else {
 	  // Time for a good hot fork
 	  pid = fork();
@@ -390,10 +476,6 @@ void Command::execute()
 		_exit(1);
 	  }
 	}
-
-	for (int x = 0; x < curr.size(); ++x) {
-	  free(d_args[x]); d_args[x] = NULL;
-	} delete[] d_args;
   }
 
   // Restore I/O defaults
@@ -405,21 +487,14 @@ void Command::execute()
   close(tmpout);
   close(tmperr);
 
-  if (!background) {
-	// We are not running in the backround,
-	// so we should wait for the final command
-	// to execute.
+  if (!background) waitpid(pid, NULL, 0);
+  else m_background.push_back(pid);
 
-	waitpid(pid, NULL, 0);
-  } else m_background.push_back(pid);
-
-  // Clear to prepare for next command
+  /* Clear to prepare for next command */
   clear();
 
-  // Print new prompt if we are in a terminal.
-  if (isatty(0)) {
-	prompt();
-  }
+  /* Print new prompt if we are in a terminal. */
+  if (isatty(0)) prompt();
 }
 
 // Shell implementation
@@ -457,10 +532,7 @@ void Command::prompt()
 	  std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
 	  fflush(stdout);
 	} free(_curr_dur);
-  } else {
-	std::cout<<PROMPT;
-	fflush(stdout);
-  }
+  } else fflush(stdout);
 }
 
 Command Command::currentCommand;
@@ -513,31 +585,6 @@ void Command::setAlias(const char * _from, const char * _to)
   m_aliases[from] = split;
 }
 
-int main()
-{
-  struct sigaction ctrl_action;
-  ctrl_action.sa_handler = ctrlc_handler;
-  sigemptyset(&ctrl_action.sa_mask);
-  ctrl_action.sa_flags = SA_RESTART;
 
-  if (sigaction(SIGINT, &ctrl_action, NULL)) {
-	perror("sigint");
-	_exit(6);
-  }
-
-  struct sigaction chld;
-  chld.sa_handler = sigchld_handler;
-  sigemptyset(&chld.sa_mask);
-  chld.sa_flags   = SA_RESTART | SA_NOCLDSTOP;
-
-  if (sigaction(SIGCHLD, &chld, NULL) == -1) {
-	perror("sigchild");
-	_exit(7);
-  } 
-  Command::currentCommand.prompt();
-  yyparse();
-
-  return 0;
-}
 
 
