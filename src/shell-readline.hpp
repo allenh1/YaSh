@@ -333,7 +333,7 @@ public:
 		  struct winsize w;
 		  ioctl(1, TIOCGWINSZ, &w);
 		  register size_t term_width = w.ws_col;
-		  register size_t line_size = _line.size();
+		  register size_t line_size = _line.size() + m_buff.size() + 2;
 		  
 		  for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
 			/* if the cursor is at the end of a line, print line up */
