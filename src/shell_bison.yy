@@ -53,11 +53,6 @@ commands command
 ;
 
 command:
-simple_command
-|
-;
-
-simple_command:	
 pipe_list iomodifier_list background_optional NEWLINE {
     Command::currentCommand.execute();
 }
