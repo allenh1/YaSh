@@ -29,7 +29,9 @@
 int yylex();  
 int yyparse();
 
+void yyrestart (FILE * in);
 void yyerror(const char * s);
+
 %}
 
 %%
