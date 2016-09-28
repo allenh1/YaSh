@@ -1,10 +1,11 @@
 %{#include <memory>%}
 
+%token PIPE GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND
+%token GREATAND AMPERSAND TAB SRC ALIAS ANDAND
+
 %token	<string_val> WORD
 %token  <string_val> BACKTIK
 
-%token 	NOTOKEN GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND PIPE AMPERSAND
-%token GREATAND TAB SRC ANDAND ALIAS GETS 
 %union	{
     char * string_val;
 }
@@ -76,12 +77,11 @@ command_and_args:
 					Command::currentCommand.insertSimpleCommand(Command::currentSimpleCommand);
 				};
 
-argument_list:
-				argument argument_list
-		|		/* empty */;
+argument_list: 	argument
+		|		argument argument_list
+		|		/*empty */;
 
-argument:
-				WORD {
+argument:		WORD {
 					std::string temp = tilde_expand(std::string($1));
 					delete[] $1;
 					char * expand_upon_me = strndup(temp.c_str(), temp.size());
@@ -97,16 +97,15 @@ argument:
 				}
 		| 		BACKTIK { Command::currentCommand.subShell($1); delete[] $1; };
 
-command_word:
-				WORD {
-					Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
+command_word:	WORD {
+					Command::currentSimpleCommand =
+						std::unique_ptr<SimpleCommand>(new SimpleCommand());
 					char * _ptr = strdup($1); delete[] $1;
 					Command::currentSimpleCommand->insertArgument(_ptr);
 					free(_ptr);
 				};
 
-pipe_list:
-			    command_and_args PIPE pipe_list
+pipe_list:		command_and_args PIPE pipe_list
 		| 		command_and_args;
 
 iomodifier_list:
