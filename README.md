@@ -2,6 +2,17 @@ YaSh:
 ====
 YaSh is yet another Sh clone. It's my personal favorite, for obvious reasons (when it's working, that is).
 
+Also, please note: if you are on the master branch, you are NOT on the stable
+branch of this shell! If you are using this shell and are NOT a developer,
+please checkout the current-stable branch.
+
+```
+ $ git checkout current-stable
+```
+
+After you are on the current-stable branch, proceed with the installation
+as below.
+
 Installation:
 =============
 Installation is very simple.
