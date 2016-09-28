@@ -146,7 +146,8 @@ iomodifier_opt:
                    if (Command::currentCommand.inIsSet())
 					   yyerror("Ambiguous input redirect.\n");
 				   Command::currentCommand.setInFile($2);
-				};
+				}
+		| /* allow empty */;
 
 background_optional:
 				AMPERSAND { Command::currentCommand.setBackground(true); }
