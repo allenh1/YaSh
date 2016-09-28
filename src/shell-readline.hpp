@@ -44,6 +44,71 @@ static class readLine
 public:
    readLine() { m_get_mode = 1; }
 
+      /** 
+	* Wrapper for the write function, given a character.
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param c Character to write.
+	* 
+	* @return True upon successful write.
+	*/
+   bool write_with_error(int _fd, char c) {
+	  if (!write(_fd, &c, 1)) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   /** 
+	* Wrapper for the write function, given a C string.
+	*
+	* This function writes the contents of s to the
+	* provided file descriptor. This function will
+	* write to the first occurance of a null character,
+	* as it calls strlen to determine the length.
+	* For those strings whose length, is known, see
+	* @see write_with_error(int _fd, const char *& s, size_t len).
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param s String to write.
+	* 
+	* @return True upon successful write.
+	*/
+   bool write_with_error(const int & _fd, const char * s) {
+	  if (write(_fd, s, strlen(s)) != strlen(s)) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   /** 
+	* Wrapper for the write function, given a C string
+	* and a number of characters.
+	*
+	* This function writes len bytes of s to the
+	* provided file descriptor.
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param s String to write.
+	* @param len Number of bytes of s to write.
+	* 
+	* @return True upon successful write.
+	*/
+   bool write_with_error(const int & _fd, const char * s, size_t len) {
+	  if (write(_fd, s, len) != len) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   bool read_with_error(const int & _fd, char & c, size_t len = 1) {
+	  char d; /* temp, for reading */
+	  if (read(0, &d, len) != len) {
+		 perror("read");
+		 return false;
+	  } else return (c = d), true;
+   }
+   
    void operator() () {
 	  // Raw mode
 	  char input;
@@ -51,23 +116,15 @@ public:
 
 	  // Read in the next character
 	  for (; true ;) {
-		 if (!read(0, &input,  1)) {
-			Command::currentCommand.printPrompt = true;
-			std::cerr<<"Got sourced EOF!";
-			// Change back to standard in!
-			dup2(fdin, 0), close(fdin);
-			continue;
-		 }
+		 /* If you can't read from 0, don't continue! */
+		 if (!read_with_error(0, input)) break;
 
 		 // Echo the character to the screen
 		 if (input >= 32 && input != 127) {
 			// Character is printable
 			if (input == '!') {
-			   if (!write(0, "!", 1)) {
-				  perror("write");		    
-				  continue;
-			   }
-		  
+			   if (!write_with_error(0, '!')) continue;
+
 			   /* Check for "!!" and "!-<n>" */
 			   if (!m_history.size()) {
 				  _line += input;
@@ -75,21 +132,16 @@ public:
 			   }
 	  
 			   char ch1;
-			   if (!read(0, &ch1, 1)) {
-				  perror("read");
-				  continue;
-			   } if (ch1 == '\n') {
-				  if (!write(1, "\n", 1)) {
-					 perror("write");
-					 continue;
-				  } break;
-			   }
+			   /* read next char from stdin */
+			   if (!read_with_error(0, ch1)) continue;
+
+			   /* print newline and stop looping */
+			   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
+			   
 			   else if (ch1 == '!') {
 				  // "!!" = run prior command
-				  if (!write(1, "!", 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "!", 1)) continue;
+
 				  _line += m_history[m_history.size() - 1];
 				  _line.pop_back();
 				  m_show_line = true;
