@@ -74,7 +74,7 @@ public:
 	* 
 	* @return True upon successful write.
 	*/
-   bool write_with_error(const int & _fd, const char * s) {
+   inline bool write_with_error(const int & _fd, const char * s) {
 	  if (write(_fd, s, strlen(s)) != strlen(s)) {
 		 perror("write");
 		 return false;
@@ -94,14 +94,14 @@ public:
 	* 
 	* @return True upon successful write.
 	*/
-   bool write_with_error(const int & _fd, const char * s, size_t len) {
+   inline bool write_with_error(const int & _fd, const char * s, size_t len) {
 	  if (write(_fd, s, len) != len) {
 		 perror("write");
 		 return false;
 	  } return true;
    }
 
-   bool read_with_error(const int & _fd, char & c, size_t len = 1) {
+   inline bool read_with_error(const int & _fd, char & c, size_t len = 1) {
 	  char d; /* temp, for reading */
 	  if (read(0, &d, len) != len) {
 		 perror("read");
@@ -168,10 +168,8 @@ public:
 						   for (; m_buff.size();) {
 							  ch = m_buff.top(); m_buff.pop();
 							  _line += ch;
-							  if (!write(1, &ch, 1)) {
-								 perror("write");					  
-								 continue;
-							  }
+							  
+							  if (!write_with_error(1, ch)) continue;
 						   }
 						}
 						history_index = m_history.size();
@@ -179,10 +177,7 @@ public:
 					 }
 				  }
 			   } else {
-				  if (!write(1, &ch1, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, ch1)) continue;
 				  _line += "!"; _line += ch1;
 				  continue;
 			   }
@@ -195,38 +190,26 @@ public:
 				*/
 			   _line += input;
 	  
-			   // Write current character
-			   if (!write(1, &input, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   /* Write current character */
+			   if (!write_with_error(1, input)) continue;
 
-			   // Copy buffer and print
+			   /* Copy buffer and print */
 			   std::stack<char> temp = m_buff;
 			   for (char d = 0; temp.size(); ) {
 				  d = temp.top(); temp.pop();
-				  if (!write(1, &d, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, d)) continue;
 			   }
 
 			   // Move cursor to current position.
 			   for (size_t x = 0; x < m_buff.size(); ++x) {
-				  if (!write(1, "\b", 1)) {
-					 perror ("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "\b", 1)) continue;
 			   }
 			} else {
 			   _line += input;
 			   if ((size_t)history_index == m_history.size())
 				  m_current_line_copy += input;
-			   // Write to screen
-			   if (!write(1, &input, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   /* Write to screen */
+			   if (!write_with_error(1, input)) continue;
 			}
 		 } else if (input == 10) {
 			// Enter was typed
@@ -235,16 +218,9 @@ public:
 			   for (; m_buff.size();) {
 				  ch = m_buff.top(); m_buff.pop();
 				  _line += ch;
-				  if (!write(1, &ch, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, ch)) continue;
 			   }
-			}
-			if (!write(1, &input, 1)) {
-			   perror("write");
-			   continue;
-			}
+			} if (!write_with_error(1, input)) continue;
 			history_index = m_history.size();
 			break;
 		 } else if (input == 1) {
@@ -253,10 +229,7 @@ public:
 
 			for (char d = '\b'; _line.size();) {
 			   m_buff.push(_line.back()); _line.pop_back();
-			   if (!write(1, &d, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   if (!write_with_error(1, d)) continue;
 			}
 		 } else if (input == 5) {
 			// Control E
@@ -269,13 +242,7 @@ public:
 			   _line += *(d++);
 			}
 
-			if (write(1, ctrle, len) != (int) len) {
-			   perror("write");
-			   std::cerr<<"Please submit a full bug report"
-						<<" including your input to"
-						<<" allen-software.com!"<<std::endl;
-			   continue;
-			}
+			if (!write_with_error(1, ctrle, len)) continue;
 		 } else if (input == 4) {
 			// Control D
 			if (!m_buff.size()) continue;
