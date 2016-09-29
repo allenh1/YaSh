@@ -9,6 +9,10 @@ AC_CONFIG_AUX_DIR(config)
 
 AM_INIT_AUTOMAKE
 
+# Set CXXFLAGS
+CXXFLAGS=""
+CFLAGS=""
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
