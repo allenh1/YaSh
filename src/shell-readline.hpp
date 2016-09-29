@@ -253,20 +253,14 @@ public:
 			for (; _line.size();) {
 			   m_buff.push(_line.back()); _line.pop_back();
 			   /* Next check if we need to go up */
+			   /* @todo this does not quite work -- but it's close */
 			   if (_line.size() == term_width) {
 				  if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) continue;
 				  else if (!write_with_error(1, _line.c_str(), term_width - 3)) continue;
 
 				  for (size_t k = 0; k < term_width - 2; ++k)
 					 if (!write_with_error(1, "\b", 1)) break;
-			   }
-			   // else if (!((_line.size() + 2) % term_width)) {
-			   // 	  if (!write_with_error(1,"\033[1A \b")) continue;
-			   // 	  else if (!write_with_error(1, _line.c_str() +
-			   // 								 term_width + (_line.size()/term_width),
-			   // 								 _line.size())) continue;
-			   // }
-			   else if (!write_with_error(1, "\b", 1)) continue;
+			   } else if (!write_with_error(1, "\b", 1)) continue;
 			}
 		 } else if (input == 5) {
 			// Control E
