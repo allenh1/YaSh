@@ -21,7 +21,18 @@ AC_PROG_LIBTOOL
 LT_INIT
 AC_CONFIG_HEADER(config.h)
 
-# Checks for libraries.
+# Check for debug mode
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+[enable debugging, default: no]),
+[case "${enableval}" in
+yes) debug=true ;;
+no)  debug=false ;;
+*)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],
+[debug=false])
+
+AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h stdlib.h string.h termios.h unistd.h])
@@ -40,5 +51,4 @@ AC_CONFIG_FILES([Makefile src/Makefile])
 
 # Output
 AC_OUTPUT
-
 

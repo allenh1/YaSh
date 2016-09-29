@@ -1,7 +1,13 @@
 # Compile flags
 BUILT_SOURCES = shell_bison.hh
+
+if DEBUG
+AM_CFLAGS = -g -O0 -lpthread -std=c++14
+AM_CXXFLAGS = -g -O0 -lpthread -std=c++14
+else
 AM_CFLAGS =  -O2 -fPIC -lpthread
 AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++14
+endif
 
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
