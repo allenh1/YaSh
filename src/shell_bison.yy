@@ -10,6 +10,7 @@
     char * string_val;
 }
 
+%left PIPE
 %{
 /* STL (C++) Includes */
 #include <algorithm>

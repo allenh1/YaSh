@@ -101,12 +101,34 @@ public:
 	  } return true;
    }
 
-   inline bool read_with_error(const int & _fd, char & c, size_t len = 1) {
+   /** 
+	* Wrapper for the read function, given a char &
+	* in which to store the char and a file descriptor
+	* from which we read it.
+	* 
+	* @param _fd File descriptor from which to read.
+	* @param c Character to store the read character.
+	* 
+	* @return True upon successful read.
+	*/
+   inline bool read_with_error(const int & _fd, char & c) {
 	  char d; /* temp, for reading */
-	  if (read(0, &d, len) != len) {
+	  if (!read(0, &d, 1)) {
 		 perror("read");
 		 return false;
 	  } else return (c = d), true;
+   }
+
+   /** 
+	* Wrapper function for getting the width
+	* of the terminal using ioctl.
+	* 
+	* @return Number of columns in the terminal.
+	*/
+   inline size_t get_term_width() {
+	  struct winsize w;
+	  ioctl(1, TIOCGWINSZ, &w);
+	  return w.ws_col;
    }
    
    void operator() () {
@@ -147,11 +169,10 @@ public:
 				  m_show_line = true;
 				  continue;
 			   } else if (ch1 == '-') {
-				  if (!write(1, "-", 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "-", 1)) continue;
+
 				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+				  
 				  /* "!-<n>" = run what I did n commands ago. */
 				  char * buff = (char*) alloca(20); char * b;
 				  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
@@ -227,9 +248,25 @@ public:
 			// Control A
 			if (!_line.size()) continue;
 
-			for (char d = '\b'; _line.size();) {
+			register size_t term_width = get_term_width();
+			
+			for (; _line.size();) {
 			   m_buff.push(_line.back()); _line.pop_back();
-			   if (!write_with_error(1, d)) continue;
+			   /* Next check if we need to go up */
+			   if (_line.size() == term_width) {
+				  if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) continue;
+				  else if (!write_with_error(1, _line.c_str(), term_width - 3)) continue;
+
+				  for (size_t k = 0; k < term_width - 2; ++k)
+					 if (!write_with_error(1, "\b", 1)) break;
+			   }
+			   // else if (!((_line.size() + 2) % term_width)) {
+			   // 	  if (!write_with_error(1,"\033[1A \b")) continue;
+			   // 	  else if (!write_with_error(1, _line.c_str() +
+			   // 								 term_width + (_line.size()/term_width),
+			   // 								 _line.size())) continue;
+			   // }
+			   else if (!write_with_error(1, "\b", 1)) continue;
 			}
 		 } else if (input == 5) {
 			// Control E
@@ -335,9 +372,7 @@ public:
 			   }
 
 			   /* get terminal width */
-			   struct winsize w;
-			   ioctl(1, TIOCGWINSZ, &w);
-			   register size_t term_width = w.ws_col;
+			   register size_t term_width = get_term_width();
 			   register size_t line_size = _line.size() + m_buff.size() + 2;
 		  
 			   for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
