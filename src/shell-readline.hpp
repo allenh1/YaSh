@@ -44,6 +44,93 @@ static class readLine
 public:
    readLine() { m_get_mode = 1; }
 
+      /** 
+	* Wrapper for the write function, given a character.
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param c Character to write.
+	* 
+	* @return True upon successful write.
+	*/
+   bool write_with_error(int _fd, char c) {
+	  if (!write(_fd, &c, 1)) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   /** 
+	* Wrapper for the write function, given a C string.
+	*
+	* This function writes the contents of s to the
+	* provided file descriptor. This function will
+	* write to the first occurance of a null character,
+	* as it calls strlen to determine the length.
+	* For those strings whose length, is known, see
+	* @see write_with_error(int _fd, const char *& s, size_t len).
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param s String to write.
+	* 
+	* @return True upon successful write.
+	*/
+   inline bool write_with_error(const int & _fd, const char * s) {
+	  if (write(_fd, s, strlen(s)) != strlen(s)) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   /** 
+	* Wrapper for the write function, given a C string
+	* and a number of characters.
+	*
+	* This function writes len bytes of s to the
+	* provided file descriptor.
+	* 
+	* @param _fd File descriptor on which to write.
+	* @param s String to write.
+	* @param len Number of bytes of s to write.
+	* 
+	* @return True upon successful write.
+	*/
+   inline bool write_with_error(const int & _fd, const char * s, size_t len) {
+	  if (write(_fd, s, len) != len) {
+		 perror("write");
+		 return false;
+	  } return true;
+   }
+
+   /** 
+	* Wrapper for the read function, given a char &
+	* in which to store the char and a file descriptor
+	* from which we read it.
+	* 
+	* @param _fd File descriptor from which to read.
+	* @param c Character to store the read character.
+	* 
+	* @return True upon successful read.
+	*/
+   inline bool read_with_error(const int & _fd, char & c) {
+	  char d; /* temp, for reading */
+	  if (!read(0, &d, 1)) {
+		 perror("read");
+		 return false;
+	  } else return (c = d), true;
+   }
+
+   /** 
+	* Wrapper function for getting the width
+	* of the terminal using ioctl.
+	* 
+	* @return Number of columns in the terminal.
+	*/
+   inline size_t get_term_width() {
+	  struct winsize w;
+	  ioctl(1, TIOCGWINSZ, &w);
+	  return w.ws_col;
+   }
+   
    void operator() () {
 	  // Raw mode
 	  char input;
@@ -51,23 +138,15 @@ public:
 
 	  // Read in the next character
 	  for (; true ;) {
-		 if (!read(0, &input,  1)) {
-			Command::currentCommand.printPrompt = true;
-			std::cerr<<"Got sourced EOF!";
-			// Change back to standard in!
-			dup2(fdin, 0), close(fdin);
-			continue;
-		 }
+		 /* If you can't read from 0, don't continue! */
+		 if (!read_with_error(0, input)) break;
 
 		 // Echo the character to the screen
 		 if (input >= 32 && input != 127) {
 			// Character is printable
 			if (input == '!') {
-			   if (!write(0, "!", 1)) {
-				  perror("write");		    
-				  continue;
-			   }
-		  
+			   if (!write_with_error(0, '!')) continue;
+
 			   /* Check for "!!" and "!-<n>" */
 			   if (!m_history.size()) {
 				  _line += input;
@@ -75,31 +154,25 @@ public:
 			   }
 	  
 			   char ch1;
-			   if (!read(0, &ch1, 1)) {
-				  perror("read");
-				  continue;
-			   } if (ch1 == '\n') {
-				  if (!write(1, "\n", 1)) {
-					 perror("write");
-					 continue;
-				  } break;
-			   }
+			   /* read next char from stdin */
+			   if (!read_with_error(0, ch1)) continue;
+
+			   /* print newline and stop looping */
+			   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
+			   
 			   else if (ch1 == '!') {
 				  // "!!" = run prior command
-				  if (!write(1, "!", 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "!", 1)) continue;
+
 				  _line += m_history[m_history.size() - 1];
 				  _line.pop_back();
 				  m_show_line = true;
 				  continue;
 			   } else if (ch1 == '-') {
-				  if (!write(1, "-", 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "-", 1)) continue;
+
 				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+				  
 				  /* "!-<n>" = run what I did n commands ago. */
 				  char * buff = (char*) alloca(20); char * b;
 				  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
@@ -116,10 +189,8 @@ public:
 						   for (; m_buff.size();) {
 							  ch = m_buff.top(); m_buff.pop();
 							  _line += ch;
-							  if (!write(1, &ch, 1)) {
-								 perror("write");					  
-								 continue;
-							  }
+							  
+							  if (!write_with_error(1, ch)) continue;
 						   }
 						}
 						history_index = m_history.size();
@@ -127,10 +198,7 @@ public:
 					 }
 				  }
 			   } else {
-				  if (!write(1, &ch1, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, ch1)) continue;
 				  _line += "!"; _line += ch1;
 				  continue;
 			   }
@@ -143,38 +211,26 @@ public:
 				*/
 			   _line += input;
 	  
-			   // Write current character
-			   if (!write(1, &input, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   /* Write current character */
+			   if (!write_with_error(1, input)) continue;
 
-			   // Copy buffer and print
+			   /* Copy buffer and print */
 			   std::stack<char> temp = m_buff;
 			   for (char d = 0; temp.size(); ) {
 				  d = temp.top(); temp.pop();
-				  if (!write(1, &d, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, d)) continue;
 			   }
 
 			   // Move cursor to current position.
 			   for (size_t x = 0; x < m_buff.size(); ++x) {
-				  if (!write(1, "\b", 1)) {
-					 perror ("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, "\b", 1)) continue;
 			   }
 			} else {
 			   _line += input;
 			   if ((size_t)history_index == m_history.size())
 				  m_current_line_copy += input;
-			   // Write to screen
-			   if (!write(1, &input, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   /* Write to screen */
+			   if (!write_with_error(1, input)) continue;
 			}
 		 } else if (input == 10) {
 			// Enter was typed
@@ -183,28 +239,28 @@ public:
 			   for (; m_buff.size();) {
 				  ch = m_buff.top(); m_buff.pop();
 				  _line += ch;
-				  if (!write(1, &ch, 1)) {
-					 perror("write");
-					 continue;
-				  }
+				  if (!write_with_error(1, ch)) continue;
 			   }
-			}
-			if (!write(1, &input, 1)) {
-			   perror("write");
-			   continue;
-			}
+			} if (!write_with_error(1, input)) continue;
 			history_index = m_history.size();
 			break;
 		 } else if (input == 1) {
 			// Control A
 			if (!_line.size()) continue;
 
-			for (char d = '\b'; _line.size();) {
+			register size_t term_width = get_term_width();
+			
+			for (; _line.size();) {
 			   m_buff.push(_line.back()); _line.pop_back();
-			   if (!write(1, &d, 1)) {
-				  perror("write");
-				  continue;
-			   }
+			   /* Next check if we need to go up */
+			   /* @todo this does not quite work -- but it's close */
+			   if (_line.size() == term_width) {
+				  if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) continue;
+				  else if (!write_with_error(1, _line.c_str(), term_width - 3)) continue;
+
+				  for (size_t k = 0; k < term_width - 2; ++k)
+					 if (!write_with_error(1, "\b", 1)) break;
+			   } else if (!write_with_error(1, "\b", 1)) continue;
 			}
 		 } else if (input == 5) {
 			// Control E
@@ -217,13 +273,7 @@ public:
 			   _line += *(d++);
 			}
 
-			if (write(1, ctrle, len) != (int) len) {
-			   perror("write");
-			   std::cerr<<"Please submit a full bug report"
-						<<" including your input to"
-						<<" allen-software.com!"<<std::endl;
-			   continue;
-			}
+			if (!write_with_error(1, ctrle, len)) continue;
 		 } else if (input == 4) {
 			// Control D
 			if (!m_buff.size()) continue;
@@ -316,9 +366,7 @@ public:
 			   }
 
 			   /* get terminal width */
-			   struct winsize w;
-			   ioctl(1, TIOCGWINSZ, &w);
-			   register size_t term_width = w.ws_col;
+			   register size_t term_width = get_term_width();
 			   register size_t line_size = _line.size() + m_buff.size() + 2;
 		  
 			   for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
