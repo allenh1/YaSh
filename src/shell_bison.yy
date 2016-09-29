@@ -1,10 +1,9 @@
 %{#include <memory>%}
-
-%token PIPE GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND
-%token GREATAND AMPERSAND TAB SRC ALIAS ANDAND
-
 %token	<string_val> WORD
 %token  <string_val> BACKTIK
+
+%token 	NOTOKEN GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND PIPE AMPERSAND
+%token GREATAND TAB SRC ANDAND ALIAS GETS PUSHD POPD
 
 %union	{
     char * string_val;
@@ -70,6 +69,13 @@ command:
 					   free(alias); free(word); delete[] $2; delete[] $3;
 				   }
 				}
+		| 		PUSHD WORD {
+			       Command::currentCommand.pushDir(strdup($2));
+				   delete[] $2;
+                }
+        |		POPD {
+			       Command::currentCommand.popDir();
+                }
 		| 		NEWLINE { Command::currentCommand.prompt(); }
 		| 		error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); };
 

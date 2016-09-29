@@ -18,6 +18,7 @@ void printEvenly(std::vector<std::string> & _vct);
 std::string tilde_expand(std::string input);
 std::string replace(std::string str, const char * sb, const char * rep);
 std::string env_expand(std::string s);
+bool changedir(std::string & s);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }

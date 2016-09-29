@@ -83,6 +83,10 @@ void myunputc(int c) {
 
 ^"alias" { return ALIAS; }
 
+^"pushd" { return PUSHD; }
+
+^"popd" { return POPD; }
+
 `(\\.|[^`"])*` {
   /* Subshell, by Drew Barthel */
 
