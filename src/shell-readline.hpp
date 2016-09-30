@@ -44,7 +44,7 @@ static class readLine
 public:
    readLine() { m_get_mode = 1; }
 
-      /** 
+   /** 
 	* Wrapper for the write function, given a character.
 	* 
 	* @param _fd File descriptor on which to write.
@@ -425,9 +425,9 @@ public:
 			Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>
 			   (new SimpleCommand());
 	
-			// Part 1: add a '*' to the end of the stream.
+			/* Part 1: add a '*' to the end of the stream. */
 			std::string _temp;
-			// std::cerr<<std::endl;
+
 			std::vector<std::string> _split;
 			if (_line.size()) {
 			   _split = string_split(_line, ' ');
@@ -436,11 +436,13 @@ public:
 
 			char * _complete_me = strndup(_temp.c_str(), _temp.size());
 	
-			// Part 2: Invoke wildcard expand
+			/* Part 2: Invoke wildcard expand */
 			wildcard_expand(_complete_me);
 
-			// Part 3: If wc_collector.size() <= 1, then complete the tab.
-			//         otherwise, run "echo <text>*"
+			/**
+			 * Part 3: If wc_collector.size() <= 1, then complete the tab.
+			 *         otherwise, run "echo <text>*"
+			 */
 			std::string * array = Command::currentCommand.wc_collector.data();
 			std::sort(array, array + Command::currentCommand.wc_collector.size(),
 					  Comparator());
@@ -469,6 +471,98 @@ public:
 			   Command::currentCommand.wc_collector.clear();
 			   Command::currentCommand.wc_collector.shrink_to_fit();
 			} else if (Command::currentCommand.wc_collector.size() == 0) {
+			   /* now we check the binaries! */
+			   char * _path = getenv("PATH");
+			   if (!_path) {
+				  /* if path isn't set, continue */
+				  free(_complete_me); continue;
+			   } std::string path(_path);
+			   
+			   /* part 1: split the path variable into individual dirs */
+			   std::vector<std::string> _path_dirs = vector_split(path, ':');
+			   std::vector<std::string> path_dirs;
+
+			   /* part 1.5: remove duplicates */
+			   for (auto && x : _path_dirs) {
+				  /* @todo it would be nice to not do this */
+				  bool add = true;
+				  for (auto && y : path_dirs) {
+					 if (x == y) add = false;
+				  } if (add) path_dirs.push_back(x);
+			   }
+
+			   /* part 2: go through the paths, coallate matches */
+			   for (auto && x : path_dirs) {
+				  /* add trailing '/' if not already there */
+				  if (x.back() != '/') x += '/';
+				  /* append _complete_me to current path */
+				  x += _complete_me;
+				  /* duplicate the string */
+				  char * _x_cpy = strndup(x.c_str(), x.size());
+
+				  /* invoke wildcard_expand */
+				  wildcard_expand(_x_cpy); free(_x_cpy);
+			   } std::vector<std::string> wc_expanded =
+					Command::currentCommand.wc_collector;
+
+			   /* part 4: check for a single match */
+			   if (wc_expanded.size() == 1) {
+				  /* First check if the line has any spaces! */
+				  /*     If so, we will wrap in quotes!      */
+				  bool quote_wrap = false; 
+				  if (Command::currentCommand.wc_collector[0].find(" ")
+					  != std::string::npos) {
+					 Command::currentCommand.wc_collector[0].insert(0, "\"");
+					 quote_wrap = true;
+				  }
+				  char ch[_line.size() + 1]; char sp[_line.size() + 1];
+				  ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
+				  memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
+				  if (!write(1, ch, _line.size())) perror("write");
+				  if (!write(1, sp, _line.size())) perror("write");
+				  if (!write(1, ch, _line.size())) perror("write");
+				  _line = "";
+	  
+				  for (size_t x = 0; x < _split.size() - 1; _line += _split[x++] + " ");
+				  _line += Command::currentCommand.wc_collector[0];
+				  if (quote_wrap) _line = _line + "\"";
+				  m_current_line_copy = _line;
+				  Command::currentCommand.wc_collector.clear();
+				  Command::currentCommand.wc_collector.shrink_to_fit();
+			   } else { /* part 5: handle multiple matches */
+				  /* clear currently printed text */
+				  char ch[_line.size() + 1]; char sp[_line.size() + 1];
+				  ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
+				  memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
+				  if (!write_with_error(1, ch, _line.size())) {
+					 free(_complete_me); continue;
+				  } else if (!write_with_error(1, sp, _line.size())) {
+					 free(_complete_me); continue;
+				  } else if (!write_with_error(1, ch, _line.size())) {
+					 free(_complete_me); continue;
+				  }
+				  
+				  std::cout<<std::endl;
+				  std::vector<std::string> _wcd = wc_expanded;
+				  std::string longest_common((longest_substring(wc_expanded)));
+				  if (_wcd.size()) {
+					 printEvenly(_wcd); char * _echo = strdup("echo");
+					 Command::currentSimpleCommand->insertArgument(_echo);
+					 Command::currentCommand.wc_collector.clear();
+					 Command::currentCommand.wc_collector.shrink_to_fit();
+					 Command::currentCommand.execute(); free(_echo);
+					 
+					 if (longest_common.size()) {
+						char * to_add = strndup(longest_common.c_str() + strlen(_complete_me) - 1,
+												longest_common.size() - strlen(_complete_me) + 1);
+						_line += to_add; free(to_add);
+						m_current_line_copy = _line;
+					 }
+				  } else { free(_complete_me); continue; }
+			   }
+
+			   /* free resources and print */
+			   write_with_error(1, _line.c_str(), _line.size());
 			   free(_complete_me); continue;
 			} else {
 			   std::cout<<std::endl;

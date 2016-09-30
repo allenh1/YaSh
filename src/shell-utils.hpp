@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <pwd.h>
 
+#include <sstream>
 #include <iostream>
 #include <cstring>
 #include <string>
@@ -18,6 +19,7 @@ void printEvenly(std::vector<std::string> & _vct);
 std::string tilde_expand(std::string input);
 std::string replace(std::string str, const char * sb, const char * rep);
 std::string env_expand(std::string s);
+std::vector<std::string> vector_split(std::string s, char delim);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }

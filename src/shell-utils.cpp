@@ -155,3 +155,9 @@ std::string env_expand(std::string s)
   return ret;
 }
 
+std::vector<std::string> vector_split(std::string s, char delim) {
+   std::vector<std::string> elems; std::stringstream ss(s);
+   std::string item;
+   for (;std::getline(ss, item, delim); elems.push_back(std::move(item)));
+   return elems;
+}
