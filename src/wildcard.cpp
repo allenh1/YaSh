@@ -70,6 +70,7 @@ void wildcard_expand(char * arg) {
     // regex pattern type compilation
     regex_t re; char * str = regStrings.front();
     int result = regcomp(&re, str, REG_EXTENDED|REG_NOSUB);
+	regfree(&re);
     if (result) {perror("regcomp"); return;}
     if (dirs) dirs--;
 

@@ -530,35 +530,8 @@ public:
 				  Command::currentCommand.wc_collector.clear();
 				  Command::currentCommand.wc_collector.shrink_to_fit();
 			   } else { /* part 5: handle multiple matches */
-				  /* clear currently printed text */
-				  char ch[_line.size() + 1]; char sp[_line.size() + 1];
-				  ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
-				  memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
-				  if (!write_with_error(1, ch, _line.size())) {
-					 free(_complete_me); continue;
-				  } else if (!write_with_error(1, sp, _line.size())) {
-					 free(_complete_me); continue;
-				  } else if (!write_with_error(1, ch, _line.size())) {
-					 free(_complete_me); continue;
-				  }
-				  
-				  std::cout<<std::endl;
-				  std::vector<std::string> _wcd = wc_expanded;
-				  std::string longest_common((longest_substring(wc_expanded)));
-				  if (_wcd.size()) {
-					 printEvenly(_wcd); char * _echo = strdup("echo");
-					 Command::currentSimpleCommand->insertArgument(_echo);
-					 Command::currentCommand.wc_collector.clear();
-					 Command::currentCommand.wc_collector.shrink_to_fit();
-					 Command::currentCommand.execute(); free(_echo);
-					 
-					 if (longest_common.size()) {
-						char * to_add = strndup(longest_common.c_str() + strlen(_complete_me) - 1,
-												longest_common.size() - strlen(_complete_me) + 1);
-						_line += to_add; free(to_add);
-						m_current_line_copy = _line;
-					 }
-				  } else { free(_complete_me); continue; }
+				  /* @todo appropriately handle multiple matches */
+				  free(_complete_me); continue;
 			   }
 
 			   /* free resources and print */
