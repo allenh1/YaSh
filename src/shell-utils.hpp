@@ -1,6 +1,7 @@
 #ifndef __SHELL_UTILS_HPP__
 #define __SHELL_UTILS_HPP__
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <unistd.h>
 #include <signal.h>
@@ -19,6 +20,7 @@ std::string tilde_expand(std::string input);
 std::string replace(std::string str, const char * sb, const char * rep);
 std::string env_expand(std::string s);
 bool changedir(std::string & s);
+bool is_directory(std::string s);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }

@@ -567,8 +567,16 @@ void Command::pushDir(const char * new_dir) {
    
    if(!wc_collector.size() && changedir(news)) {
       m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
-   } else if(wc_collector.size() && changedir(wc_collector[0])) {
-      m_dir_stack.insert(m_dir_stack.begin(), wc_collector.begin(), wc_collector.end());
+   } else if(wc_collector.size()) {
+	  
+	  for (int y = wc_collector.size() - 1; y--; ) {
+		 auto x = wc_collector[y];
+		 if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
+	  } if (m_dir_stack.size()) {
+		 changedir(m_dir_stack[0]);
+		 m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
+		 m_dir_stack.push_back(curr_dir);
+	  } else goto clear_and_exit;
    } else goto clear_and_exit;
    
    for(auto && a: m_dir_stack) std::cout<<a<<" ";

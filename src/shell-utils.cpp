@@ -155,9 +155,13 @@ std::string env_expand(std::string s)
    return ret;
 }
 
-
-/**
- *
+/** 
+ * Function to change a directory into
+ * the provided argument.
+ * 
+ * @param s Directory in which to change.
+ * 
+ * @return True upon successful change.
  */
 bool changedir(std::string & s) {
    /* verify that the directory exists */
@@ -193,4 +197,18 @@ bool changedir(std::string & s) {
    } for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
    free(cpy);
    return chdir(s.c_str()) == 0;
-};
+}
+
+bool is_directory(std::string str)
+{
+   struct stat s;
+   char * c = strndup(str.c_str(), str.size());
+
+   if (stat(c, &s)) goto not_directory;
+   else if (s.st_mode & S_IFDIR) {
+	  free(c); return true;
+   }
+not_directory:
+   free(c); return false;
+}
+
