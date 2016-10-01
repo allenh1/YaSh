@@ -183,67 +183,31 @@ void Command::print()
 
 void Command::execute()
 {
-   // Don't do anything if there are no simple commands
-   if (numOfSimpleCommands == 0) {
-	  prompt();
-	  return;
-   }
+  // Don't do anything if there are no simple commands
+  if (numOfSimpleCommands == 0) {
+	prompt();
+	return;
+  }
 
-   auto changedir = [] (std::string & s) {
-	  /* verify that the directory exists */
-	  char * cpy = strndup(s.c_str(), s.size()); 
-	  DIR * _dir;
+  // Print contents of Command data structure
+  char * dbg = getenv("SHELL_DBG");
+  if (dbg && !strcmp(dbg, "YES")) print();
 
-	  if (!s.empty() && (_dir = opendir(cpy))) {
-		 /* directory is there */
-		 closedir(_dir);
-	  } else if (!s.empty() && errno == ENOENT) {
-		 /* directory doesn't exist! */
-		 std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
-		 std::cerr<<"No such file or directory"<<std::endl;
-		 free(cpy);
-		 return -1;
-	  } else if (!s.empty()) {
-		 /* cd failed because... ¯\_(ツ)_/¯ */
-		 std::cerr<<u8"¯\\_(ツ)_/¯"<<std::endl;
-		 free(cpy);
-		 return -1;
-	  }
-    
-	  if (*s.c_str() && *s.c_str() != '/') {
-		 // we need to append the current directory.
-		 for (;s.back() == '/'; s.pop_back());
-		 s = std::string(getenv("PWD")) + "/" + s;
-	  } else if (!*s.c_str()) {
-		 for (;s.back() == '/'; s.pop_back());
-		 passwd * _passwd = getpwuid(getuid());
-		 std::string user_home = _passwd->pw_dir;
-		 free(cpy);
-		 return chdir(user_home.c_str());
-	  } for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
-	  free(cpy);
-	  return chdir(s.c_str());
-   };
-
-   // Print contents of Command data structure
-   char * dbg = getenv("SHELL_DBG");
-   if (dbg && !strcmp(dbg, "YES")) print();
-
-   char * lolz = getenv("LOLZ");
-   if (lolz && !strcmp(lolz, "YES")) {
-	  /// Because why not?
-	  std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
-	  char * _ptr = strdup("lolcat");
-	  lul->insertArgument(_ptr);
-	  free(_ptr);
-	  if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
-		  strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
-		  strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
-		  strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
-		  strcmp(simpleCommands.back().get()->arguments[0], "unsetenv")) {
-		 this->insertSimpleCommand(lul);
-	  }
-   }
+  char * lolz = getenv("LOLZ");
+  if (lolz && !strcmp(lolz, "YES")) {
+	/// Because why not?
+	std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
+	char * _ptr = strdup("lolcat");
+	lul->insertArgument(_ptr);
+	free(_ptr);
+	if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
+		strcmp(simpleCommands.back().get()->arguments[0], "unsetenv")) {
+	  this->insertSimpleCommand(lul);
+	}
+  }
   
    // Add execution here
    // For every simple command fork a new process
@@ -582,6 +546,56 @@ void Command::setAlias(const char * _from, const char * _to)
    m_aliases[from] = split;
 }
 
+void Command::pushDir(const char * new_dir) {
+   char * _pwd = getenv("PWD");
+   
+   if (_pwd == NULL) {
+	  perror("pwd");
+	  return;
+   } else if (new_dir == NULL || *new_dir == '\0') {
+	  std::cerr<<"Invalid new directory!"<<std::endl;
+	  return;
+   }
+   
+   std::string curr_dir = std::string(getenv("PWD"));
+   std::string news(new_dir);
 
+   news = tilde_expand(news);
+   if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
 
+   wildcard_expand((char*)news.c_str());
+   
+   if(!wc_collector.size() && changedir(news)) {
+      m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
+   } else if(wc_collector.size()) {
+	  
+	  for (int y = wc_collector.size() - 1; y--; ) {
+		 auto x = wc_collector[y];
+		 if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
+	  } if (m_dir_stack.size()) {
+		 changedir(m_dir_stack[0]);
+		 m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
+		 m_dir_stack.push_back(curr_dir);
+	  } else goto clear_and_exit;
+   } else goto clear_and_exit;
+   
+   for(auto && a: m_dir_stack) std::cout<<a<<" ";
+   if(!m_dir_stack.empty()) std::cout<<std::endl;
+clear_and_exit:
+   wc_collector.clear();
+   wc_collector.shrink_to_fit();
+}
 
+void Command::popDir() {
+   if (!m_dir_stack.size()) {
+	  std::cerr<<"No directories left to pop!"<<std::endl;
+	  return;
+   }
+   
+   std::string dir = tilde_expand(m_dir_stack.front());
+   if(changedir(dir)) {
+      m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
+   }
+   for(auto && a: m_dir_stack) std::cout<<a<<" ";
+   std::cout<<std::endl;
+}
