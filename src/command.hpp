@@ -32,6 +32,7 @@
 
 /* File Includes */
 #include "shell-utils.hpp"
+#include "wildcard.hpp"
 
 /* Command Data Structure */
 struct SimpleCommand {
@@ -108,7 +109,7 @@ private:
    bool errSet = false;
    bool inSet  = false;
 
-   std::stack<std::string> m_dir_stack;
+   std::vector<std::string> m_dir_stack;
    
    std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
    std::vector<std::string> m_history;

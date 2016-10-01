@@ -558,11 +558,24 @@ void Command::pushDir(const char * new_dir) {
    }
    
    std::string curr_dir = std::string(getenv("PWD"));
-   m_dir_stack.push(curr_dir);
    std::string news(new_dir);
-   changedir(news);
+
+   news = tilde_expand(news);
+   if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
+
+   wildcard_expand((char*)news.c_str());
+   
+   if(!wc_collector.size() && changedir(news)) {
+      m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
+   } else if(wc_collector.size() && changedir(wc_collector[0])) {
+      m_dir_stack.insert(m_dir_stack.begin(), wc_collector.begin(), wc_collector.end());
+   } else goto clear_and_exit;
+   
    for(auto && a: m_dir_stack) std::cout<<a<<" ";
-   std::cout<<std::endl;
+   if(!m_dir_stack.empty()) std::cout<<std::endl;
+clear_and_exit:
+   wc_collector.clear();
+   wc_collector.shrink_to_fit();
 }
 
 void Command::popDir() {
@@ -571,9 +584,10 @@ void Command::popDir() {
 	  return;
    }
    
-   std::string dir = m_dir_stack.top();
-   changedir(dir);
-   m_dir_stack.pop();
+   std::string dir = tilde_expand(m_dir_stack.front());
+   if(changedir(dir)) {
+      m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
+   }
    for(auto && a: m_dir_stack) std::cout<<a<<" ";
    std::cout<<std::endl;
 }
