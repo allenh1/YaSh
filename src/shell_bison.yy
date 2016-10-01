@@ -73,7 +73,10 @@ command:
 			       Command::currentCommand.pushDir(strdup($2));
 				   delete[] $2;
                 }
-        |		POPD {
+        | PUSHD {
+	  	std::cerr<<"pushd: no provided directory"<<std::endl;
+	  }
+	| POPD {
 			       Command::currentCommand.popDir();
                 }
 		| 		NEWLINE { Command::currentCommand.prompt(); }

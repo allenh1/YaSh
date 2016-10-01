@@ -556,11 +556,13 @@ void Command::pushDir(const char * new_dir) {
 	  std::cerr<<"Invalid new directory!"<<std::endl;
 	  return;
    }
-
+   
    std::string curr_dir = std::string(getenv("PWD"));
    m_dir_stack.push(curr_dir);
    std::string news(new_dir);
    changedir(news);
+   for(auto && a: m_dir_stack) std::cout<<a<<" ";
+   std::cout<<std::endl;
 }
 
 void Command::popDir() {
@@ -572,4 +574,6 @@ void Command::popDir() {
    std::string dir = m_dir_stack.top();
    changedir(dir);
    m_dir_stack.pop();
+   for(auto && a: m_dir_stack) std::cout<<a<<" ";
+   std::cout<<std::endl;
 }
