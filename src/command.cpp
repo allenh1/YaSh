@@ -315,7 +315,7 @@ void Command::execute()
 			/* garauntee we have enough space */
 			char * replacement = (char*) calloc(curr_dir.size() -
 												replace_len +
-												replacement_len,
+												replacement_len + 1,
 												sizeof(char));
 			char * d = replacement;
 			/* copy up to the beginning of the substring */
