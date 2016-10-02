@@ -193,7 +193,7 @@ bool changedir(std::string & s) {
       passwd * _passwd = getpwuid(getuid());
       std::string user_home = _passwd->pw_dir;
       free(cpy);
-      return chdir(user_home.c_str());
+      return chdir(user_home.c_str()) == 0;
    } for(; *s.c_str() != '/' && s.back() == '/'; s.pop_back());
    free(cpy);
    return chdir(s.c_str()) == 0;
