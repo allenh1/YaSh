@@ -1,62 +1,58 @@
-*   [33m8301d35[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh
-[31m|[m[32m\[m  
-[31m|[m * [33m20760f7[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add changelog
-[31m|[m *   [33m2b5742e[m[33m ([m[1;31morigin/12-tab-complete-with-binaries[m[33m)[m Merge branch 'hunter-dev' into 'master'
-[31m|[m [33m|[m[34m\[m  
-* [33m|[m [34m|[m [33m1b3658d[m[33m ([m[1;31morigin/hunter-dev[m[33m, [m[1;32mhunter-dev[m[33m)[m Removed default C/C++ flags from autoconf.
-* [33m|[m [34m|[m [33m3f7c11f[m Added debug mode compile flags.
-[34m|[m [33m|[m[34m/[m  
-[34m|[m[34m/[m[33m|[m   
-* [33m|[m [33m90d2b01[m[33m ([m[1;31mgithub/hunter-dev[m[33m)[m Ready for merge
-* [33m|[m [33m1296347[m That's probably as good as we're gonna get on the multi-line editor.
-* [33m|[m [33m6f40609[m Still working on yacc file.
-* [33m|[m [33m1840b34[m Uhm. That was bad.
-* [33m|[m [33m49f552a[m Removed shift and reduce conflicts in the bison code and refactored.
-* [33m|[m [33ma669575[m Trying to reduce conflicts.
-* [33m|[m [33ma1682fb[m Continuing to refactor the shell-readline class.
-* [33m|[m [33mc461d65[m Making the readline class cleaner and more readable. Cause... it's gross.
-[33m|[m[33m/[m  
-*   [33mbecd7cf[m Merge branch '16-multi-line-editor' into 'master'
-[35m|[m[36m\[m  
-[35m|[m * [33mbe9628d[m[33m ([m[1;31morigin/16-multi-line-editor[m[33m)[m Re-indented and worked on backspace with multiple lines.
-[35m|[m * [33maa337af[m Backspace over two lines works!!!!!!!!!!
-[35m|[m * [33mc5bed0a[m This is hard.
-[35m|[m * [33me61e59a[m Moving function headers around so that Ubuntu doesn't complain.
-[35m|[m *   [33mc829ce7[m Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh into 16-multi-line-editor
-[35m|[m [1;31m|[m[1;32m\[m  
-[35m|[m * [1;32m|[m [33m960d568[m Working on multi-line editing.
-[35m|[m  [1;32m/[m  
-* [1;32m|[m [33mf81a44b[m[33m ([m[1;31morigin/current-stable[m[33m)[m Updated readme.
-[1;32m|[m[1;32m/[m  
-*   [33m6c82c6d[m[33m ([m[1;31morigin/21-pushd-and-popd[m[33m)[m Merge branch '25-multi-argument-cd' into 'master'
-[1;33m|[m[1;34m\[m  
-[1;33m|[m * [33m81f2dce[m Todo: write a test for this. Somehow, this isn't simple.
-[1;33m|[m * [33m3b407e0[m Actually, I don't think we necessarily need the global flag... I think that's a separate feature. So, if it is desired, please file as a separate issue. For now, I'm going to say close #25.
-[1;33m|[m * [33m19c776c[m Got the first part working. Going to add a global flag now.
-[1;33m|[m[1;33m/[m  
-* [33mb40b371[m Fixed the leak in wildcard!
-*   [33m24c74e6[m[33m ([m[1;33mtag: v0.0.4[m[33m, [m[1;31morigin/10-ctrl-z[m[33m)[m Merge branch '24-small-memory-leak' into 'master'
-[1;35m|[m[1;36m\[m  
-[1;35m|[m * [33mda6ef3b[m Ok. That should do it.
-[1;35m|[m * [33m2c42d13[m Ok. Pretty major changes. But, the leaks in #24 are fixed. The remaining leaks come from wildcard_expand, so @Anagabriel needs to look at what regcomp does. Cause apparently it calls malloc.
-[1;35m|[m[1;35m/[m  
-* [33mcf41b00[m The freaking tab v space thing.
-* [33m5115c89[m No idea.
-* [33m81ee416[m Forgot a label.
-* [33mee37809[m Adding tests to CI.
-* [33ma567e17[m Fixed the sorting order in the bison file.
-* [33m4f81b9e[m Added test cases.
-*   [33m1412094[m Merge branch '1-subshell' into 'master'
-[31m|[m[32m\[m  
-[31m|[m * [33m7937026[m FINALLY, Fix #1.
-[31m|[m * [33ma69a5fa[m Uh. Ya. So... Subshell is hard @Purdrew2
-[31m|[m[31m/[m  
-*   [33ma8e856f[m Merge branch '4-source' into 'master'
-[33m|[m[34m\[m  
-[33m|[m * [33m77f0e0e[m[33m ([m[1;33mtag: v0.0.4-rc[m[33m)[m Forgot to call free.
-[33m|[m * [33me19319c[m Fix #4.
-[33m|[m[33m/[m  
-* [33me6b773a[m Merge branch '22-yash-rc-file' into 'master'
-* [33mdd7ece9[m Added suppport for comments. This should Fix #22.
-* [33m68d081e[m Ok! Due to a good tip from Brian Hays, the rc file is running. Ready for tests.
-* [33ma05a70e[m Uh... @Purdrew2 or @Anagabriel ... Any ideas?
+Ana-Gabriel (3):
+      Moved changedir to shell-utils, and added pushd and popd. Fix #21
+      fixed the syntax error output for pushd,     and printed the stack after pushd and popd
+      fixed some shit. But there still needs to be something that tests whether     a name returned by wildcard is a directory or not
+
+Hunter Allen (6):
+      Trying to reduce conflicts.
+      Removed shift and reduce conflicts in the bison code and refactored.
+      Uhm. That was bad.
+      Fixed a small invalid read issue.
+      Fixing some small performance things.
+      bump to v0.0.5
+
+Hunter L. Allen (34):
+      Uh. Ya. So... Subshell is hard @Purdrew2
+      FINALLY, Fix #1.
+      Added test cases.
+      Fixed the sorting order in the bison file.
+      Adding tests to CI.
+      Forgot a label.
+      No idea.
+      The freaking tab v space thing.
+      Ok. Pretty major changes. But, the leaks in #24 are fixed. The remaining leaks come from wildcard_expand, so @Anagabriel needs to look at what regcomp does. Cause apparently it calls malloc.
+      Ok. That should do it.
+      Fixed the leak in wildcard!
+      Got the first part working. Going to add a global flag now.
+      Actually, I don't think we necessarily need the global flag... I think that's a separate feature. So, if it is desired, please file as a separate issue. For now, I'm going to say close #25.
+      Todo: write a test for this. Somehow, this isn't simple.
+      Working on multi-line editing.
+      Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh into 16-multi-line-editor
+      Moving function headers around so that Ubuntu doesn't complain.
+      This is hard.
+      Backspace over two lines works!!!!!!!!!!
+      Re-indented and worked on backspace with multiple lines.
+      Updated readme.
+      Making the readline class cleaner and more readable. Cause... it's gross.
+      Continuing to refactor the shell-readline class.
+      Still working on yacc file.
+      That's probably as good as we're gonna get on the multi-line editor.
+      Ready for merge
+      Added debug mode compile flags.
+      Removed default C/C++ flags from autoconf.
+      Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh
+      Added CHANGELOG
+      Tab complete over binaries works for exact matches.
+      Production for #12
+      Fixed small issue with the pushd and popd with wildcards.
+      Merge !25. Close #21
+
+Hunter L. allen (7):
+      Merge branch '1-subshell' into 'master'
+      Merge branch '24-small-memory-leak' into 'master'
+      Merge branch '25-multi-argument-cd' into 'master'
+      Merge branch '16-multi-line-editor' into 'master'
+      Merge branch 'hunter-dev' into 'master'
+      Add changelog
+      Merge branch '12-tab-complete-with-binaries' into 'master'
+
