@@ -293,12 +293,16 @@ void Command::execute()
 			/* Desired replacement wasn't found, so error and exit */
 			if (sub == NULL) {
 			   perror("cd");
-		  
+
+			   free(to_replace);
+			   free(replace_to);
+			   free(replace_in);
+			   
 			   dup2(tmpin, 0);  close(tmpin);
 			   dup2(tmpout, 1); close(tmpout);
 			   dup2(tmperr, 2); close(tmperr);
 		  
-			   clear(); prompt();
+			   clear(); prompt(); return;
 			}
 
 			register size_t replace_len     = strlen(to_replace);
@@ -306,11 +310,14 @@ void Command::execute()
 
 			if (!(replace_len && replacement_len)) {
 			   std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
+
+			   free(to_replace); free(replace_in); free(replace_to);
+			   
 			   dup2(tmpin, 0);  close(tmpin);
 			   dup2(tmpout, 1); close(tmpout);
 			   dup2(tmperr, 2); close(tmperr);
 		  
-			   clear(); prompt();
+			   clear(); prompt(); return;
 			}
 			/* garauntee we have enough space */
 			char * replacement = (char*) calloc(curr_dir.size() -
@@ -332,19 +339,18 @@ void Command::execute()
 			free(to_replace); free(replace_to); free(replace_in);
 
 			std::string new_dir(replacement); free(replacement);
-			if (changedir(new_dir)) {
+			if (!changedir(new_dir)) {
 			   perror("cd");
 		  
 			   dup2(tmpin, 0);  close(tmpin);
 			   dup2(tmpout, 1); close(tmpout);
 			   dup2(tmperr, 2); close(tmperr);
 		  
-			   clear(); prompt();
+			   clear(); prompt(); return;
 			}
 		 } else if (curr.size() == 2) {
 			std::string _empty = "";
-			cd = changedir(_empty);
-			if (cd != 0) {
+			if (!changedir(_empty)) {
 			   perror("cd");
 		  
 			   dup2(tmpin, 0);
@@ -368,8 +374,7 @@ void Command::execute()
 			} else new_dir = std::string(d_args[1]);
 
 			for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back());
-			cd = changedir(new_dir);
-			if (cd == 0) setenv("PWD", new_dir.c_str(), 1);
+			if (changedir(new_dir)) setenv("PWD", new_dir.c_str(), 1);
 		 }
 		 setenv("PWD", curr_dir.c_str(), 1);
 		 // Regardless of errors, cd has finished.
