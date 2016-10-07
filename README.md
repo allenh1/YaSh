@@ -45,7 +45,7 @@ If you don't like the shell, you can remove it pretty easily.
 
 Usage:
 ======
-To run the installed shell, just type "hsh" in your terminal.
+To run the installed shell, just type "yash" in your terminal.
 
 ```
  $ yash
