@@ -15,14 +15,24 @@ as below.
 
 Installation:
 =============
-Installation is very simple.
+Installation is as you would expect (well, for a source installation).
 
 ```
  $ ./autogen.sh
- $ autoconf
  $ ./configure --prefix=<prefix>
  $ make
  $ sudo make install
+```
+
+If you are installing it in your home directory (you know, if you're at school
+or something), then you might do the following instead.
+
+```
+ $ ./autogen.sh
+ $ echo "export PATH=~/bin:${PATH}" >> ~/.bashrc
+ $ ./configure --prefix=${HOME}
+ $ make
+ $ make install
 ```
 
 Uninstall:
@@ -50,9 +60,9 @@ In YaSh, one can...
  * tab to do tab completion
  * ctrl + c to send a kill signal to a process
  * ctrl + d to delete a character (backspace and delete keys also work)
- * ctrl + <right arrow> to go to the next space
- * ctrl + <left arrow>  to go to the previous space. 
-* use arrow keys to move through history
+ * ctrl + right arrow to go to the next space
+ * ctrl + left arrow  to go to the previous space. 
+ * use arrow keys to move through history
 
 History:
 ========
