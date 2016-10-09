@@ -33,6 +33,7 @@ int yyparse();
 void yyrestart (FILE * in);
 void yyerror(const char * s);
 
+static read_line reader;
 %}
 
 %%

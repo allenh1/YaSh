@@ -27,153 +27,69 @@
 #include <cctype>
 #include <mutex>
 #include <stack>
-
 /** Include wildcards for tab completion **/
 #include "wildcard.hpp"
 #include "command.hpp"
-
-#define STANDARD 572
-#define SOURCE 5053
 
 extern FILE * yyin;
 extern void yyrestart(FILE*);
 extern int yyparse();
 
-static class readLine
+bool write_with_error(int _fd, char & c);
+bool write_with_error(int _fd, const char * s);
+bool write_with_error(int _fd, const char * s, const size_t & len);
+
+bool read_with_error(int _fd, char & c);
+size_t get_term_width();
+
+class read_line
 {
 public:
-   readLine() { m_get_mode = 1; }
-
-   /** 
-	* Wrapper for the write function, given a character.
-	* 
-	* @param _fd File descriptor on which to write.
-	* @param c Character to write.
-	* 
-	* @return True upon successful write.
-	*/
-   bool write_with_error(int _fd, char c) {
-	  if (!write(_fd, &c, 1)) {
-		 perror("write");
-		 return false;
-	  } return true;
-   }
-
-   /** 
-	* Wrapper for the write function, given a C string.
-	*
-	* This function writes the contents of s to the
-	* provided file descriptor. This function will
-	* write to the first occurance of a null character,
-	* as it calls strlen to determine the length.
-	* For those strings whose length, is known, see
-	* @see write_with_error(int _fd, const char *& s, size_t len).
-	* 
-	* @param _fd File descriptor on which to write.
-	* @param s String to write.
-	* 
-	* @return True upon successful write.
-	*/
-   inline bool write_with_error(const int & _fd, const char * s) {
-	  if (write(_fd, s, strlen(s)) != strlen(s)) {
-		 perror("write");
-		 return false;
-	  } return true;
-   }
-
-   /** 
-	* Wrapper for the write function, given a C string
-	* and a number of characters.
-	*
-	* This function writes len bytes of s to the
-	* provided file descriptor.
-	* 
-	* @param _fd File descriptor on which to write.
-	* @param s String to write.
-	* @param len Number of bytes of s to write.
-	* 
-	* @return True upon successful write.
-	*/
-   inline bool write_with_error(const int & _fd, const char * s, size_t len) {
-	  if (write(_fd, s, len) != len) {
-		 perror("write");
-		 return false;
-	  } return true;
-   }
-
-   /** 
-	* Wrapper for the read function, given a char &
-	* in which to store the char and a file descriptor
-	* from which we read it.
-	* 
-	* @param _fd File descriptor from which to read.
-	* @param c Character to store the read character.
-	* 
-	* @return True upon successful read.
-	*/
-   inline bool read_with_error(const int & _fd, char & c) {
-	  char d; /* temp, for reading */
-	  if (!read(0, &d, 1)) {
-		 perror("read");
-		 return false;
-	  } else return (c = d), true;
-   }
-
-   /** 
-	* Wrapper function for getting the width
-	* of the terminal using ioctl.
-	* 
-	* @return Number of columns in the terminal.
-	*/
-   inline size_t get_term_width() {
-	  struct winsize w;
-	  ioctl(1, TIOCGWINSZ, &w);
-	  return w.ws_col;
-   }
+	read_line() { m_get_mode = 1; }
    
-   void operator() () {
-	  // Raw mode
-	  char input;
-	  std::string _line = "";
+	void operator() () {
+		// Raw mode
+		char input;
+		std::string _line = "";
 
-	  // Read in the next character
-	  for (; true ;) {
-		 /* If you can't read from 0, don't continue! */
-		 if (!read_with_error(0, input)) break;
+		// Read in the next character
+		for (; true ;) {
+			/* If you can't read from 0, don't continue! */
+			if (!read_with_error(0, input)) break;
 
-		 // Echo the character to the screen
-		 if (input >= 32 && input != 127) {
-			// Character is printable
-			if (input == '!') {
-			   if (!write_with_error(0, '!')) continue;
+			// Echo the character to the screen
+			if (input >= 32 && input != 127) {
+				// Character is printable
+				if (input == '!') {
+					if (!write_with_error(0, "!")) continue;
 
-			   /* Check for "!!" and "!-<n>" */
-			   if (!m_history.size()) {
-				  _line += input;
-				  continue;
-			   }
+					/* Check for "!!" and "!-<n>" */
+					if (!m_history.size()) {
+						_line += input;
+						continue;
+					}
 	  
-			   char ch1;
-			   /* read next char from stdin */
-			   if (!read_with_error(0, ch1)) continue;
+					char ch1;
+					/* read next char from stdin */
+					if (!read_with_error(0, ch1)) continue;
 
-			   /* print newline and stop looping */
-			   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
+					/* print newline and stop looping */
+					if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
 			   
-			   else if (ch1 == '!') {
-				  // "!!" = run prior command
-				  if (!write_with_error(1, "!", 1)) continue;
+					else if (ch1 == '!') {
+						// "!!" = run prior command
+						if (!write_with_error(1, "!", 1)) continue;
 
-				  _line += m_history[m_history.size() - 1];
-				  _line.pop_back();
-				  m_show_line = true;
-				  continue;
-			   } else if (ch1 == '-') {
-				  if (!write_with_error(1, "-", 1)) continue;
+						_line += m_history[m_history.size() - 1];
+						_line.pop_back();
+						m_show_line = true;
+						continue;
+					} else if (ch1 == '-') {
+						if (!write_with_error(1, "-", 1)) continue;
 
-				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+						auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
 				  
-				  /* "!-<n>" = run what I did n commands ago. */
+/* "!-<n>" = run what I did n commands ago. */
 				  char * buff = (char*) alloca(20); char * b;
 				  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
 				  int n = atoi(buff); bool run_cmd = false;
@@ -805,7 +721,7 @@ public:
       
 	  std::string returning;
 	  returning = m_history[m_history.size() - 1];
-	  if (m_mode == SOURCE) m_history.pop_back();
+	  m_history.pop_back();
 	  char * ret = (char*) calloc(returning.size() + 1, sizeof(char));
 	  strncpy(ret, returning.c_str(), returning.size());
 	  ret[returning.size()] = '\0';
@@ -826,8 +742,6 @@ public:
    void unset_tty_raw_mode() {
 	  tcsetattr(0, TCSAFLUSH, &oldtermios);
    }
-
-   void setMode(const int & _mode) { m_mode = _mode; }
 
    void setFile(const std::string & _filename) {
 	  std::string expanded_home = tilde_expand(_filename.c_str());
@@ -865,9 +779,8 @@ private:
    int fdin = 0;
    std::string m_filename;
    std::ifstream * m_ifstream;
-   volatile int m_mode = STANDARD;
    int m_get_mode;
    bool m_show_line = false;
    termios oldtermios;
-} reader;
+};
 #endif

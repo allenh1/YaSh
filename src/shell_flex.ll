@@ -1,17 +1,17 @@
 %{
 #include <string.h>
 #include "shell_bison.hh"
-
-/******************* Input From read-shell ************************/
 #include "shell-readline.hpp"
+/******************* Input From read-shell ************************/
 #include <unistd.h>
-static char * lastLine = NULL;
+	static char * lastLine = NULL;
+	static read_line reader;
 // extern FILE * yyin;
 
 int mygetc (FILE * f) {
-static readLine reader;
 static char * p = NULL;
 static int get_file = 0;
+
 char ch;
 
 if (!isatty(0)) return getc(f);
