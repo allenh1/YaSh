@@ -35,59 +35,59 @@ extern FILE * yyin;
 extern void yyrestart(FILE*);
 extern int yyparse();
 
-bool write_with_error(int _fd, char & c);
-bool write_with_error(int _fd, const char * s);
-bool write_with_error(int _fd, const char * s, const size_t & len);
-
-bool read_with_error(int _fd, char & c);
-size_t get_term_width();
-
 class read_line
 {
 public:
-	read_line() { m_get_mode = 1; }
-   
-	void operator() () {
-		// Raw mode
-		char input;
-		std::string _line = "";
+   read_line() { m_get_mode = 1; }
 
-		// Read in the next character
-		for (; true ;) {
-			/* If you can't read from 0, don't continue! */
-			if (!read_with_error(0, input)) break;
+   bool write_with_error(int _fd, char & c);
+   bool write_with_error(int _fd, const char * s);
+   bool write_with_error(int _fd, const char * s, const size_t & len);
 
-			// Echo the character to the screen
-			if (input >= 32 && input != 127) {
-				// Character is printable
-				if (input == '!') {
-					if (!write_with_error(0, "!")) continue;
+   bool read_with_error(int _fd, char & c);
+   size_t get_term_width();
 
-					/* Check for "!!" and "!-<n>" */
-					if (!m_history.size()) {
-						_line += input;
-						continue;
-					}
+   void operator() () {
+	  // Raw mode
+	  char input;
+	  std::string _line = "";
+
+	  // Read in the next character
+	  for (; true ;) {
+		 /* If you can't read from 0, don't continue! */
+		 if (!read_with_error(0, input)) break;
+
+		 // Echo the character to the screen
+		 if (input >= 32 && input != 127) {
+			// Character is printable
+			if (input == '!') {
+			   if (!write_with_error(0, "!")) continue;
+
+			   /* Check for "!!" and "!-<n>" */
+			   if (!m_history.size()) {
+				  _line += input;
+				  continue;
+			   }
 	  
-					char ch1;
-					/* read next char from stdin */
-					if (!read_with_error(0, ch1)) continue;
+			   char ch1;
+			   /* read next char from stdin */
+			   if (!read_with_error(0, ch1)) continue;
 
-					/* print newline and stop looping */
-					if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
+			   /* print newline and stop looping */
+			   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
 			   
-					else if (ch1 == '!') {
-						// "!!" = run prior command
-						if (!write_with_error(1, "!", 1)) continue;
+			   else if (ch1 == '!') {
+				  // "!!" = run prior command
+				  if (!write_with_error(1, "!", 1)) continue;
 
-						_line += m_history[m_history.size() - 1];
-						_line.pop_back();
-						m_show_line = true;
-						continue;
-					} else if (ch1 == '-') {
-						if (!write_with_error(1, "-", 1)) continue;
+				  _line += m_history[m_history.size() - 1];
+				  _line.pop_back();
+				  m_show_line = true;
+				  continue;
+			   } else if (ch1 == '-') {
+				  if (!write_with_error(1, "-", 1)) continue;
 
-						auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
 				  
 /* "!-<n>" = run what I did n commands ago. */
 				  char * buff = (char*) alloca(20); char * b;

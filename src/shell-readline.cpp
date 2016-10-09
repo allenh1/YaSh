@@ -8,7 +8,7 @@
  * 
  * @return True upon successful write.
  */
-bool write_with_error(int _fd, char & c) {
+bool read_line::write_with_error(int _fd, char & c) {
    if (!write(_fd, &c, 1)) {
 	  perror("write");
 	  return false;
@@ -30,7 +30,7 @@ bool write_with_error(int _fd, char & c) {
  * 
  * @return True upon successful write.
  */
-bool write_with_error(int _fd, const char * s) {
+bool read_line::write_with_error(int _fd, const char * s) {
    if (write(_fd, s, strlen(s)) != strlen(s)) {
 	  perror("write");
 	  return false;
@@ -50,7 +50,7 @@ bool write_with_error(int _fd, const char * s) {
  * 
  * @return True upon successful write.
  */
-bool write_with_error(int _fd, const char * s, const size_t & len) {
+bool read_line::write_with_error(int _fd, const char * s, const size_t & len) {
    if (write(_fd, s, len) != len) {
 	  perror("write");
 	  return false;
@@ -67,7 +67,7 @@ bool write_with_error(int _fd, const char * s, const size_t & len) {
  * 
  * @return True upon successful read.
  */
-bool read_with_error(int _fd, char & c) {
+bool read_line::read_with_error(int _fd, char & c) {
    char d; /* temp, for reading */
    if (!read(0, &d, 1)) {
 	  perror("read");
@@ -81,7 +81,7 @@ bool read_with_error(int _fd, char & c) {
  * 
  * @return Number of columns in the terminal.
  */
-size_t get_term_width() {
+size_t read_line::get_term_width() {
    struct winsize w;
    ioctl(1, TIOCGWINSZ, &w);
    return w.ws_col;
