@@ -25,7 +25,6 @@
 #include <thread>
 #include <vector>
 #include <cctype>
-#include <mutex>
 #include <stack>
 /** Include wildcards for tab completion **/
 #include "wildcard.hpp"
@@ -46,6 +45,12 @@ public:
 
    bool read_with_error(int _fd, char & c);
    size_t get_term_width();
+
+   bool handle_enter(std::string & _line, char & input);
+   
+   bool handle_ctrl_a(std::string & _line);
+   bool handle_ctrl_d(std::string & _line);
+   bool handle_ctrl_e(std::string & _line);
 
    void operator() () {
 	  // Raw mode
@@ -149,91 +154,15 @@ public:
 			   if (!write_with_error(1, input)) continue;
 			}
 		 } else if (input == 10) {
-			// Enter was typed
-			if (m_buff.size()) {
-			   char ch;
-			   for (; m_buff.size();) {
-				  ch = m_buff.top(); m_buff.pop();
-				  _line += ch;
-				  if (!write_with_error(1, ch)) continue;
-			   }
-			} if (!write_with_error(1, input)) continue;
-			history_index = m_history.size();
-			break;
+			if (handle_enter(_line, input)) break;
+			else continue;
 		 } else if (input == 1) {
-			// Control A
-			if (!_line.size()) continue;
-
-			register size_t term_width = get_term_width();
-			
-			for (; _line.size();) {
-			   m_buff.push(_line.back()); _line.pop_back();
-			   /* Next check if we need to go up */
-			   /* @todo this does not quite work -- but it's close */
-			   if (_line.size() == term_width) {
-				  if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) continue;
-				  else if (!write_with_error(1, _line.c_str(), term_width - 3)) continue;
-
-				  for (size_t k = 0; k < term_width - 2; ++k)
-					 if (!write_with_error(1, "\b", 1)) break;
-			   } else if (!write_with_error(1, "\b", 1)) continue;
-			}
-		 } else if (input == 5) {
-			// Control E
-			char ctrle[m_buff.size() + 1];
-			size_t len = m_buff.size();
-			memset(ctrle, 0, m_buff.size() + 1);
-
-			for (char * d = ctrle; m_buff.size();) {
-			   *(d) = m_buff.top(); m_buff.pop();
-			   _line += *(d++);
-			}
-
-			if (!write_with_error(1, ctrle, len)) continue;
-		 } else if (input == 4) {
-			// Control D
-			if (!m_buff.size()) continue;
-			if (!_line.size()) {
-			   m_buff.pop();
-			   std::stack<char> temp = m_buff;
-			   for (char d = 0; temp.size();)
-				  if (write(1, &(d = (temp.top())), 1)) temp.pop();
-	  
-			   if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
-			   for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
-			   continue;
-			}
-	
-			if (m_buff.size()) {
-			   // Buffer!
-			   std::stack<char> temp = m_buff;
-			   temp.pop();
-			   for (char d = 0; temp.size(); ) {
-				  d = temp.top(); temp.pop();
-				  if (!write(1, &d, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			   char b = ' ';
-			   if (!write(1, &b, 1)) {
-				  perror ("write");
-				  continue;
-			   } b = '\b';
-			   if (!write(1, &b, 1)) {
-				  perror("write");
-				  continue;
-			   } m_buff.pop();
-			   /* Move cursor to current position. */
-			   for (size_t x = 0; x < m_buff.size(); ++x) {
-				  if (!write(1, &b, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			} else continue;
-			if ((size_t)history_index == m_history.size()) m_current_line_copy.pop_back();
-		 } else if (input == 11) {
+			if (handle_ctrl_a(_line)) break;
+			else continue;
+		 }
+		 else if (input == 5 && !handle_ctrl_e(_line)) continue;
+		 else if (input == 4 && !handle_ctrl_d(_line)) continue;
+		 else if (input == 11) {
 			/// Control K
 			if (!m_buff.size()) continue;
 			size_t count = m_buff.size() + 1;
