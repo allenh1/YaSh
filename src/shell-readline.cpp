@@ -420,3 +420,34 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
 			  ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0););
    } return true;
 }
+
+/** 
+ * Handle ctrl + k
+ *
+ * ctrl + k clears the remaining
+ * parts of the line.
+ * 
+ * @param _line Current line.
+ * 
+ * @return False upon error. 
+ */
+bool read_line::handle_ctrl_k(std::string & _line)
+{
+   if (!m_buff.size()) return false;
+   size_t count = m_buff.size() + 1;
+   /* Clear the stack. On its own thread. */
+   std::thread stack_killer([this](){
+		 for(;m_buff.size();m_buff.pop());
+	  }); stack_killer.detach();
+
+   char * spaces = (char*) malloc(count + 1);
+   char * bspaces = (char*) malloc(count + 1);
+
+   memset(spaces, ' ', count); spaces[count] = '\0';
+   memset(bspaces, '\b', count); bspaces[count] = '\0';
+
+   if (!write_with_error(1, spaces, count)) return false;
+   else if (!write_with_error(1, bspaces, count)) return false;
+
+   return true;
+}

@@ -52,6 +52,8 @@ public:
    bool handle_ctrl_a(std::string & _line);
    bool handle_ctrl_d(std::string & _line);
    bool handle_ctrl_e(std::string & _line);
+   bool handle_ctrl_k(std::string & _line);
+   
    bool handle_ctrl_arrow(std::string & _line);
    
    void operator() () {
@@ -164,24 +166,8 @@ public:
 		 }
 		 else if (input == 5 && !handle_ctrl_e(_line)) continue;
 		 else if (input == 4 && !handle_ctrl_d(_line)) continue;
-		 else if (input == 11) {
-			/// Control K
-			if (!m_buff.size()) continue;
-			size_t count = m_buff.size() + 1;
-			/// Clear the stack. On its own thread.
-			std::thread stack_killer([this](){
-				  for(;m_buff.size();m_buff.pop());
-			   }); stack_killer.detach();
-			char * spaces = (char*) malloc(count + 1);
-			char * bspaces = (char*) malloc(count + 1);
-			memset(spaces, ' ', count); spaces[count] = '\0';
-			memset(bspaces, '\b', count); bspaces[count] = '\0';
-			if (write(1, spaces, count) != (int) count) {
-			   std::cerr<<"Could not write spaces to stdout"<<std::endl;
-			} else if (write(1, bspaces, count) != (int) count) {
-			   std::cerr<<"count not write backspaces to stdout!"<<std::endl;
-			}
-		 } else if (input == 8 || input == 127) {
+		 else if (input == 11 && !handle_ctrl_k(_line)) continue;
+		 else if (input == 8 || input == 127) {
 			/* backspace */
 			if (!_line.size()) continue;
 
