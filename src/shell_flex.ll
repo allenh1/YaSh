@@ -5,34 +5,33 @@
 /******************* Input From read-shell ************************/
 #include <unistd.h>
 	static char * lastLine = NULL;
-	static read_line reader;
-// extern FILE * yyin;
+//	read_line read_line::reader;
 
 int mygetc (FILE * f) {
-static char * p = NULL;
-static int get_file = 0;
-
-char ch;
-
-if (!isatty(0)) return getc(f);
-if (p == NULL || *p == 0) {
-if (lastLine != NULL) free(lastLine);
-if (get_file) {
-p = reader.getStashed();
-get_file = 0;
-lastLine = p;
-} else {
-reader.tty_raw_mode();
-reader();
-reader.unset_tty_raw_mode();
-p = reader.get();
-lastLine = p;
-}
-}
-ch = *p;
-++p;
-
-return ch;
+	static char * p = NULL;
+	static int get_file = 0;
+	
+	char ch;
+	
+	if (!isatty(0)) return getc(f);
+	if (p == NULL || *p == 0) {
+		if (lastLine != NULL) free(lastLine);
+		if (get_file) {
+			p = read_line::reader.getStashed();
+			get_file = 0;
+			lastLine = p;
+		} else {
+			read_line::reader.tty_raw_mode();
+			read_line::reader();
+			read_line::reader.unset_tty_raw_mode();
+			p = read_line::reader.get();
+			lastLine = p;
+		}
+	}
+	ch = *p;
+	++p;
+	
+	return ch;
 }
 
 #undef getc

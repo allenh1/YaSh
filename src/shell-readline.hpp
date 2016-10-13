@@ -73,7 +73,7 @@ public:
 			   if (!write_with_error(0, "!")) continue;
 
 			   /* Check for "!!" and "!-<n>" */
-			   if (!m_history.size()) {
+			   if (!read_line::m_history.size()) {
 				  _line += input;
 				  continue;
 			   }
@@ -89,7 +89,7 @@ public:
 				  // "!!" = run prior command
 				  if (!write_with_error(1, "!", 1)) continue;
 
-				  _line += m_history[m_history.size() - 1];
+				  _line += read_line::m_history[read_line::m_history.size() - 1];
 				  _line.pop_back();
 				  m_show_line = true;
 				  continue;
@@ -104,8 +104,8 @@ public:
 				  int n = atoi(buff); bool run_cmd = false;
 				  if (*b=='\n') run_cmd = true;
 				  if (n > 0) {
-					 int _idx = m_history.size() - n;
-					 _line += m_history[(_idx >= 0) ? _idx : 0];
+					 int _idx = read_line::m_history.size() - n;
+					 _line += read_line::m_history[(_idx >= 0) ? _idx : 0];
 					 _line.pop_back();
 					 m_show_line = true;
 					 if (run_cmd) {
@@ -118,7 +118,7 @@ public:
 							  if (!write_with_error(1, ch)) continue;
 						   }
 						}
-						history_index = m_history.size();
+						history_index = read_line::m_history.size();
 						break;
 					 }
 				  }
@@ -152,7 +152,7 @@ public:
 			   }
 			} else {
 			   _line += input;
-			   if ((size_t)history_index == m_history.size())
+			   if ((size_t)history_index == read_line::m_history.size())
 				  m_current_line_copy += input;
 			   /* Write to screen */
 			   if (!write_with_error(1, input)) continue;
@@ -253,7 +253,7 @@ public:
 				  continue;
 			   }
 			   _line.pop_back();
-			} if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
+			} if ((size_t) history_index == read_line::m_history.size()) m_current_line_copy.pop_back();
 		 }
 		 else if (input == 9 && !handle_tab(_line)) continue;
 		 else if (input == 27) {	
@@ -314,12 +314,12 @@ public:
 						}
 					 }
 				  } else continue;
-				  if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
+				  if ((size_t) history_index == read_line::m_history.size()) m_current_line_copy.pop_back();
 			   }
 			} if (ch1 == 91 && ch2 == 65) {
 			   // This was an up arrow.
 			   // We will print the line prior from history.
-			   if (!m_history.size()) continue;
+			   if (!read_line::m_history.size()) continue;
 			   // if (history_index == -1) continue;
 			   // Clear input so far
 			   char ch[_line.size() + 1]; char sp[_line.size() + 1];
@@ -335,9 +335,9 @@ public:
 				  continue;
 			   }
 
-			   if ((size_t) history_index == m_history.size()) --history_index;
+			   if ((size_t) history_index == read_line::m_history.size()) --history_index;
 			   // Only decrement if we are going beyond the first command (duh).
-			   _line = m_history[history_index];
+			   _line = read_line::m_history[history_index];
 			   history_index = (!history_index) ? history_index : history_index - 1;
 			   // Print the line
 			   if (_line.size()) _line.pop_back();
@@ -349,8 +349,8 @@ public:
 			   // This was a down arrow.
 			   // We will print the line prior from history.
 	  
-			   if (!m_history.size()) continue;
-			   if ((size_t) history_index == m_history.size()) continue;
+			   if (!read_line::m_history.size()) continue;
+			   if ((size_t) history_index == read_line::m_history.size()) continue;
 			   // Clear input so far
 			   for (size_t x = 0, bsp ='\b'; x < _line.size(); ++x) {
 				  if (!write(1, &bsp, 1)) {
@@ -371,11 +371,11 @@ public:
 				  }
 			   }
 	  
-			   history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
+			   history_index = ((size_t) history_index == read_line::m_history.size()) ? read_line::m_history.size()
 				  : history_index + 1;
-			   if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
-			   else _line = m_history[history_index];
-			   if (_line.size() && (size_t) history_index != m_history.size()) _line.pop_back();
+			   if ((size_t) history_index == read_line::m_history.size()) _line = m_current_line_copy;
+			   else _line = read_line::m_history[history_index];
+			   if (_line.size() && (size_t) history_index != read_line::m_history.size()) _line.pop_back();
 			   // Print the line
 			   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
 				  perror("write");
@@ -438,8 +438,8 @@ public:
 	  }
 
 	  _line += (char) 10 + '\0';
-	  m_current_line_copy.clear();
-	  m_history.push_back(_line);
+	  read_line::reader.m_current_line_copy.clear();
+	  read_line::reader.read_line::m_history.push_back(_line);
    }
 
    char * getStashed() {
@@ -462,8 +462,8 @@ public:
 	  }
       
 	  std::string returning;
-	  returning = m_history[m_history.size() - 1];
-	  m_history.pop_back();
+	  returning = read_line::reader.read_line::m_history[read_line::m_history.size() - 1];
+	  read_line::reader.read_line::m_history.pop_back();
 	  char * ret = (char*) calloc(returning.size() + 1, sizeof(char));
 	  strncpy(ret, returning.c_str(), returning.size());
 	  ret[returning.size()] = '\0';
@@ -504,6 +504,7 @@ public:
 	  yyparse();
    }
 
+   static read_line reader;
 private:
    std::vector<std::string> string_split(std::string s, char delim) {
 	  std::vector<std::string> elems; std::stringstream ss(s);
