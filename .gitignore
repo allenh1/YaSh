@@ -31,3 +31,4 @@ test/csh-out
 test/hello world
 test/*.out
 test/*-out
+test/*-in
