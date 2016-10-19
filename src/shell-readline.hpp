@@ -44,6 +44,7 @@ public:
    size_t get_term_width();
 
    bool handle_enter(std::string & _line, char & input);
+   bool handle_backspace(std::string & _line);
    bool handle_tab(std::string & _line);
    
    bool handle_ctrl_a(std::string & _line);
@@ -164,94 +165,7 @@ public:
 		 else if (input == 5 && !handle_ctrl_e(_line)) continue;
 		 else if (input == 4 && !handle_ctrl_d(_line)) continue;
 		 else if (input == 11 && !handle_ctrl_k(_line)) continue;
-		 else if (input == 8 || input == 127) {
-			/* backspace */
-			if (!_line.size()) continue;
-
-			if (m_buff.size()) {
-			   // Buffer!
-			   char b = '\b';
-			   if (!write(1, &b, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   _line.pop_back();
-			   std::stack<char> temp = m_buff;
-			   for (char d = 0; temp.size(); ) {
-				  d = temp.top(); temp.pop();
-				  if (!write(1, &d, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			   b = ' ';
-			   if (!write(1, &b, 1)) {
-				  perror("write");
-				  continue;
-			   } b = '\b';
-		  
-			   if (!write(1, &b, 1)) {
-				  perror("write");
-				  continue;
-			   }
-
-			   /* get terminal width */
-			   register size_t term_width = get_term_width();
-			   register size_t line_size = _line.size() + m_buff.size() + 2;
-		  
-			   for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
-				  /* if the cursor is at the end of a line, print line up */
-				  if (line_size && (line_size % term_width == 0)) {
-					 /* need to go up a line */			  
-					 const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
-
-					 /* now we print the string */
-					 if (line_size == term_width) {	
-						if (!write(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) {
-						   /**
-							* @todo Make sure you print the correct prompt!
-							* this currently is not going to print that prompt.
-							*/
-						   perror("write");
-						   continue;
-						}  else if (!write(1, _line.c_str(), _line.size())) {
-						   perror("write");
-						   continue;
-						} else break;
-					 } else {
-						if (!write(1, "\033[1A \b", strlen("\033[1A \b"))) {
-						   perror("write");
-						   continue;
-						} else if (!write(1, _line.c_str() + (_line.size() - line_size),
-										  _line.size() - line_size)) {
-						   perror("write");
-						   continue;
-						}
-					 }
-				  } else if (!write(1, "\b", 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			} else {
-			   char ch = '\b';
-			   if (!write(1, &ch, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   ch = ' ';
-			   if (!write(1, &ch, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   ch = '\b';
-			   if (!write(1, &ch, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   _line.pop_back();
-			} if (((size_t) history_index == m_history.size()) && m_current_line_copy.size()) m_current_line_copy.pop_back();
-		 }
+		 else if ((input == 8 || input == 127) && !handle_backspace(_line)) continue;
 		 else if (input == 9 && !handle_tab(_line)) continue;
 		 else if (input == 27) {	
 			char ch1, ch2;

@@ -448,3 +448,55 @@ bool read_line::handle_ctrl_k(std::string & _line)
 
    return true;
 }
+
+bool read_line::handle_backspace(std::string & _line)
+{
+   /* backspace */
+   if (!_line.size()) return false;
+
+   if (m_buff.size()) {
+	  // Buffer!
+	  if (!write_with_error(1, "\b", 1)) return false;
+	  _line.pop_back();
+	  std::stack<char> temp = m_buff;
+	  for (char d = 0; temp.size(); ) {
+		 d = temp.top(); temp.pop();
+		 if (!write_with_error(1, d)) return false;
+	  }
+
+	  if (!write_with_error(1, " ", 1)) return false;
+	  else if (!write_with_error(1, "\b", 1)) return false;
+
+	  /* get terminal width */
+	  register size_t term_width = get_term_width();
+	  register size_t line_size = _line.size() + m_buff.size() + 2;
+		  
+	  for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
+		 /* if the cursor is at the end of a line, print line up */
+		 if (line_size && (line_size % term_width == 0)) {
+			/* need to go up a line */			  
+			const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
+
+			/* now we print the string */
+			if (line_size == term_width) {
+			   /**
+				* @todo Make sure you print the correct prompt!
+				* this currently is not going to print that prompt.
+				*/
+			   if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) return false;				  
+			   else if (!write_with_error(1, _line.c_str(), _line.size())) return false;			  
+			   else break;
+			} else {
+			   if (!write_with_error(1, "\033[1A \b")) return false;
+			   else if (!write_with_error(1, _line.c_str() + (_line.size() - line_size),
+										  _line.size() - line_size)) return false;
+			}
+		 } else if (!write_with_error(1, "\b", 1)) return false;
+	  }
+   } else {
+	  if (!write_with_error(1, "\b", 1)) return false;
+	  else if (!write_with_error(1, " ", 1)) return false;
+	  else if (!write_with_error(1, "\b", 1)) return false;
+	  _line.pop_back();
+   } if (((size_t) history_index == m_history.size()) && m_current_line_copy.size()) m_current_line_copy.pop_back();
+}
