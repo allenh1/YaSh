@@ -1,5 +1,4 @@
 #include "shell-readline.hpp"
-
 /** 
  * Wrapper for the write function, given a character.
  * 
@@ -105,7 +104,6 @@ bool read_line::handle_enter(std::string & _line, char & input)
    char ch;
    // Enter was typed
    if (m_buff.size()) {
-	  char ch;
 	  for (; m_buff.size();) {
 		 ch = m_buff.top(); m_buff.pop();
 		 _line += ch;
@@ -160,7 +158,6 @@ bool read_line::handle_ctrl_a(std::string & _line)
  */
 bool read_line::handle_ctrl_e(std::string & _line)
 {
-   // Control E
    char ctrle[m_buff.size() + 1];
    size_t len = m_buff.size();
    memset(ctrle, 0, m_buff.size() + 1);

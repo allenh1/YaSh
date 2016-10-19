@@ -1,14 +1,11 @@
-#ifndef KYBD_READ_THREAD
-#define KYBD_READ_THREAD
-/**
- * This is the keyboard callable. 
- * This example implements a more
- * C++-y version of read-line.c.
- */
+#ifndef __SHELL_READLINE_HPP__
+#define __SHELL_READLINE_HPP__
+/* Linux Includes */
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+
 #include <functional>
 #include <termios.h>
 #include <algorithm>
@@ -73,7 +70,7 @@ public:
 			   if (!write_with_error(0, "!")) continue;
 
 			   /* Check for "!!" and "!-<n>" */
-			   if (!read_line::m_history.size()) {
+			   if (!m_history.size()) {
 				  _line += input;
 				  continue;
 			   }
@@ -89,7 +86,7 @@ public:
 				  // "!!" = run prior command
 				  if (!write_with_error(1, "!", 1)) continue;
 
-				  _line += read_line::m_history[read_line::m_history.size() - 1];
+				  _line += m_history[m_history.size() - 1];
 				  _line.pop_back();
 				  m_show_line = true;
 				  continue;
@@ -98,14 +95,14 @@ public:
 
 				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
 				  
-/* "!-<n>" = run what I did n commands ago. */
+                  /* "!-<n>" = run what I did n commands ago. */
 				  char * buff = (char*) alloca(20); char * b;
 				  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
 				  int n = atoi(buff); bool run_cmd = false;
 				  if (*b=='\n') run_cmd = true;
 				  if (n > 0) {
-					 int _idx = read_line::m_history.size() - n;
-					 _line += read_line::m_history[(_idx >= 0) ? _idx : 0];
+					 int _idx = m_history.size() - n;
+					 _line += m_history[(_idx >= 0) ? _idx : 0];
 					 _line.pop_back();
 					 m_show_line = true;
 					 if (run_cmd) {
@@ -118,7 +115,7 @@ public:
 							  if (!write_with_error(1, ch)) continue;
 						   }
 						}
-						history_index = read_line::m_history.size();
+						history_index = m_history.size();
 						break;
 					 }
 				  }
@@ -152,7 +149,7 @@ public:
 			   }
 			} else {
 			   _line += input;
-			   if ((size_t)history_index == read_line::m_history.size())
+			   if ((size_t)history_index == m_history.size())
 				  m_current_line_copy += input;
 			   /* Write to screen */
 			   if (!write_with_error(1, input)) continue;
@@ -253,7 +250,7 @@ public:
 				  continue;
 			   }
 			   _line.pop_back();
-			} if ((size_t) history_index == read_line::m_history.size()) m_current_line_copy.pop_back();
+			} if (((size_t) history_index == m_history.size()) && m_current_line_copy.size()) m_current_line_copy.pop_back();
 		 }
 		 else if (input == 9 && !handle_tab(_line)) continue;
 		 else if (input == 27) {	
@@ -263,10 +260,10 @@ public:
 			else if (!read_with_error(0, ch2)) continue;
 		
 			/* handle ctrl + arrow key */
-			if (ch1 == 91 && ch2 == 49 && !handle_ctrl_arrow(_line)) continue;
+			if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;
 			
 			else if (ch1 == 91 && ch2 == 51) {
-			   // Maybe a delete key?
+			   /* delete key */			   
 			   char ch3;
 
 			   if (!read(0, &ch3, 1)) {
@@ -314,12 +311,13 @@ public:
 						}
 					 }
 				  } else continue;
-				  if ((size_t) history_index == read_line::m_history.size()) m_current_line_copy.pop_back();
+				  if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
 			   }
-			} if (ch1 == 91 && ch2 == 65) {
+			}
+			if (ch1 == 91 && ch2 == 65) {
 			   // This was an up arrow.
 			   // We will print the line prior from history.
-			   if (!read_line::m_history.size()) continue;
+			   if (!m_history.size()) continue;
 			   // if (history_index == -1) continue;
 			   // Clear input so far
 			   char ch[_line.size() + 1]; char sp[_line.size() + 1];
@@ -335,9 +333,9 @@ public:
 				  continue;
 			   }
 
-			   if ((size_t) history_index == read_line::m_history.size()) --history_index;
+			   if ((size_t) history_index == m_history.size()) --history_index;
 			   // Only decrement if we are going beyond the first command (duh).
-			   _line = read_line::m_history[history_index];
+			   _line = m_history[history_index];
 			   history_index = (!history_index) ? history_index : history_index - 1;
 			   // Print the line
 			   if (_line.size()) _line.pop_back();
@@ -349,8 +347,8 @@ public:
 			   // This was a down arrow.
 			   // We will print the line prior from history.
 	  
-			   if (!read_line::m_history.size()) continue;
-			   if ((size_t) history_index == read_line::m_history.size()) continue;
+			   if (!m_history.size()) continue;
+			   if ((size_t) history_index == m_history.size()) continue;
 			   // Clear input so far
 			   for (size_t x = 0, bsp ='\b'; x < _line.size(); ++x) {
 				  if (!write(1, &bsp, 1)) {
@@ -371,17 +369,18 @@ public:
 				  }
 			   }
 	  
-			   history_index = ((size_t) history_index == read_line::m_history.size()) ? read_line::m_history.size()
+			   history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
 				  : history_index + 1;
-			   if ((size_t) history_index == read_line::m_history.size()) _line = m_current_line_copy;
-			   else _line = read_line::m_history[history_index];
-			   if (_line.size() && (size_t) history_index != read_line::m_history.size()) _line.pop_back();
+			   if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
+			   else _line = m_history[history_index];
+			   if (_line.size() && (size_t) history_index != m_history.size()) _line.pop_back();
 			   // Print the line
 			   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
 				  perror("write");
 				  continue;
 			   }
-			} if (ch1 == 91 && ch2 == 67) {
+			}
+			if (ch1 == 91 && ch2 == 67) {
 			   /* Right Arrow Key */
 			   if (!m_buff.size()) continue;
 
@@ -433,13 +432,12 @@ public:
 			   }
 			   _line.pop_back();
 			}
-		 }
-      
+		 }      
 	  }
 
 	  _line += (char) 10 + '\0';
-	  read_line::reader.m_current_line_copy.clear();
-	  read_line::reader.read_line::m_history.push_back(_line);
+	  m_current_line_copy.clear();
+	  m_history.push_back(_line);
    }
 
    char * getStashed() {
@@ -462,8 +460,8 @@ public:
 	  }
       
 	  std::string returning;
-	  returning = read_line::reader.read_line::m_history[read_line::m_history.size() - 1];
-	  read_line::reader.read_line::m_history.pop_back();
+	  returning = m_history[m_history.size() - 1];
+	  /* returning.pop_back(); */
 	  char * ret = (char*) calloc(returning.size() + 1, sizeof(char));
 	  strncpy(ret, returning.c_str(), returning.size());
 	  ret[returning.size()] = '\0';
@@ -504,7 +502,6 @@ public:
 	  yyparse();
    }
 
-   static read_line reader;
 private:
    std::vector<std::string> string_split(std::string s, char delim) {
 	  std::vector<std::string> elems; std::stringstream ss(s);
@@ -517,12 +514,12 @@ private:
    std::string m_stashed;
    std::stack<char> m_buff;
    std::vector<std::string> m_path;
-   std::vector<std::string> m_history;
    ssize_t history_index = 0;
    int fdin = 0;
    std::string m_filename;
    std::ifstream * m_ifstream;
    int m_get_mode;
+   std::vector<std::string> m_history;
    bool m_show_line = false;
    termios oldtermios;
 };
