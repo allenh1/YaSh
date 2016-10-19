@@ -449,6 +449,7 @@ bool read_line::handle_ctrl_k(std::string & _line)
    return true;
 }
 
+
 bool read_line::handle_backspace(std::string & _line)
 {
    /* backspace */
@@ -499,4 +500,48 @@ bool read_line::handle_backspace(std::string & _line)
 	  else if (!write_with_error(1, "\b", 1)) return false;
 	  _line.pop_back();
    } if (((size_t) history_index == m_history.size()) && m_current_line_copy.size()) m_current_line_copy.pop_back();
+
+   return true;
 }
+
+bool read_line::handle_delete(std::string & _line)
+{
+   char ch3;
+
+   if (!read_with_error(0, ch3)) return false;
+
+   if (ch3 == 126) {
+	  if (!m_buff.size()) return false;
+	  if (!_line.size()) {
+		 m_buff.pop();
+		 std::stack<char> temp = m_buff;
+		 for (char d = 0; temp.size();) {
+			if (write_with_error(1, &(d = (temp.top())), 1)) temp.pop();
+			else return false;
+		 }
+		 if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
+		 for (int x = m_buff.size() + 1; x-- && write_with_error(1, "\b", 1););
+		 return false;
+	  }
+
+	  if (m_buff.size()) {
+		 // Buffer!
+		 std::stack<char> temp = m_buff;
+		 temp.pop();
+		 for (char d = 0; temp.size(); ) {
+			d = temp.top(); temp.pop();
+			if (!write_with_error(1, d)) return false;
+		 }
+		 char b = ' ';
+		 if (!write_with_error(1, " ", 1)) return false;
+		 else if (!write_with_error(1, "\b", 1)) return false;
+		 m_buff.pop();
+		 // Move cursor to current position.
+		 for (size_t x = 0; x < m_buff.size(); ++x) {
+			if (!write_with_error(1, "\b", 1)) return false;
+		 }
+	  } else return false;
+	  if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
+   } return true;
+}
+

@@ -45,6 +45,7 @@ public:
 
    bool handle_enter(std::string & _line, char & input);
    bool handle_backspace(std::string & _line);
+   bool handle_delete(std::string & _line);
    bool handle_tab(std::string & _line);
    
    bool handle_ctrl_a(std::string & _line);
@@ -176,58 +177,7 @@ public:
 			/* handle ctrl + arrow key */
 			if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;
 			
-			else if (ch1 == 91 && ch2 == 51) {
-			   /* delete key */			   
-			   char ch3;
-
-			   if (!read(0, &ch3, 1)) {
-				  perror("read");
-				  continue;
-			   }
-			   if (ch3 == 126) {
-				  if (!m_buff.size()) continue;
-				  if (!_line.size()) {
-					 m_buff.pop();
-					 std::stack<char> temp = m_buff;
-					 for (char d = 0; temp.size();)
-						if (write(1, &(d = (temp.top())), 1)) temp.pop();
-
-					 if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
-					 for (int x = m_buff.size() + 1; x -= write(1, "\b", 1););
-					 continue;
-				  }
-
-				  if (m_buff.size()) {
-					 // Buffer!
-					 std::stack<char> temp = m_buff;
-					 temp.pop();
-					 for (char d = 0; temp.size(); ) {
-						d = temp.top(); temp.pop();
-						if (!write(1, &d, 1)) {
-						   perror("write");
-						   continue;
-						}
-					 }
-					 char b = ' ';
-					 if (!write(1, &b, 1)) {
-						perror("write");
-						continue;
-					 } b = '\b';
-					 if (!write(1, &b, 1)) {
-						perror("write");
-						continue;
-					 } m_buff.pop();
-					 // Move cursor to current position.
-					 for (size_t x = 0; x < m_buff.size(); ++x) {
-						if (!write(1, &b, 1)) {
-						   perror("write");
-						   continue;
-						}
-					 }
-				  } else continue;
-				  if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
-			   }
-			}
+			else if (ch1 == 91 && ch2 == 51 && !handle_delete(_line)) continue;
 			if (ch1 == 91 && ch2 == 65) {
 			   // This was an up arrow.
 			   // We will print the line prior from history.
