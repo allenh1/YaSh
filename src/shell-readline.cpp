@@ -445,11 +445,16 @@ bool read_line::handle_ctrl_k(std::string & _line)
 
    if (!write_with_error(1, spaces, count)) return false;
    else if (!write_with_error(1, bspaces, count)) return false;
-
-   return true;
+   return false;
 }
 
-
+/** 
+ * Handle the backspace key.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
 bool read_line::handle_backspace(std::string & _line)
 {
    /* backspace */
@@ -504,6 +509,13 @@ bool read_line::handle_backspace(std::string & _line)
    return true;
 }
 
+/** 
+ * Handle the delete button.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
 bool read_line::handle_delete(std::string & _line)
 {
    char ch3;
@@ -545,3 +557,214 @@ bool read_line::handle_delete(std::string & _line)
    } return true;
 }
 
+/** 
+ * Handle the "!!" or "!-<n>" keys.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
+bool read_line::handle_bang(std::string & _line)
+{
+   if (!write_with_error(0, "!", 1)) return false;
+
+   /* Check for "!!" and "!-<n>" */
+   if (!m_history.size()) {
+	  _line += "!";
+	  return false;
+   }
+	  
+   char ch1;
+   /* read next char from stdin */
+   if (!read_with_error(0, ch1)) return false;
+
+   /* print newline and stop looping */
+   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) return true;			   
+   else if (ch1 == '!') {
+	  // "!!" = run prior command
+	  if (!write_with_error(1, "!", 1)) return false;
+
+	  _line += m_history[m_history.size() - 1];
+	  _line.pop_back();
+	  m_show_line = true;
+	  return false;
+   } else if (ch1 == '-') {
+	  if (!write_with_error(1, "-", 1)) return false;
+
+	  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
+				  
+/* "!-<n>" = run what I did n commands ago. */
+	  char * buff = (char*) alloca(20); char * b;
+	  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
+	  int n = atoi(buff); bool run_cmd = false;
+	  if (*b=='\n') run_cmd = true;
+	  if (n > 0) {
+		 int _idx = m_history.size() - n;
+		 _line += m_history[(_idx >= 0) ? _idx : 0];
+		 _line.pop_back();
+		 m_show_line = true;
+		 if (run_cmd) {
+			if (m_buff.size()) {
+			   char ch;
+			   for (; m_buff.size();) {
+				  ch = m_buff.top(); m_buff.pop();
+				  _line += ch;
+							  
+				  if (!write_with_error(1, ch)) return false;
+			   }
+			}
+			history_index = m_history.size();
+			return true;
+		 }
+	  }
+   } else {
+	  if (!write_with_error(1, ch1)) return false;
+	  _line += "!"; _line += ch1;
+	  return false;
+   }
+}
+
+/** 
+ * Handle the up arrow.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
+bool read_line::handle_up_arrow(std::string & _line)
+{
+   /* we will print the line prior from history. */
+   if (!m_history.size()) return false;
+
+   /* clear input so far */
+   char ch[_line.size() + 1]; char sp[_line.size() + 1];
+   memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
+   if (write(1, ch, _line.size()) != (int) _line.size()) {
+	  perror("write");
+	  return false;
+   } else if (write(1, sp, _line.size()) != (int) _line.size()) {
+	  perror("write");
+	  return false;
+   } else if (write(1, ch, _line.size()) != (int) _line.size()) {
+	  perror("write");
+	  return false;
+   }
+
+   if ((size_t) history_index == m_history.size()) --history_index;
+   /* only decrement if we are going beyond the first command (duh) */
+   _line = m_history[history_index];
+   history_index = (!history_index) ? history_index : history_index - 1;
+   /* print the line */
+   if (_line.size()) _line.pop_back();
+   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
+	  perror("write");
+	  return false;
+   }
+}
+
+/** 
+ * Handle the down arrow.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
+bool read_line::handle_down_arrow(std::string & _line)
+{
+   if (!m_history.size()) return false;
+   if ((size_t) history_index == m_history.size()) return false;
+   // Clear input so far
+   for (size_t x = 0; x < _line.size(); ++x) {
+	  if (!write_with_error(1, "\b", 1)) return false;
+   }
+  
+   for (size_t x = 0; x < _line.size(); ++x) {
+	  if (!write_with_error(1, " ", 1)) return false;
+   }
+  
+   for (size_t x = 0; x < _line.size(); ++x) {
+	  if (!write_with_error(1, "\b", 1)) return false;
+   }
+	  
+   history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
+	  : history_index + 1;
+   if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
+   else _line = m_history[history_index];
+   if (_line.size() && (size_t) history_index != m_history.size()) _line.pop_back();
+   // Print the line
+   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
+	  perror("write");
+	  return false;
+   }
+}
+
+/** 
+ * Handle the right arrow key.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
+bool read_line::handle_right_arrow(std::string & _line)
+{
+   /* Right Arrow Key */
+   if (!m_buff.size()) return false;
+
+   char wrt = m_buff.top();
+   if (!write(1, &wrt, 1)) {
+	  perror("write");
+	  return false;
+   }
+   _line += wrt; m_buff.pop();
+}
+
+/** 
+ * Handle the left arrow key.
+ * 
+ * @param _line Current line of text.
+ * 
+ * @return False to continue, true to break.
+ */
+bool read_line::handle_left_arrow(std::string & _line)
+{
+   if (!_line.size()) return false;
+   /* Left Arrow Key */
+
+   /* grab width of terminal */
+   struct winsize w;
+   ioctl(1, TIOCGWINSZ, &w);
+   size_t term_width = w.ws_col;
+
+   /* check if we need to go up a line */
+   /*  The plus 2 comes from the "$ "  */
+   if ((_line.size() == (term_width - 2))) {
+	  /* need to go up a line */		   
+	  const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
+
+	  /* now we print the string */
+	  if (!write(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) {
+		 /**
+		  * @todo Make sure you print the correct prompt!
+		  */
+		 perror("write");
+		 return false;
+	  } else if (!write(1, _line.c_str(), term_width - 2)) {
+		 perror("write");
+		 return false;
+	  }
+   } else if (!((_line.size() + 2) % (term_width))) {
+	  /* This case is for more than one line of backtrack */
+	  if (!write(1, "\033[1A \b", strlen("\033[1A \b"))) perror("write");
+	  else if (!write(1, _line.c_str() - 2 + (term_width  * ((_line.size() - 2) / term_width)), term_width)) {
+		 perror("write");
+		 return false;
+	  }
+   }
+   m_buff.push(_line.back());
+   char bsp = '\b';
+   if (!write(1, &bsp, 1)) {
+	  perror("write");
+	  return false;
+   }
+   _line.pop_back();
+}

@@ -45,6 +45,7 @@ public:
 
    bool handle_enter(std::string & _line, char & input);
    bool handle_backspace(std::string & _line);
+   bool handle_bang(std::string & _line);
    bool handle_delete(std::string & _line);
    bool handle_tab(std::string & _line);
    
@@ -54,7 +55,12 @@ public:
    bool handle_ctrl_k(std::string & _line);
    
    bool handle_ctrl_arrow(std::string & _line);
-   
+
+   bool handle_up_arrow(std::string & _line);
+   bool handle_down_arrow(std::string & _line);
+   bool handle_left_arrow(std::string & _line);
+   bool handle_right_arrow(std::string & _line);
+  
    void operator() () {
 	  // Raw mode
 	  char input;
@@ -68,65 +74,7 @@ public:
 		 // Echo the character to the screen
 		 if (input >= 32 && input != 127) {
 			// Character is printable
-			if (input == '!') {
-			   if (!write_with_error(0, "!")) continue;
-
-			   /* Check for "!!" and "!-<n>" */
-			   if (!m_history.size()) {
-				  _line += input;
-				  continue;
-			   }
-	  
-			   char ch1;
-			   /* read next char from stdin */
-			   if (!read_with_error(0, ch1)) continue;
-
-			   /* print newline and stop looping */
-			   if ((ch1 == '\n') && !write_with_error(1, "\n", 1)) break;
-			   
-			   else if (ch1 == '!') {
-				  // "!!" = run prior command
-				  if (!write_with_error(1, "!", 1)) continue;
-
-				  _line += m_history[m_history.size() - 1];
-				  _line.pop_back();
-				  m_show_line = true;
-				  continue;
-			   } else if (ch1 == '-') {
-				  if (!write_with_error(1, "-", 1)) continue;
-
-				  auto && is_digit = [](char b) { return '0' <= b && b <= '9'; };
-				  
-                  /* "!-<n>" = run what I did n commands ago. */
-				  char * buff = (char*) alloca(20); char * b;
-				  for (b=buff;read(0,b,1)&&write(1,b,1)&&is_digit(*b);*(++b+1)=0);
-				  int n = atoi(buff); bool run_cmd = false;
-				  if (*b=='\n') run_cmd = true;
-				  if (n > 0) {
-					 int _idx = m_history.size() - n;
-					 _line += m_history[(_idx >= 0) ? _idx : 0];
-					 _line.pop_back();
-					 m_show_line = true;
-					 if (run_cmd) {
-						if (m_buff.size()) {
-						   char ch;
-						   for (; m_buff.size();) {
-							  ch = m_buff.top(); m_buff.pop();
-							  _line += ch;
-							  
-							  if (!write_with_error(1, ch)) continue;
-						   }
-						}
-						history_index = m_history.size();
-						break;
-					 }
-				  }
-			   } else {
-				  if (!write_with_error(1, ch1)) continue;
-				  _line += "!"; _line += ch1;
-				  continue;
-			   }
-			}
+			if (input == '!' && !handle_bang(_line)) continue;
 	
 			if (m_buff.size()) {
 			   /**
@@ -165,7 +113,10 @@ public:
 		 }
 		 else if (input == 5 && !handle_ctrl_e(_line)) continue;
 		 else if (input == 4 && !handle_ctrl_d(_line)) continue;
-		 else if (input == 11 && !handle_ctrl_k(_line)) continue;
+		 else if (input == 11) {
+			if (!handle_ctrl_k(_line)) continue;
+			else break;
+		 }
 		 else if ((input == 8 || input == 127) && !handle_backspace(_line)) continue;
 		 else if (input == 9 && !handle_tab(_line)) continue;
 		 else if (input == 27) {	
@@ -178,125 +129,11 @@ public:
 			if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;
 			
 			else if (ch1 == 91 && ch2 == 51 && !handle_delete(_line)) continue;
-			if (ch1 == 91 && ch2 == 65) {
-			   // This was an up arrow.
-			   // We will print the line prior from history.
-			   if (!m_history.size()) continue;
-			   // if (history_index == -1) continue;
-			   // Clear input so far
-			   char ch[_line.size() + 1]; char sp[_line.size() + 1];
-			   memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
-			   if (write(1, ch, _line.size()) != (int) _line.size()) {
-				  perror("write");
-				  continue;
-			   } else if (write(1, sp, _line.size()) != (int) _line.size()) {
-				  perror("write");
-				  continue;
-			   } else if (write(1, ch, _line.size()) != (int) _line.size()) {
-				  perror("write");
-				  continue;
-			   }
-
-			   if ((size_t) history_index == m_history.size()) --history_index;
-			   // Only decrement if we are going beyond the first command (duh).
-			   _line = m_history[history_index];
-			   history_index = (!history_index) ? history_index : history_index - 1;
-			   // Print the line
-			   if (_line.size()) _line.pop_back();
-			   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
-				  perror("write");
-				  continue;
-			   }
-			} if (ch1 == 91 && ch2 == 66) {
-			   // This was a down arrow.
-			   // We will print the line prior from history.
-	  
-			   if (!m_history.size()) continue;
-			   if ((size_t) history_index == m_history.size()) continue;
-			   // Clear input so far
-			   for (size_t x = 0, bsp ='\b'; x < _line.size(); ++x) {
-				  if (!write(1, &bsp, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			   for (size_t x = 0, sp = ' '; x < _line.size(); ++x) {
-				  if (!write(1, &sp, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			   for (size_t x = 0, bsp ='\b'; x < _line.size(); ++x) {
-				  if (!write(1, &bsp, 1)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-	  
-			   history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
-				  : history_index + 1;
-			   if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
-			   else _line = m_history[history_index];
-			   if (_line.size() && (size_t) history_index != m_history.size()) _line.pop_back();
-			   // Print the line
-			   if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
-				  perror("write");
-				  continue;
-			   }
-			}
-			if (ch1 == 91 && ch2 == 67) {
-			   /* Right Arrow Key */
-			   if (!m_buff.size()) continue;
-
-			   char wrt = m_buff.top();
-			   if (!write(1, &wrt, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   _line += wrt; m_buff.pop();
-			} if (ch1 == 91 && ch2 == 68) {
-			   if (!_line.size()) continue;
-			   /* Left Arrow Key */
-
-			   /* grab width of terminal */
-			   struct winsize w;
-			   ioctl(1, TIOCGWINSZ, &w);
-			   size_t term_width = w.ws_col;
-
-			   /* check if we need to go up a line */
-			   /*  The plus 2 comes from the "$ "  */
-			   if ((_line.size() == (term_width - 2))) {
-				  /* need to go up a line */		   
-				  const size_t p_len = strlen("\033[1A\x1b[33;1m$ \x1b[0m");
-
-				  /* now we print the string */
-				  if (!write(1, "\033[1A\x1b[33;1m$ \x1b[0m", p_len)) {
-					 /**
-					  * @todo Make sure you print the correct prompt!
-					  */
-					 perror("write");
-					 continue;
-				  } else if (!write(1, _line.c_str(), term_width - 2)) {
-					 perror("write");
-					 continue;
-				  }
-			   } else if (!((_line.size() + 2) % (term_width))) {
-				  /* This case is for more than one line of backtrack */
-				  if (!write(1, "\033[1A \b", strlen("\033[1A \b"))) perror("write");
-				  else if (!write(1, _line.c_str() - 2 + (term_width  * ((_line.size() - 2) / term_width)), term_width)) {
-					 perror("write");
-					 continue;
-				  }
-			   }
-			   m_buff.push(_line.back());
-			   char bsp = '\b';
-			   if (!write(1, &bsp, 1)) {
-				  perror("write");
-				  continue;
-			   }
-			   _line.pop_back();
-			}
-		 }      
+			if (ch1 == 91 && ch2 == 65 && !handle_up_arrow(_line)) continue;
+			if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) continue;
+			if (ch1 == 91 && ch2 == 67 && !handle_right_arrow(_line)) continue;
+			if (ch1 == 91 && ch2 == 68 && !handle_left_arrow(_line)) continue;
+		 }
 	  }
 
 	  _line += (char) 10 + '\0';
