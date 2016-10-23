@@ -440,7 +440,6 @@ void Command::execute()
 			pid = fork();
 			if (pid == 0) {
 				execvp(temp[0],temp);
-				//execlp("ls", "--color=auto", NULL);
 				perror("execlp");
 				_exit(1);
 			}
