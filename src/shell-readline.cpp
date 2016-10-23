@@ -253,8 +253,7 @@ bool read_line::handle_tab(std::string & _line)
 	*         otherwise, run "echo <text>*"
 	*/
    std::string * array = Command::currentCommand.wc_collector.data();
-   std::sort(array, array + Command::currentCommand.wc_collector.size(),
-			 Comparator());
+   std::sort(array, array + Command::currentCommand.wc_collector.size());
 
    if (Command::currentCommand.wc_collector.size() == 1) {
 	  /* First check if the line has any spaces! */

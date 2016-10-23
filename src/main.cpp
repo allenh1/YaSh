@@ -9,6 +9,7 @@ extern int yyparse();
 
 extern void yyrestart (FILE * in);
 extern void yyerror(const char * s);
+extern read_line reader;
 
 int main()
 {
