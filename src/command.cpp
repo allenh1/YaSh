@@ -480,244 +480,169 @@ void Command::execute()
 					char ** _env = environ;
 					for (; *_env; ++_env) std::cout<<*_env<<std::endl;
 					_exit (0);
-					setenv("PWD", getenv("HOME"), 1);
-				} else {
-					if (d_args[1] == std::string("pwd") ||
-						d_args[1] == std::string("/bin/pwd")) {
-					} else if (*d_args[1] != '/') { 
-						new_dir = std::string(getenv("PWD"));
-						for (;new_dir.back() == '/'; new_dir.pop_back());
-						new_dir += "/" + std::string(d_args[1]);
-					} else new_dir = std::string(d_args[1]);
-
-					for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back());
-					if (changedir(new_dir)) setenv("PWD", new_dir.c_str(), 1);
 				}
-				setenv("PWD", curr_dir.c_str(), 1);
-				// Regardless of errors, cd has finished.
-			} else if (d_args[0] == std::string("ls")) {
-				char ** temp = new char*[curr.size() + 2];
-				for (int y = 2; y < curr.size(); ++y) {
-					temp[y] = strdup(curr[y - 1]);
-				} // ... still better than managing myself!
-				temp[0] = strdup("ls");
-				temp[1] = strdup("--color=auto");
-				temp[curr.size()] = NULL;
 
-				pid = fork();
-
-				if (pid == 0) {
-					execvp (temp[0], temp);
-					perror("execvp");
-					exit(2);
-				} 
-				for (int x = 0; x < curr.size() + 1; ++x) {
-					free(temp[x]);
-					temp[x] = NULL;
-				} delete[] temp;
-			} else if (d_args[0] == std::string("setenv")) {
-				char * temp = (char*) calloc(strlen(d_args[1]) + 1, sizeof(char));
-				char * pemt = (char*) calloc(strlen(d_args[2]) + 2, sizeof(char));
-				strcpy(temp, d_args[1]); strcpy(pemt, d_args[2]);
-				int result = setenv(temp, pemt, 1);
-				if (result) perror("setenv");
-				clear(); prompt(); free(temp); free(pemt);
-				return;
-			} else if (d_args[0] == std::string("unsetenv")) {
-				char * temp = (char*) calloc(strlen(d_args[1]) + 1, sizeof(char));
-				strcpy(temp, d_args[1]);
-				if (unsetenv(temp) == -1) perror("unsetenv");
-				clear(); prompt(); free(temp);
-				return;
-			} else if (d_args[0] == std::string("grep")) {
-				char ** temp = new char*[curr.size() + 1];
-				for (int y = 0; y < curr.size() - 1; ++y) {
-					temp[y] = strdup(curr[y]);
-				} // ... still better than managing myself!
-				temp[curr.size() - 1] = strdup("--color");
-				temp[curr.size()] = NULL;
-
-				pid = fork();
-
-				if (pid == 0) {
-					execvp (temp[0], temp);
-					perror("execvp");
-					exit(2);
-				} for (int x = 0; x < curr.size(); ++x) {
-					free(temp[x]); temp[x] = NULL;
-				}
-			} else {
-				// Time for a good hot fork
-				pid = fork();
-
-				if (pid == 0) {
-					if (d_args[0] == std::string("printenv")) {
-						char ** _env = environ;
-						for (; *_env; ++_env) std::cout<<*_env<<std::endl;
-						_exit (0);
-					}
-
-					execvp (d_args[0], d_args);
-					perror("execvp");
-					_exit(1);
-				}
+				execvp (d_args[0], d_args);
+				perror("execvp");
+				_exit(1);
 			}
 		}
-
-		// Restore I/O defaults
-
-		dup2(tmpin, 0);  close(tmpin);
-		dup2(tmpout, 1); close(tmpout);
-		dup2(tmperr, 2); close(tmperr);
-
-		if (!background) waitpid(pid, NULL, 0);
-		else m_background.push_back(pid);
-
-		/* Clear to prepare for next command */
-		clear();
-
-		/* Print new prompt if we are in a terminal. */
-		if (isatty(0)) prompt();
 	}
 
-	// Shell implementation
+	// Restore I/O defaults
 
-	void Command::prompt()
-	{
-		if (!printPrompt) return;
-		std::string PROMPT; char * pmt = getenv("PROMPT");
-		if (pmt) PROMPT = std::string(pmt);
-		else PROMPT = std::string("default");
+	dup2(tmpin, 0);  close(tmpin);
+	dup2(tmpout, 1); close(tmpout);
+	dup2(tmperr, 2); close(tmperr);
 
-		if (isatty(0) && PROMPT == std::string("default")) {
-			std::string _user = std::string(getenv("USER"));
-			char buffer[100]; std::string _host;
-			if (!gethostname(buffer, 100)) _host = std::string(buffer);
-			else _host = std::string("localhost");
-			char * _wd = NULL, * _hme = NULL;
-			char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
-			eval_to_buffer(_pwd, cdirbuff, 2048);
-			std::string _cdir = std::string(cdirbuff);
-			char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
-			if (setenv("PWD", _curr_dur, 1)) perror("setenv");
-			std::string _home = std::string(_hme = getenv("HOME"));
+	if (!background) waitpid(pid, NULL, 0);
+	else m_background.push_back(pid);
 
-			// Replace the user home with ~
-			if (strstr(_curr_dur, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
+	/* Clear to prepare for next command */
+	clear();
 
-			if (_user != std::string("root")) {
-				std::cout<<"\x1b[36;1m"<<_user<<"@"<<_host<<" ";
-				std::cout<<"\x1b[33;1m"<<_cdir<<"$ "<<"\x1b[0m";
-				fflush(stdout);
-			} else {
-				// Root prompt is cooler than you
-				std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
-				std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
-				fflush(stdout);
-			} free(_curr_dur);
-		} else fflush(stdout);
-	}
+	/* Print new prompt if we are in a terminal. */
+	if (isatty(0)) prompt();
+}
 
-	Command Command::currentCommand;
-	std::shared_ptr<SimpleCommand> Command::currentSimpleCommand;
+// Shell implementation
 
-	int yyparse(void);
+void Command::prompt()
+{
+	if (!printPrompt) return;
+	std::string PROMPT; char * pmt = getenv("PROMPT");
+	if (pmt) PROMPT = std::string(pmt);
+	else PROMPT = std::string("default");
 
-	void ctrlc_handler(int signum)
-	{
-		/** kill my kids **/
-		kill(signum, SIGINT);
-	}
+	if (isatty(0) && PROMPT == std::string("default")) {
+		std::string _user = std::string(getenv("USER"));
+		char buffer[100]; std::string _host;
+		if (!gethostname(buffer, 100)) _host = std::string(buffer);
+		else _host = std::string("localhost");
+		char * _wd = NULL, * _hme = NULL;
+		char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
+		eval_to_buffer(_pwd, cdirbuff, 2048);
+		std::string _cdir = std::string(cdirbuff);
+		char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
+		if (setenv("PWD", _curr_dur, 1)) perror("setenv");
+		std::string _home = std::string(_hme = getenv("HOME"));
 
-	void sigchld_handler(int signum)
-	{
-		int saved_errno = errno; int pid = -1;
-		for(; pid = waitpid(-1, NULL, WNOHANG) > 0;) {
-			bool found = false;
-			for (auto && a : m_background) {
-				if (a == pid) {
-					found = true;
-					break;
-				}
-			} if (found) {
-				std::cout<<"["<<signum<<"] has exited."<<std::endl;
-				Command::currentCommand.prompt();
+		// Replace the user home with ~
+		if (strstr(_curr_dur, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
+
+		if (_user != std::string("root")) {
+			std::cout<<"\x1b[36;1m"<<_user<<"@"<<_host<<" ";
+			std::cout<<"\x1b[33;1m"<<_cdir<<"$ "<<"\x1b[0m";
+			fflush(stdout);
+		} else {
+			// Root prompt is cooler than you
+			std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
+			std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
+			fflush(stdout);
+		} free(_curr_dur);
+	} else fflush(stdout);
+}
+
+Command Command::currentCommand;
+std::shared_ptr<SimpleCommand> Command::currentSimpleCommand;
+
+int yyparse(void);
+
+void ctrlc_handler(int signum)
+{
+	/** kill my kids **/
+	kill(signum, SIGINT);
+}
+
+void sigchld_handler(int signum)
+{
+	int saved_errno = errno; int pid = -1;
+	for(; pid = waitpid(-1, NULL, WNOHANG) > 0;) {
+		bool found = false;
+		for (auto && a : m_background) {
+			if (a == pid) {
+				found = true;
+				break;
 			}
-		} errno = saved_errno;
-	}
+		} if (found) {
+			std::cout<<"["<<signum<<"] has exited."<<std::endl;
+			Command::currentCommand.prompt();
+		}
+	} errno = saved_errno;
+}
 
-	std::vector<std::string> splitta(std::string s, char delim) {
-		std::vector<std::string> elems; std::stringstream ss(s);
-		std::string item;
-		for (;std::getline(ss, item, delim); elems.push_back(std::move(item)));
-		return elems;
-	}
+std::vector<std::string> splitta(std::string s, char delim) {
+	std::vector<std::string> elems; std::stringstream ss(s);
+	std::string item;
+	for (;std::getline(ss, item, delim); elems.push_back(std::move(item)));
+	return elems;
+}
 
-	void Command::setAlias(const char * _from, const char * _to)
-	{
-		std::string from(_from); std::string to(_to);
-		std::vector<std::string> split = splitta(to, ' ');
+void Command::setAlias(const char * _from, const char * _to)
+{
+	std::string from(_from); std::string to(_to);
+	std::vector<std::string> split = splitta(to, ' ');
 	
-		/**
-		 * We really don't care if the alias has been
-		 * set. We should just overwrite the current
-		 * alias. So, we just use the [] operator
-		 * in map.
-		 */
+	/**
+	 * We really don't care if the alias has been
+	 * set. We should just overwrite the current
+	 * alias. So, we just use the [] operator
+	 * in map.
+	 */
 
-		m_aliases[from] = split;
+	m_aliases[from] = split;
+}
+
+void Command::pushDir(const char * new_dir) {
+	char * _pwd = getenv("PWD");
+   
+	if (_pwd == NULL) {
+		perror("pwd");
+		return;
+	} else if (new_dir == NULL || *new_dir == '\0') {
+		std::cerr<<"Invalid new directory!"<<std::endl;
+		return;
 	}
-
-	void Command::pushDir(const char * new_dir) {
-		char * _pwd = getenv("PWD");
    
-		if (_pwd == NULL) {
-			perror("pwd");
-			return;
-		} else if (new_dir == NULL || *new_dir == '\0') {
-			std::cerr<<"Invalid new directory!"<<std::endl;
-			return;
-		}
-   
-		std::string curr_dir = std::string(getenv("PWD"));
-		std::string news(new_dir);
+	std::string curr_dir = std::string(getenv("PWD"));
+	std::string news(new_dir);
 
-		news = tilde_expand(news);
-		if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
+	news = tilde_expand(news);
+	if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
 
-		wildcard_expand((char*)news.c_str());
+	wildcard_expand((char*)news.c_str());
    
-		if(!wc_collector.size() && changedir(news)) {
-			m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
-		} else if(wc_collector.size()) {
+	if(!wc_collector.size() && changedir(news)) {
+		m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
+	} else if(wc_collector.size()) {
 	  
-			for (int y = wc_collector.size() - 1; y--; ) {
-				auto x = wc_collector[y];
-				if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
-			} if (m_dir_stack.size()) {
-				changedir(m_dir_stack[0]);
-				m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
-				m_dir_stack.push_back(curr_dir);
-			} else goto clear_and_exit;
+		for (int y = wc_collector.size() - 1; y--; ) {
+			auto x = wc_collector[y];
+			if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
+		} if (m_dir_stack.size()) {
+			changedir(m_dir_stack[0]);
+			m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
+			m_dir_stack.push_back(curr_dir);
 		} else goto clear_and_exit;
+	} else goto clear_and_exit;
    
-		for(auto && a: m_dir_stack) std::cout<<a<<" ";
-		if(!m_dir_stack.empty()) std::cout<<std::endl;
-	clear_and_exit:
-		wc_collector.clear();
-		wc_collector.shrink_to_fit();
-	}
+	for(auto && a: m_dir_stack) std::cout<<a<<" ";
+	if(!m_dir_stack.empty()) std::cout<<std::endl;
+clear_and_exit:
+	wc_collector.clear();
+	wc_collector.shrink_to_fit();
+}
 
-	void Command::popDir() {
-		if (!m_dir_stack.size()) {
-			std::cerr<<"No directories left to pop!"<<std::endl;
-			return;
-		}
-   
-		std::string dir = tilde_expand(m_dir_stack.front());
-		if(changedir(dir)) {
-			m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
-		}
-		for(auto && a: m_dir_stack) std::cout<<a<<" ";
-		std::cout<<std::endl;
+void Command::popDir() {
+	if (!m_dir_stack.size()) {
+		std::cerr<<"No directories left to pop!"<<std::endl;
+		return;
 	}
+   
+	std::string dir = tilde_expand(m_dir_stack.front());
+	if(changedir(dir)) {
+		m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
+	}
+	for(auto && a: m_dir_stack) std::cout<<a<<" ";
+	std::cout<<std::endl;
+}

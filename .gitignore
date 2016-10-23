@@ -32,3 +32,10 @@ test/csh-out
 test/hello world
 test/*.out
 test/*-out
+shell
+test/csh-in
+test/out
+test/out2
+"test/p\253\324\001"
+test/shell-in
+						

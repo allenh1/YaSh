@@ -80,6 +80,7 @@ public:
 	const bool & inIsSet()  { return inSet; }
 	const bool & outIsSet() { return outSet; }
 	const bool & errIsSet() { return errSet; }
+	const bool & is_interactive() { return m_interactive; }
 	
 	void setAppend(const bool & ap) { append = ap; }
 	void setBackground(const bool & bg) { background = bg; }
@@ -90,6 +91,12 @@ public:
 	const int & get_stdin()  { return m_stdin; }
 	const int & get_stdout() { return m_stdout; }
 	const int & get_stderr() { return m_stderr; }
+
+	void set_interactive(const bool & _interactive) {
+		m_interactive = _interactive;
+	}
+
+	pid_t m_pgid;
 	
 	std::map<std::string, std::vector<std::string> > m_aliases;
    
@@ -111,8 +118,9 @@ private:
 
 	bool append = false;
 	bool background = false;
+	bool m_interactive = false;
 	int numOfSimpleCommands = 0;
-
+	
 	bool inSet  = false; int m_stdin  = 0;
 	bool outSet = false; int m_stdout = 1;
 	bool errSet = false; int m_stderr = 2;

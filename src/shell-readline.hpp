@@ -171,13 +171,7 @@ public:
 
    
 	void tty_raw_mode() {
-		/* get pgid */
-		pid_t pid = getpid();
-		if (setpgid(pid, pid) < 0) {
-			perror("setpgid");
-			exit(1);
-		}
-
+		pid_t pid = Command::currentCommand.m_pgid;
 		/* become a strong independent black woman */
 		tcsetpgrp(0, pid);
 		/* save defaults for later */
@@ -187,7 +181,7 @@ public:
 		tty_attr.c_lflag &= (~(ICANON|ECHO));
 		tty_attr.c_cc[VTIME] = 0;
 		tty_attr.c_cc[VMIN] = 1;
-    
+			
 		tcsetattr(0,TCSANOW,&tty_attr);
 	}
 	
