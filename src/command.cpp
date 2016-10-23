@@ -429,6 +429,29 @@ void Command::execute()
 		 } for (int x = 0; x < curr.size(); ++x) {
 			free(temp[x]); temp[x] = NULL;
 		 }
+	  } else if (d_args[0] == std::string("cl")) {
+	  	if(curr.size() > 2){
+			char ** temp = new char*[curr.size()+2];
+			temp[0] = strdup("ls");
+			temp[1] = strdup("--color=auto");
+			temp[2] = 0;
+			std::string dir = std::string(d_args[1]);
+			changedir(dir);
+			pid = fork();
+			if (pid == 0) {
+				execvp(temp[0],temp);
+				//execlp("ls", "--color=auto", NULL);
+				perror("execlp");
+				_exit(1);
+			}
+			waitpid(pid,0,0);
+			for(int y = 0; y < 3; y++){
+				free(temp[y]);
+				temp[y] = NULL;
+			} delete[] temp;
+		}else {
+			std::cerr<< "Usage: cl, no args given" << std::endl;
+		}
 	  } else {
 		 // Time for a good hot fork
 		 pid = fork();
