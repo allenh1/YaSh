@@ -24,6 +24,7 @@ stamp-h1
 *~
 *.o
 src/*~
+src/*.swp # ty, Eric
 src/*.o
 test/shell-out
 test/testall.out
