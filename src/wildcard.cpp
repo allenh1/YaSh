@@ -37,7 +37,8 @@ void wildcard_expand(char * arg) {
       *(r++) = '.';
       break;
     case '.':
-       if(*(a+1) != '.'||*(a+1) != '/') {
+      //std::cerr<<"a+1 = "<<(*(a+1))<<std::endl;
+       if(*(a+1) != '.' && *(a+1) != '/') {
 	  hidden = true;
        }
       *(r++) = '\\';
@@ -86,9 +87,12 @@ void wildcard_expand(char * arg) {
 		std::string e((char*)entry->d_name); files.push_back(e);
       } std::sort(files.begin(), files.end());
 
+      std::cerr<<"files: "<<std::endl;
       for(auto && f : files) {
 		regmatch_t match; std::string e (f);
-		if ((!hidden) && (e.front() == '.')) {/* do nothing */}
+		std::cerr<<e<<"\t";
+		if ((!hidden) && (e.front() == '.') && (e.find("..") == std::string::npos))
+		{/* do nothing */}
 		else {
 		  /* re-compile bc regex cleans up memory -_- */
 		  regfree(&re);
