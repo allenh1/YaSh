@@ -1,4 +1,4 @@
-YaSh:
+YaSh: [![build status](http://allen-software.com/gitlab/allensoftware/YaSh/badges/master/build.svg)](http://allen-software.com/gitlab/allensoftware/YaSh/commits/master)
 ====
 YaSh is yet another Sh clone. It's my personal favorite, for obvious reasons (when it's working, that is).
 
