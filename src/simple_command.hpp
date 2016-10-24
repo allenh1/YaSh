@@ -50,8 +50,15 @@ struct SimpleCommand {
 
 	void launch(int fdin, int fdout, int fderr,
 				int pgid, bool background, bool interactive);
-	bool handle_builtins();
-	bool handle_cd();
+	void setup_process_io(int fdin, int fdout, int fderr);
+	bool handle_builtins(int,int,int);
+	void handle_modified_commands();
+
+	bool handle_cd(int,int,int);
+	bool handle_setenv(int,int,int);
+	bool handle_unsetenv(int,int,int);
+	
+	void handle_ls();
 	pid_t pid;
 };
 #endif

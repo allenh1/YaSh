@@ -109,8 +109,8 @@ void Command::set_out_file(char * _fd) {
 }
 
 void Command::set_err_file(char * _fd) {
-	outFile = std::unique_ptr<char>(_fd);
-	outSet = true;
+	errFile = std::unique_ptr<char>(_fd);
+	errSet = true;
 
 	m_stderr = open(_fd, get_output_flags(), 0600);
 
@@ -195,6 +195,12 @@ void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 
 void Command::clear()
 {
+   if (m_stdin  != 0) close(m_stdin);
+   if (m_stdout != 1) close(m_stdout);
+   if (m_stderr != 2) close(m_stderr);
+
+   m_stdin = 0, m_stdout = 1, m_stderr = 2;
+   
 	simpleCommands.clear(),
 		background = append = false,
 		numOfSimpleCommands = 0,
@@ -275,8 +281,11 @@ void Command::execute()
 		if (x != numOfSimpleCommands - 1) fdout = fdpipe[1];
 		else fdout = m_stdout;
 
-		if (simpleCommands.at(x).get()->handle_builtins()) goto cleanup;
-		else if ((pid = fork()) < 0) {
+		if (simpleCommands.at(x).get()->handle_builtins(fdin,
+														fdout,
+														fderr)) {
+		   goto cleanup;
+		} else if ((pid = fork()) < 0) {
 			/* fork failed */
 			perror("fork"); clear();
 			prompt(); return;

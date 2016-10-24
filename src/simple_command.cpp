@@ -27,7 +27,19 @@ void SimpleCommand::launch(int fdin, int fdout, int fderr,
 		signal(SIGTTIN, SIG_DFL);
 		signal(SIGTTOU, SIG_DFL);
 		signal(SIGCHLD, SIG_DFL);	  
-	} if (fdin != STDIN_FILENO) {
+	} setup_process_io(fdin, fdout, fderr); 
+
+	/* handle special commands */
+	handle_modified_commands();
+	/* execute */
+	execvp(arguments[0], arguments.data());
+	perror("execvp");
+	_exit(1);
+}
+
+void SimpleCommand::setup_process_io(int fdin, int fdout, int fderr)
+{
+	if (fdin != STDIN_FILENO) {
 		dup2(fdin, STDIN_FILENO);
 		close(fdin);
 	} if (fdout != STDOUT_FILENO) {
@@ -37,22 +49,25 @@ void SimpleCommand::launch(int fdin, int fdout, int fderr,
 		dup2(fderr, STDERR_FILENO);
 		close(fderr);	  
 	}
-
-	/* execute */
-	execvp(arguments[0], arguments.data());
-	perror("execvp");
-	_exit(1);
 }
 
-bool SimpleCommand::handle_builtins()
+bool SimpleCommand::handle_builtins(int fdin, int fdout, int fderr)
 {
-	if (handle_cd()) return true;
+	if (handle_cd(fdin, fdout, fderr)) return true;
+	else if (handle_setenv(fdin, fdout, fderr)) return true;
+	else if (handle_unsetenv(fdin, fdout, fderr)) return true;
 	return false;
 }
 
-bool SimpleCommand::handle_cd()
+void SimpleCommand::handle_modified_commands()
+{
+	handle_ls();
+}
+
+bool SimpleCommand::handle_cd(int fdin, int fdout, int fderr)
 {
 	if (arguments[0] == std::string("cd")) {
+		setup_process_io(fdin, fdout, fderr);
 		std::string curr_dir = std::string(getenv("PWD"));
 		int cd; std::string new_dir;
 
@@ -70,7 +85,7 @@ bool SimpleCommand::handle_cd()
 				free(to_replace);
 				free(replace_to);
 				free(replace_in);
-				return false;
+				return true;
 			}
 
 			register size_t replace_len     = strlen(to_replace);
@@ -80,7 +95,7 @@ bool SimpleCommand::handle_cd()
 				std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
 
 				free(to_replace); free(replace_in); free(replace_to);
-				return false;
+				return true;
 			}
 			/* garauntee we have enough space */
 			char * replacement = (char*) calloc(curr_dir.size() -
@@ -104,13 +119,13 @@ bool SimpleCommand::handle_cd()
 			std::string new_dir(replacement); free(replacement);
 			if (!changedir(new_dir)) {
 				perror("cd");		 
-				return false;
+				return true;
 			}
 		} else if (arguments.size() == 2) {
 			std::string _empty = "";
 			if (!changedir(_empty)) {
 				perror("cd");
-				return false;
+				return true;
 			}		
 			setenv("PWD", getenv("HOME"), 1);
 		} else {
@@ -130,4 +145,46 @@ bool SimpleCommand::handle_cd()
 		return true;
 	}
 	return false;
+}
+
+void SimpleCommand::handle_ls()
+{
+	if (arguments[0] == std::string("ls")) {
+		char ** temp = new char*[arguments.size() + 2];
+		for (int y = 2; y < arguments.size(); ++y) {
+			temp[y] = strdup(arguments[y - 1]);
+		} // ... still better than managing myself!
+		temp[0] = strdup("ls");
+		temp[1] = strdup("--color=auto");
+		temp[arguments.size()] = NULL;
+
+		execvp (temp[0], temp);
+		perror("execvp");
+		exit(2);
+	}
+}
+
+bool SimpleCommand::handle_setenv(int fdin, int fdout, int fderr)
+{
+	if (arguments[0] == std::string("setenv")) {
+		setup_process_io(fdin, fdout, fderr);
+		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
+		char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
+		strcpy(temp, arguments[1]); strcpy(pemt, arguments[2]);
+		int result = setenv(temp, pemt, 1);
+		if (result) perror("setenv");
+		free(temp); free(pemt);
+		return true;
+	} return false;
+}
+
+bool SimpleCommand::handle_unsetenv(int fdin, int fdout, int fderr)
+{
+	if (arguments[0] == std::string("unsetenv")) {
+		setup_process_io(fdin, fdout, fderr);
+		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
+		strcpy(temp, arguments[1]);
+		if (unsetenv(temp) == -1) perror("unsetenv");		
+		free(temp); return true;
+	} return false;
 }
