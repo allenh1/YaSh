@@ -63,6 +63,8 @@ bool SimpleCommand::handle_builtins(int fdin, int fdout, int fderr)
 void SimpleCommand::handle_modified_commands()
 {
    handle_ls();
+   handle_grep();
+   handle_printenv();
 }
 
 bool SimpleCommand::handle_cd(int fdin, int fdout, int fderr)
@@ -165,6 +167,29 @@ void SimpleCommand::handle_ls()
    }
 }
 
+void SimpleCommand::handle_grep()
+{
+	char ** temp = new char*[arguments.size() + 1];
+	for (int y = 0; y < arguments.size() - 1; ++y) {
+		temp[y] = strdup(arguments[y]);
+	}
+	temp[arguments.size() - 1] = strdup("--color");
+	temp[arguments.size()] = NULL;
+
+	execvp (temp[0], temp);
+	perror("execvp");
+	exit(2);
+}
+
+void SimpleCommand::handle_printenv()
+{
+	if (arguments[0] == std::string("printenv")) {	
+		char ** _env = environ;
+		for (; *_env; ++_env) std::cout<<*_env<<std::endl;
+		_exit (0);
+	}
+}
+
 bool SimpleCommand::handle_setenv(int fdin, int fdout, int fderr)
 {
    if (arguments[0] == std::string("setenv")) {
@@ -218,3 +243,4 @@ bool SimpleCommand::handle_cl(int fdin, int fdout, int fderr)
 	  } else std::cerr<< "Usage: cl, no args given" << std::endl;	
    } return false;
 }
+

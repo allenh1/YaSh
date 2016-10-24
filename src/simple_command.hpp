@@ -62,7 +62,8 @@ struct SimpleCommand {
 	bool stopped = false;
 	int status = -1;
 	void handle_ls();
-	void handle_cl();
+	void handle_grep();
+	void handle_printenv();
 	pid_t pid;
 };
 #endif
