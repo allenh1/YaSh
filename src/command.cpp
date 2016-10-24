@@ -236,7 +236,7 @@ void Command::print()
 void Command::execute()
 {
 	int fdpipe[2], fdin, fdout, fderr;
-	pid_t pid;
+	pid_t pid = 0;
 
 	/* check for dank memes */
 	char * dbg = getenv("SHELL_DBG");
