@@ -48,7 +48,9 @@ struct SimpleCommand {
 		numOfArguments = 0;
 	};
 
-	
+	void launch(int fdin, int fdout, int fderr,
+				int pgid, bool background, bool interactive);
+   pid_t pid;
 };
 
 class Command
@@ -59,6 +61,7 @@ public:
 	void prompt();
 	void print();
 	void execute();
+	void old_execute();
 	void clear();
 
 	void pushDir(const char * new_dir);
@@ -96,7 +99,7 @@ public:
 		m_interactive = _interactive;
 	}
 
-	pid_t m_pgid;
+	pid_t m_pgid = 0;
 	
 	std::map<std::string, std::vector<std::string> > m_aliases;
    

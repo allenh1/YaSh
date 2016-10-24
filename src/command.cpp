@@ -227,8 +227,70 @@ void Command::print()
 	std::cout<<std::endl<<std::endl;
 }
 
-
 void Command::execute()
+{
+	int fdpipe[2], fdin, fdout, fderr;
+	pid_t pid;
+
+
+
+	/* point fdin (fderr) to this pipeline's input (error) */
+	fdin = m_stdin; fderr = m_stderr;
+	for (int x = 0; x < numOfSimpleCommands; ++x) {
+		/* add NULL to the end of the simple command (for exec) */
+		simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
+		if (pipe(fdpipe)) {
+			/* pipe failed */
+			perror("pipe");
+			clear(); prompt();
+			return;
+		}
+
+		/* redirect output */
+		if (x != numOfSimpleCommands - 1) fdout = fdpipe[1];
+		else fdout = m_stdout;
+
+		if ((pid = fork()) < 0) {
+			/* fork failed */
+			perror("fork"); clear();
+			prompt(); return;
+		} else if (pid == 0) {
+			/* child process: exec into the process group */
+			simpleCommands.at(x).get()->launch(fdin, fdout, fderr,
+											   m_pgid, background,
+											   m_interactive);			
+		} else {
+			/* parent process */
+			simpleCommands.at(x).get()->pid = pid;
+			if (m_interactive) {
+				if (!m_pgid) m_pgid = pid;
+				/* add pid to the pipeline's process group */
+				setpgid(pid, m_pgid);
+			}
+		}
+
+		/* cleanup pipeline */
+		if (fdin  != m_stdin) close(fdin);
+		if (fdout != m_stdout) close(fdout);
+		/* set up the input for the next command */
+		fdin = fdpipe[0];
+	}
+
+	if (!background) waitpid(pid, NULL, 0);
+	else m_background.push_back(pid);
+
+	/* Clear to prepare for next command */
+	clear();
+
+	/* Print new prompt if we are in a terminal. */
+	if (m_interactive) prompt();
+
+	/**
+	 * @todo put in foreground or background
+	 */
+}
+
+void Command::old_execute()
 {
 	// Don't do anything if there are no simple commands
 	if (numOfSimpleCommands == 0) {
