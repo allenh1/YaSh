@@ -55,10 +55,14 @@ struct SimpleCommand {
 	void handle_modified_commands();
 
 	bool handle_cd(int,int,int);
+	bool handle_cl(int,int,int);
 	bool handle_setenv(int,int,int);
 	bool handle_unsetenv(int,int,int);
-	
+	bool completed = false;
+	bool stopped = false;
+	int status = -1;
 	void handle_ls();
+	void handle_cl();
 	pid_t pid;
 };
 #endif

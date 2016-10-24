@@ -15,6 +15,8 @@ public:
 	void old_execute();
 	void clear();
 
+	void wait_for_command(Command * cmd);
+	bool mark_process_status(pid_t, int);
 	void pushDir(const char * new_dir);
 	void popDir();
    
@@ -31,6 +33,8 @@ public:
 
 	void subShell(char * arg);
 
+	int status = -1;
+	
 	const bool & inIsSet()  { return inSet; }
 	const bool & outIsSet() { return outSet; }
 	const bool & errIsSet() { return errSet; }
@@ -46,14 +50,19 @@ public:
 	const int & get_stdout() { return m_stdout; }
 	const int & get_stderr() { return m_stderr; }
 
+   const bool & is_stopped() { return stopped; }
+   const bool & is_completed() { return completed; }
 	void set_interactive(const bool & _interactive) {
 		m_interactive = _interactive;
 	}
 
 	pid_t m_pgid = 0;
-	
+   pid_t m_pid = 0;
 	std::map<std::string, std::vector<std::string> > m_aliases;
-   
+
+	std::map<pid_t, Command *> m_commands;
+	std::map<pid_t, SimpleCommand *> m_processes;
+	
 	std::vector<std::string> wc_collector;// Wild card collection tool
 
 	bool printPrompt = true;
@@ -73,6 +82,8 @@ private:
 	bool append = false;
 	bool background = false;
 	bool m_interactive = false;
+   bool stopped = false;
+   bool completed = false;
 	int numOfSimpleCommands = 0;
 	
 	bool inSet  = false; int m_stdin  = 0;
