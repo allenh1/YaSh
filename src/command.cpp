@@ -269,12 +269,15 @@ void Command::execute()
 
 		/* add NULL to the end of the simple command (for exec) */
 		simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
-		
-		if (pipe(fdpipe)) {
-			/* pipe failed */
-			perror("pipe");
-			clear(); prompt();
-			return;
+
+		if (x != numOfSimpleCommands - 1) {
+			/* thank you Gustavo for the outer if statement. */
+			if (pipe(fdpipe)) {
+				/* pipe failed */
+				perror("pipe");
+				clear(); prompt();
+				return;
+			}
 		}
 
 		/* redirect output */
