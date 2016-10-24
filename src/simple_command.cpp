@@ -62,9 +62,9 @@ bool SimpleCommand::handle_builtins(int fdin, int fdout, int fderr)
 
 void SimpleCommand::handle_modified_commands()
 {
-   handle_ls();
-   handle_grep();
-   handle_printenv();
+	handle_ls();
+	handle_grep();
+	handle_printenv();
 }
 
 bool SimpleCommand::handle_cd(int fdin, int fdout, int fderr)
@@ -152,33 +152,35 @@ bool SimpleCommand::handle_cd(int fdin, int fdout, int fderr)
 
 void SimpleCommand::handle_ls()
 {
-   if (arguments[0] == std::string("ls")) {
-	  char ** temp = new char*[arguments.size() + 2];
-	  for (int y = 2; y < arguments.size(); ++y) {
-		 temp[y] = strdup(arguments[y - 1]);
-	  } // ... still better than managing myself!
-	  temp[0] = strdup("ls");
-	  temp[1] = strdup("--color=auto");
-	  temp[arguments.size()] = NULL;
+	if (arguments[0] == std::string("ls")) {
+		char ** temp = new char*[arguments.size() + 2];
+		for (int y = 2; y < arguments.size(); ++y) {
+			temp[y] = strdup(arguments[y - 1]);
+		} // ... still better than managing myself!
+		temp[0] = strdup("ls");
+		temp[1] = strdup("--color=auto");
+		temp[arguments.size()] = NULL;
 
-	  execvp (temp[0], temp);
-	  perror("execvp");
-	  exit(2);
-   }
+		execvp (temp[0], temp);
+		perror("execvp");
+		exit(2);
+	}
 }
 
 void SimpleCommand::handle_grep()
 {
-	char ** temp = new char*[arguments.size() + 1];
-	for (int y = 0; y < arguments.size() - 1; ++y) {
-		temp[y] = strdup(arguments[y]);
-	}
-	temp[arguments.size() - 1] = strdup("--color");
-	temp[arguments.size()] = NULL;
+	if (arguments[0] == std::string("grep")) {
+		char ** temp = new char*[arguments.size() + 1];
+		for (int y = 0; y < arguments.size() - 1; ++y) {
+			temp[y] = strdup(arguments[y]);
+		}
+		temp[arguments.size() - 1] = strdup("--color");
+		temp[arguments.size()] = NULL;
 
-	execvp (temp[0], temp);
-	perror("execvp");
-	exit(2);
+		execvp (temp[0], temp);
+		perror("execvp");
+		exit(2);
+	}
 }
 
 void SimpleCommand::handle_printenv()
@@ -192,55 +194,55 @@ void SimpleCommand::handle_printenv()
 
 bool SimpleCommand::handle_setenv(int fdin, int fdout, int fderr)
 {
-   if (arguments[0] == std::string("setenv")) {
-	  setup_process_io(fdin, fdout, fderr);
-	  char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
-	  char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
-	  strcpy(temp, arguments[1]); strcpy(pemt, arguments[2]);
-	  int result = setenv(temp, pemt, 1);
-	  if (result) perror("setenv");
-	  free(temp); free(pemt);
-	  return true;
-   } return false;
+	if (arguments[0] == std::string("setenv")) {
+		setup_process_io(fdin, fdout, fderr);
+		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
+		char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
+		strcpy(temp, arguments[1]); strcpy(pemt, arguments[2]);
+		int result = setenv(temp, pemt, 1);
+		if (result) perror("setenv");
+		free(temp); free(pemt);
+		return true;
+	} return false;
 }
 
 bool SimpleCommand::handle_unsetenv(int fdin, int fdout, int fderr)
 {
-   if (arguments[0] == std::string("unsetenv")) {
-	  setup_process_io(fdin, fdout, fderr);
-	  char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
-	  strcpy(temp, arguments[1]);
-	  if (unsetenv(temp) == -1) perror("unsetenv");		
-	  free(temp); return true;
-   } return false;
+	if (arguments[0] == std::string("unsetenv")) {
+		setup_process_io(fdin, fdout, fderr);
+		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
+		strcpy(temp, arguments[1]);
+		if (unsetenv(temp) == -1) perror("unsetenv");		
+		free(temp); return true;
+	} return false;
 }
 
 bool SimpleCommand::handle_cl(int fdin, int fdout, int fderr)
 {
-   if (arguments[0] == std::string("cl")) {
-	  setup_process_io(fdin, fdout, fderr);
-	  if (arguments.size() > 2) {
-		 char ** temp = new char*[arguments.size()+2];
-		 temp[0] = strdup("ls");
-		 temp[1] = strdup("--color=auto");
-		 temp[2] = 0;
-		 std::string dir = std::string(arguments[1]);
-		 changedir(dir);
+	if (arguments[0] == std::string("cl")) {
+		setup_process_io(fdin, fdout, fderr);
+		if (arguments.size() > 2) {
+			char ** temp = new char*[arguments.size()+2];
+			temp[0] = strdup("ls");
+			temp[1] = strdup("--color=auto");
+			temp[2] = 0;
+			std::string dir = std::string(arguments[1]);
+			changedir(dir);
 
-		 pid_t pid = fork();
-		 if (pid == 0) {
-			execvp(temp[0],temp);
-			perror("execlp");
-			_exit(1);
-		 }
-		 waitpid(pid,0,0);
-		 for(int y = 0; y < 3; y++){
-			free(temp[y]);
-			temp[y] = NULL;
-		 } delete[] temp;
+			pid_t pid = fork();
+			if (pid == 0) {
+				execvp(temp[0],temp);
+				perror("execlp");
+				_exit(1);
+			}
+			waitpid(pid,0,0);
+			for(int y = 0; y < 3; y++){
+				free(temp[y]);
+				temp[y] = NULL;
+			} delete[] temp;
 
-		 return true;
-	  } else std::cerr<< "Usage: cl, no args given" << std::endl;	
-   } return false;
+			return true;
+		} else std::cerr<< "Usage: cl, no args given" << std::endl;	
+	} return false;
 }
 
