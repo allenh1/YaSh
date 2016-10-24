@@ -13,7 +13,7 @@ int mygetc (FILE * f) {
 	
 	char ch;
 	
-	if (!isatty(0)) return getc(f);
+	if (!Command::currentCommand.is_interactive()) return getc(f);
 	if (p == NULL || *p == 0) {
 		if (lastLine != NULL) free(lastLine);
 		if (get_file) {
