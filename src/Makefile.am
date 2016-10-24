@@ -18,9 +18,10 @@ CLEAN_FILES = *~
 bin_PROGRAMS = yash
 UTILS = shell-utils.hpp shell-utils.cpp
 PARSER = wildcard.hpp wildcard.cpp shell_bison.yy shell_flex.ll $(UTILS)
+SIMPLE_COMMAND = simple_command.cpp simple_command.hpp
 COMMAND = command.cpp command.hpp
-READLINE = shell-readline.hpp
-yash_SOURCES = main.cpp $(COMMAND) $(PARSER)
+READLINE =  shell-readline.cpp shell-readline.hpp
+yash_SOURCES = main.cpp $(COMMAND) $(PARSER) $(READLINE) $(SIMPLE_COMMAND)
 
 # don't forget the readline!
-EXTRA_DIST = $(READLINE) $(UTILS) $(PARSER) $(COMMAND)
+EXTRA_DIST = $(READLINE) $(UTILS) $(PARSER) $(COMMAND) $(SIMPLE_COMMAND)

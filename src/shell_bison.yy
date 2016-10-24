@@ -33,6 +33,7 @@ int yyparse();
 void yyrestart (FILE * in);
 void yyerror(const char * s);
 
+extern read_line reader;
 %}
 
 %%
@@ -126,35 +127,35 @@ iomodifier_opt:
 				GREAT WORD {
 					if (Command::currentCommand.outIsSet())
 						yyerror("Ambiguous output redirect.\n");
-					Command::currentCommand.setOutFile($2);
+					Command::currentCommand.set_out_file($2);
 				}
 		| 		TOOGREAT WORD {
 			       if (Command::currentCommand.outIsSet())
 					   yyerror("Ambiguous output redirect.\n");
-				   Command::currentCommand.setOutFile($2);
 				   Command::currentCommand.setAppend(true);
+				   Command::currentCommand.set_out_file($2);
 				}
 		| 		GREATAND WORD {
 			       if (Command::currentCommand.outIsSet())
 					   yyerror("Ambiguous output redirect.\n");
 				   else if (Command::currentCommand.errIsSet())
 					   yyerror("Ambiguous error redirect.\n");
-				   Command::currentCommand.setErrFile($2);
-				   Command::currentCommand.setOutFile($2);
+				   Command::currentCommand.set_out_file($2);
+				   Command::currentCommand.set_err_file($2);
 				}
 		| 		TOOGREATAND WORD {
                    if (Command::currentCommand.outIsSet())
 					   yyerror("Ambiguous output redirect.\n");
 				   else if (Command::currentCommand.errIsSet())
 					   yyerror("Ambiguous error redirect.\n");
-				   Command::currentCommand.setOutFile($2);
-				   Command::currentCommand.setErrFile($2);
 				   Command::currentCommand.setAppend(true);
+				   Command::currentCommand.set_out_file($2);
+				   Command::currentCommand.set_err_file($2);
 				}
 		| 		LESS WORD {
                    if (Command::currentCommand.inIsSet())
 					   yyerror("Ambiguous input redirect.\n");
-				   Command::currentCommand.setInFile($2);
+				   Command::currentCommand.set_in_file($2);
 				}
 		| /* allow empty */;
 

@@ -4,7 +4,7 @@
 extern "C" FILE * yyin;
 extern "C" FILE * yyout;
 
-extern "C" int yylex();  
+extern int yylex();  
 extern int yyparse();
 
 extern void yyrestart (FILE * in);
@@ -12,45 +12,51 @@ extern void yyerror(const char * s);
 
 int main()
 {
-  struct sigaction ctrl_action;
-  ctrl_action.sa_handler = ctrlc_handler;
-  sigemptyset(&ctrl_action.sa_mask);
-  ctrl_action.sa_flags = SA_RESTART;
+	bool is_interactive = false;  
+	Command::currentCommand.set_interactive((is_interactive = isatty(0)));
 
-  if (sigaction(SIGINT, &ctrl_action, NULL)) {
-	perror("sigint");
-	_exit(6);
-  }
+	std::string expanded_home = tilde_expand("~/.yashrc");
 
-  struct sigaction chld;
-  chld.sa_handler = sigchld_handler;
-  sigemptyset(&chld.sa_mask);
-  chld.sa_flags   = SA_RESTART | SA_NOCLDSTOP;
+	char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
 
-  if (sigaction(SIGCHLD, &chld, NULL) == -1) {
-	perror("sigchild");
-	_exit(7);
-  }
+	yyin = fopen(rcfile, "r"); free(rcfile);
 
-  std::string expanded_home = tilde_expand("~/.yashrc");
+	/* From Brian P. Hays */
+	if (yyin != NULL) {
+		Command::currentCommand.printPrompt = false;
+		yyparse();
+		fclose(yyin);
 
-  char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
+		yyin = stdin;
+		yyrestart(yyin);
+		Command::currentCommand.printPrompt = true;
+	}
 
-  yyin = fopen(rcfile, "r"); free(rcfile);
+	if (is_interactive) {
+		/* loop until we are in the foreground */
+		for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
+			kill(- Command::currentCommand.m_pgid, SIGTTIN);
+		}
 
-  /* From Brian P. Hays */
-  if (yyin != NULL) {
-	Command::currentCommand.printPrompt = false;
-	yyparse();
-	fclose(yyin);
+		/* Ignore interactive and job-control signals */
+		signal(SIGINT,  SIG_IGN);
+		signal(SIGQUIT, SIG_IGN);
+		signal(SIGTSTP, SIG_IGN);
+		signal(SIGTTIN, SIG_IGN);
+		signal(SIGTTOU, SIG_IGN);
+		signal(SIGCHLD, SIG_IGN);
 
-	yyin = stdin;
-	yyrestart(yyin);
-	Command::currentCommand.printPrompt = true;
-  }
+		/* go to our process group */
+		Command::currentCommand.m_pgid = getpid();
+		if (setpgid(Command::currentCommand.m_pgid,
+					Command::currentCommand.m_pgid) < 0) {
+			perror("setpgid");
+			_exit(1);
+		} /* read_line will grab the terminal */	
+	}
   
-  Command::currentCommand.prompt();
-  yyparse();
+	Command::currentCommand.prompt();  
+	yyparse();
 
-  return 0;
+	return 0;
 }

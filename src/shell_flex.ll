@@ -1,38 +1,37 @@
 %{
 #include <string.h>
 #include "shell_bison.hh"
-
-/******************* Input From read-shell ************************/
 #include "shell-readline.hpp"
+/******************* Input From read-shell ************************/
 #include <unistd.h>
-static char * lastLine = NULL;
-// extern FILE * yyin;
+	static char * lastLine = NULL;
+	read_line reader;
 
 int mygetc (FILE * f) {
-static readLine reader;
-static char * p = NULL;
-static int get_file = 0;
-char ch;
-
-if (!isatty(0)) return getc(f);
-if (p == NULL || *p == 0) {
-if (lastLine != NULL) free(lastLine);
-if (get_file) {
-p = reader.getStashed();
-get_file = 0;
-lastLine = p;
-} else {
-reader.tty_raw_mode();
-reader();
-reader.unset_tty_raw_mode();
-p = reader.get();
-lastLine = p;
-}
-}
-ch = *p;
-++p;
-
-return ch;
+	static char * p = NULL;
+	static int get_file = 0;
+	
+	char ch;
+	
+	if (!Command::currentCommand.is_interactive()) return getc(f);
+	if (p == NULL || *p == 0) {
+		if (lastLine != NULL) free(lastLine);
+		if (get_file) {
+			p = reader.getStashed();
+			get_file = 0;
+			lastLine = p;
+		} else {
+			reader.tty_raw_mode();
+			reader();
+			reader.unset_tty_raw_mode();
+			p = reader.get();
+			lastLine = p;
+		}
+	}
+	ch = *p;
+	++p;
+	
+	return ch;
 }
 
 #undef getc
