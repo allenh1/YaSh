@@ -232,13 +232,38 @@ void Command::execute()
 	int fdpipe[2], fdin, fdout, fderr;
 	pid_t pid;
 
+	/* check for dank memes */
+	char * dbg = getenv("SHELL_DBG");
+	if (dbg && !strcmp(dbg, "YES")) print();
 
+	char * lolz = getenv("LOLZ");
+	if (lolz && !strcmp(lolz, "YES")) {
+		/// Because why not?
+		std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
+		char * _ptr = strdup("lolcat");
+		lul->insertArgument(_ptr);
+		free(_ptr);
+		if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
+			strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
+			strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
+			strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
+			strcmp(simpleCommands.back().get()->arguments[0], "unsetenv")) {
+			this->insertSimpleCommand(lul);
+		}
+	}
 
 	/* point fdin (fderr) to this pipeline's input (error) */
 	fdin = m_stdin; fderr = m_stderr;
 	for (int x = 0; x < numOfSimpleCommands; ++x) {
+		/* manage commands */
+		std::vector<char *> curr = simpleCommands.at(x).get()->arguments;		
+		char ** d_args;
+		curr.push_back((char *) NULL);
+		d_args = curr.data();
+
 		/* add NULL to the end of the simple command (for exec) */
 		simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
+		
 		if (pipe(fdpipe)) {
 			/* pipe failed */
 			perror("pipe");
@@ -250,7 +275,8 @@ void Command::execute()
 		if (x != numOfSimpleCommands - 1) fdout = fdpipe[1];
 		else fdout = m_stdout;
 
-		if ((pid = fork()) < 0) {
+		if (simpleCommands.at(x).get()->handle_builtins()) goto cleanup;
+		else if ((pid = fork()) < 0) {
 			/* fork failed */
 			perror("fork"); clear();
 			prompt(); return;
@@ -269,6 +295,7 @@ void Command::execute()
 			}
 		}
 
+	cleanup:
 		/* cleanup pipeline */
 		if (fdin  != m_stdin) close(fdin);
 		if (fdout != m_stdout) close(fdout);
@@ -362,105 +389,7 @@ void Command::old_execute()
 		dup2(fdout, 1);
 		close(fdout);
 
-		if (d_args[0] == std::string("cd")) {
-			std::string curr_dir = std::string(getenv("PWD"));
-			int cd; std::string new_dir;
-
-			if (curr.size() == 4) {
-				char * to_replace = strdup(d_args[1]);
-				char * replace_to = strdup(d_args[2]);		
-				char * replace_in = strndup(curr_dir.c_str(), curr_dir.size());
-		
-				char * sub = strstr(replace_in, to_replace);
-
-				/* Desired replacement wasn't found, so error and exit */
-				if (sub == NULL) {
-					perror("cd");
-
-					free(to_replace);
-					free(replace_to);
-					free(replace_in);
-			   
-					dup2(tmpin, 0);  close(tmpin);
-					dup2(tmpout, 1); close(tmpout);
-					dup2(tmperr, 2); close(tmperr);
-		  
-					clear(); prompt(); return;
-				}
-
-				register size_t replace_len     = strlen(to_replace);
-				register size_t replacement_len = strlen(replace_to);
-
-				if (!(replace_len && replacement_len)) {
-					std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
-
-					free(to_replace); free(replace_in); free(replace_to);
-			   
-					dup2(tmpin, 0);  close(tmpin);
-					dup2(tmpout, 1); close(tmpout);
-					dup2(tmperr, 2); close(tmperr);
-		  
-					clear(); prompt(); return;
-				}
-				/* garauntee we have enough space */
-				char * replacement = (char*) calloc(curr_dir.size() -
-													replace_len +
-													replacement_len + 1,
-													sizeof(char));
-				char * d = replacement;
-				/* copy up to the beginning of the substring */
-				for (char * c = replace_in; c != sub; *(d++) = *(c++));
-				/* copy the replacement */
-				for (char * c = replace_to; *c; *(d++) = *(c++));
-				/* advance past the substring we wanted to replace */
-				char * residual = sub + replace_len;
-				/* copy the residual chars over */
-				for (; *residual; *(d++) = *(residual++));
-		
-				std::cout<<replacement<<std::endl;
-		
-				free(to_replace); free(replace_to); free(replace_in);
-
-				std::string new_dir(replacement); free(replacement);
-				if (!changedir(new_dir)) {
-					perror("cd");
-		  
-					dup2(tmpin, 0);  close(tmpin);
-					dup2(tmpout, 1); close(tmpout);
-					dup2(tmperr, 2); close(tmperr);
-		  
-					clear(); prompt(); return;
-				}
-			} else if (curr.size() == 2) {
-				std::string _empty = "";
-				if (!changedir(_empty)) {
-					perror("cd");
-		  
-					dup2(tmpin, 0);
-					dup2(tmpout, 1);
-					dup2(tmperr, 2);
-					close(tmpin);
-					close(tmpout);
-					close(tmperr);
-
-					clear(); prompt();
-				}		
-				setenv("PWD", getenv("HOME"), 1);
-			} else {
-				if (d_args[1] == std::string("pwd") ||
-					d_args[1] == std::string("/bin/pwd")) {
-				} else if (*d_args[1] != '/') { 
-					new_dir = std::string(getenv("PWD"));
-					for (;new_dir.back() == '/'; new_dir.pop_back());
-					new_dir += "/" + std::string(d_args[1]);
-				} else new_dir = std::string(d_args[1]);
-
-				for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back());
-				if (changedir(new_dir)) setenv("PWD", new_dir.c_str(), 1);
-			}
-			setenv("PWD", curr_dir.c_str(), 1);
-			// Regardless of errors, cd has finished.
-		} else if (d_args[0] == std::string("ls")) {
+	if (d_args[0] == std::string("ls")) {
 			char ** temp = new char*[curr.size() + 2];
 			for (int y = 2; y < curr.size(); ++y) {
 				temp[y] = strdup(curr[y - 1]);
