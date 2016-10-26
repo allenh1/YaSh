@@ -195,17 +195,18 @@ void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 
 void Command::clear()
 {
-   if (m_stdin  != 0) close(m_stdin);
-   if (m_stdout != 1) close(m_stdout);
-   if (m_stderr != 2) close(m_stderr);
+	if (m_stdin  != 0) close(m_stdin);
+	if (m_stdout != 1) close(m_stdout);
+	if (m_stderr != 2) close(m_stderr);
 
-   m_stdin = 0, m_stdout = 1, m_stderr = 2;
+	m_stdin = 0, m_stdout = 1, m_stderr = 2;
    
 	simpleCommands.clear(),
 		background = append = false,
 		numOfSimpleCommands = 0,
 		outFile.release(), inFile.release(),
-		errFile.release(), simpleCommands.shrink_to_fit();
+		errFile.release(), simpleCommands.shrink_to_fit(),
+		m_jobs.shrink_to_fit();
 	outSet = inSet = errSet = false;
 }
 
@@ -269,12 +270,15 @@ void Command::execute()
 
 		/* add NULL to the end of the simple command (for exec) */
 		simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
-		
-		if (pipe(fdpipe)) {
-			/* pipe failed */
-			perror("pipe");
-			clear(); prompt();
-			return;
+
+		if (x != numOfSimpleCommands - 1) {
+			/* thank you Gustavo for the outer if statement. */
+			if (pipe(fdpipe)) {
+				/* pipe failed */
+				perror("pipe");
+				clear(); prompt();
+				return;
+			}
 		}
 
 		/* redirect output */
@@ -284,7 +288,7 @@ void Command::execute()
 		if (simpleCommands.at(x).get()->handle_builtins(fdin,
 														fdout,
 														fderr)) {
-		   goto cleanup;
+			goto cleanup;
 		} else if ((pid = fork()) < 0) {
 			/* fork failed */
 			perror("fork"); clear();
@@ -312,8 +316,38 @@ void Command::execute()
 		fdin = fdpipe[0];
 	}
 
-	if (!background) waitpid(pid, NULL, 0);
-	else m_background.push_back(pid);
+	/* prep to save */
+	job current; int status;
+	current.pgid   = pid;
+	current.stdin  = m_stdin;
+	current.stdout = m_stdout;
+	current.stderr = m_stderr;
+	current.status = job_status::RUNNING;
+	/* waitpid:
+	 *   pid <  -1 => wait for absolute value of pid
+	 *   pid == -1 => wait for any child process
+	 *   pid ==  0 => wait for any child whose pgid is ours
+	 *   pid >   0 => wait for the specified pid
+	 */
+
+	if (!background) waitpid(pid, &status, WUNTRACED);
+	else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+	
+	if (WIFSTOPPED(status)) {
+		current.status = job_status::STOPPED;
+		m_jobs.push_back(current);
+		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
+				 <<"]+\tstopped\t"<<pid<<std::endl;
+	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
+										   WUNTRACED|WNOHANG)) > 0;) {
+		const auto & x = m_job_map.find(_pid);
+		if (x != m_job_map.end()) {
+			/* x->second is the value */
+			std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+					 <<"]-\texited"<<std::endl;
+		}
+	}
+	
 
 	/* Clear to prepare for next command */
 	clear();
@@ -366,29 +400,6 @@ Command Command::currentCommand;
 std::shared_ptr<SimpleCommand> Command::currentSimpleCommand;
 
 int yyparse(void);
-
-void ctrlc_handler(int signum)
-{
-	/** kill my kids **/
-	kill(signum, SIGINT);
-}
-
-void sigchld_handler(int signum)
-{
-	int saved_errno = errno; int pid = -1;
-	for(; pid = waitpid(-1, NULL, WNOHANG) > 0;) {
-		bool found = false;
-		for (auto && a : m_background) {
-			if (a == pid) {
-				found = true;
-				break;
-			}
-		} if (found) {
-			std::cout<<"["<<signum<<"] has exited."<<std::endl;
-			Command::currentCommand.prompt();
-		}
-	} errno = saved_errno;
-}
 
 std::vector<std::string> splitta(std::string s, char delim) {
 	std::vector<std::string> elems; std::stringstream ss(s);
