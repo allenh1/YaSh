@@ -49,16 +49,12 @@ int main()
 		signal(SIGCHLD, SIG_IGN);
 
 		/* go to our process group */
-		Command::currentCommand.m_pgid = getpid();
-		if (setpgid(Command::currentCommand.m_pgid,
-					Command::currentCommand.m_pgid) < 0) {
-			perror("setpgid");
-			_exit(1);
-		} /* read_line will grab the terminal */
-
-		/* grab control */
-		tcsetpgrp(0, Command::currentCommand.m_pgid);
-		tcgetattr(0, &reader.oldtermios);
+		pid_t shell_pgid = getpid();
+		Command::currentCommand.m_pgid = shell_pgid;
+		if (setpgid(shell_pgid, shell_pgid) < 0) {
+		   perror("Couldn't construct our process group!");
+		   exit(1);
+		}
 	}
   
 	Command::currentCommand.prompt();  
