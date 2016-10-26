@@ -39,23 +39,23 @@ int main()
 		for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
 			kill(- Command::currentCommand.m_pgid, SIGTTIN);
 		}
-
+		
+		/* go to our process group */
+		pid_t shell_pgid = getpid();
+		if ((getpgrp() != getpid()) && (setpgid(shell_pgid, shell_pgid) < 0)) {
+		   perror("setpgid");
+		   std::cerr<<"pgid: "<<getpgrp()<<std::endl;
+		   std::cerr<<"pid: "<<getpid()<<std::endl;
+		   /* exit(1); */
+		}
+		Command::currentCommand.m_pgid = shell_pgid;
 		/* Ignore interactive and job-control signals */
 		signal(SIGINT,  SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 		signal(SIGTSTP, SIG_IGN);
 		signal(SIGTTIN, SIG_IGN);
 		signal(SIGTTOU, SIG_IGN);
-		signal(SIGCHLD, SIG_IGN);
-
-		/* go to our process group */
-		pid_t shell_pgid = getpid();
-		Command::currentCommand.m_pgid = shell_pgid;
-		if (setpgid(shell_pgid, shell_pgid) < 0) {
-		   perror("setpgid");
-		   std::cerr<<"pgid: "<<shell_pgid<<std::endl;
-		   /* exit(1); */
-		}
+		signal(SIGCHLD, SIG_IGN);		
 	}
   
 	Command::currentCommand.prompt();  
