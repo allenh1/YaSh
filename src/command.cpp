@@ -315,8 +315,45 @@ void Command::execute()
 		fdin = fdpipe[0];
 	}
 
-	if (!background) waitpid(pid, NULL, 0);
-	else m_background.push_back(pid);
+	/* prep to save */
+	job current; int status;
+	current.pgid   = m_pgid;
+	current.stdin  = m_stdin;
+	current.stderr = m_stderr;
+	current.status = job_status::RUNNING;
+	
+	/* wait for the current group to exit */
+	bool wait_current = !background;
+	/* waitpid:
+	 *
+	 * pid < -1  => wait for absolute value of pid
+	 * pid == -1 => wait for any child process
+	 * pid == 0  => wait for any child whose pgid is ours
+	 * pid >  0  => wait for the specified pid
+	 *
+	 * std::map<pid_t, job> m_jobs;
+	 */
+
+	if (!background) waitpid(pid, &status, WUNTRACED);
+	if (WIFSTOPPED(status)) {
+		std::cerr<<"["<<pid<<"] stopped"<<std::endl;
+	} else if (WIFEXITED(status)) {
+		std::cerr<<"["<<pid<<"] exited"<<std::endl;
+	}
+	for (pid_t _pid = 0; (_pid = waitpid(WAIT_ANY, &status,
+										 WUNTRACED|WNOHANG)) > 0;) {
+		/* this is one we remembered! */
+		if (WIFSTOPPED(status)) {
+			/* job stopped due to signal */
+			std::cerr<<"WIFSTOPPED fired!"<<std::endl;
+		} if (WIFEXITED(status)) {
+			/* job exited */
+			std::cerr<<"WIFEXITED fired!"<<std::endl;
+		}
+
+		std::cerr<<"pid's: "<<_pid<<std::endl;
+	}
+	
 
 	/* Clear to prepare for next command */
 	clear();
@@ -369,29 +406,6 @@ Command Command::currentCommand;
 std::shared_ptr<SimpleCommand> Command::currentSimpleCommand;
 
 int yyparse(void);
-
-void ctrlc_handler(int signum)
-{
-	/** kill my kids **/
-	kill(signum, SIGINT);
-}
-
-void sigchld_handler(int signum)
-{
-	int saved_errno = errno; int pid = -1;
-	for(; pid = waitpid(-1, NULL, WNOHANG) > 0;) {
-		bool found = false;
-		for (auto && a : m_background) {
-			if (a == pid) {
-				found = true;
-				break;
-			}
-		} if (found) {
-			std::cout<<"["<<signum<<"] has exited."<<std::endl;
-			Command::currentCommand.prompt();
-		}
-	} errno = saved_errno;
-}
 
 std::vector<std::string> splitta(std::string s, char delim) {
 	std::vector<std::string> elems; std::stringstream ss(s);
