@@ -208,6 +208,7 @@ public:
 		yyparse();
 	}
 
+	termios oldtermios;
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
 		std::vector<std::string> elems; std::stringstream ss(s);
@@ -227,6 +228,5 @@ private:
 	int m_get_mode;
 	std::vector<std::string> m_history;
 	bool m_show_line = false;
-	termios oldtermios;
 };
 #endif
