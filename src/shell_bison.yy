@@ -3,7 +3,7 @@
 %token  <string_val> BACKTIK
 
 %token 	NOTOKEN GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND PIPE AMPERSAND
-%token GREATAND TAB SRC ANDAND ALIAS GETS PUSHD POPD
+%token GREATAND TAB SRC ANDAND ALIAS GETS PUSHD POPD FG BG
 
 %union	{
     char * string_val;
@@ -56,6 +56,18 @@ command:
 					Command::currentCommand.execute();
 				}
 		| 		SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
+		|		FG {
+          			pid_t current = tcgetpgrp(0);
+			        job _back = Command::currentCommand.m_jobs.back();
+					tcsetpgrp(0, _back.pgid);
+			        tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+					if (kill(- _back.pgid, SIGCONT) < 0) perror("kill");
+
+					waitpid(_back.pgid, 0, WUNTRACED);
+					tcsetpgrp(0, current);
+					tcgetattr(0, &reader.oldtermios);
+					tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+				}	
 		| 		ALIAS WORD WORD {
 			       char * alias, * word, * equals;
 				   if (!(equals = strchr($2, '='))) {

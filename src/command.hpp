@@ -64,12 +64,13 @@ public:
 	pid_t m_pgid = 0;
 	pid_t m_pid = 0;
 	std::map<std::string, std::vector<std::string> > m_aliases;
+	std::map<pid_t, size_t> m_job_map;
 
-	std::map<pid_t, job> m_jobs;
+	std::vector<job> m_jobs;
 	std::map<pid_t, SimpleCommand> m_processes;
-	
-	std::vector<std::string> wc_collector;// Wild card collection tool
 
+	std::vector<std::string> wc_collector;// Wild card collection tool
+   
 	bool printPrompt = true;
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
@@ -79,7 +80,7 @@ private:
 	}
 
 	int get_output_flags();
-	
+
 	std::unique_ptr<char> outFile;
 	std::unique_ptr<char> inFile;
 	std::unique_ptr<char> errFile;

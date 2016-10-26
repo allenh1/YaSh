@@ -319,39 +319,32 @@ void Command::execute()
 	job current; int status;
 	current.pgid   = m_pgid;
 	current.stdin  = m_stdin;
+	current.stdout = m_stdout;
 	current.stderr = m_stderr;
 	current.status = job_status::RUNNING;
-	
-	/* wait for the current group to exit */
-	bool wait_current = !background;
 	/* waitpid:
-	 *
-	 * pid < -1  => wait for absolute value of pid
-	 * pid == -1 => wait for any child process
-	 * pid == 0  => wait for any child whose pgid is ours
-	 * pid >  0  => wait for the specified pid
-	 *
-	 * std::map<pid_t, job> m_jobs;
+	 *   pid <  -1 => wait for absolute value of pid
+	 *   pid == -1 => wait for any child process
+	 *   pid ==  0 => wait for any child whose pgid is ours
+	 *   pid >   0 => wait for the specified pid
 	 */
 
 	if (!background) waitpid(pid, &status, WUNTRACED);
+	else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+	
 	if (WIFSTOPPED(status)) {
-		std::cerr<<"["<<pid<<"] stopped"<<std::endl;
-	} else if (WIFEXITED(status)) {
-		std::cerr<<"["<<pid<<"] exited"<<std::endl;
-	}
-	for (pid_t _pid = 0; (_pid = waitpid(WAIT_ANY, &status,
-										 WUNTRACED|WNOHANG)) > 0;) {
-		/* this is one we remembered! */
-		if (WIFSTOPPED(status)) {
-			/* job stopped due to signal */
-			std::cerr<<"WIFSTOPPED fired!"<<std::endl;
-		} if (WIFEXITED(status)) {
-			/* job exited */
-			std::cerr<<"WIFEXITED fired!"<<std::endl;
-		}
-
-		std::cerr<<"pid's: "<<_pid<<std::endl;
+		current.status = job_status::STOPPED;
+		m_jobs.push_back(current);
+		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
+				 <<"]+\tstopped"<<std::endl;
+	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
+										   WUNTRACED|WNOHANG)) > 0;) {
+	   const auto & x = m_job_map.find(_pid);
+	   if (x != m_job_map.end()) {
+		  /* x->second is the value */
+		  std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+				   <<"]-\texited"<<std::endl;
+	   }
 	}
 	
 

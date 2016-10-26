@@ -18,6 +18,12 @@ struct job
    int stdout;
    int stderr;
 
+   void restore_io() {
+	  dup2(stdin,  0); close(stdin);
+	  dup2(stdout, 1); close(stdout);
+	  dup2(stderr, 2); close(stderr);
+   }
+   
    job_status status;
 };
 #endif

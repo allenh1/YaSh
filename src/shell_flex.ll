@@ -78,6 +78,10 @@ void myunputc(int c) {
 
 "exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
 
+^"fg" { return FG; }
+
+^"bg" { return BG; }
+
 ^"source" { return SRC; }
 
 ^"alias" { return ALIAS; }

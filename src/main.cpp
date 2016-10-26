@@ -1,14 +1,16 @@
+#include "shell-readline.hpp"
 #include "shell_bison.hh"
 #include "command.hpp"
 
-extern "C" FILE * yyin;
-extern "C" FILE * yyout;
+extern FILE * yyin;
+extern FILE * yyout;
 
 extern int yylex();  
 extern int yyparse();
 
 extern void yyrestart (FILE * in);
 extern void yyerror(const char * s);
+extern read_line reader;
 
 int main()
 {
@@ -16,21 +18,21 @@ int main()
 	Command::currentCommand.set_interactive((is_interactive = isatty(0)));
 
 	std::string expanded_home = tilde_expand("~/.yashrc");
-/*
-  char * rcfile = strndup(expanded_home.c_str(), expanded_home.size()); */
 
-	// yyin = fopen(rcfile, "r"); free(rcfile);
+	char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
 
-	// /* From Brian P. Hays */
-	// if (yyin != NULL) {
-	// 	Command::currentCommand.printPrompt = false;
-	// 	yyparse();
-	// 	fclose(yyin);
+	yyin = fopen(rcfile, "r"); free(rcfile);
 
-	// 	yyin = stdin;
-	// 	yyrestart(yyin);
-	// 	Command::currentCommand.printPrompt = true;
-	// } 
+	/* From Brian P. Hays */
+	if (yyin != NULL) {
+		Command::currentCommand.printPrompt = false;
+		yyparse();
+		fclose(yyin);
+
+		yyin = stdin;
+		yyrestart(yyin);
+		Command::currentCommand.printPrompt = true;
+	} 
 
 	if (is_interactive) {
 		/* loop until we are in the foreground */
@@ -52,7 +54,11 @@ int main()
 					Command::currentCommand.m_pgid) < 0) {
 			perror("setpgid");
 			_exit(1);
-		} /* read_line will grab the terminal */	
+		} /* read_line will grab the terminal */
+
+		/* grab control */
+		tcsetpgrp(0, Command::currentCommand.m_pgid);
+		tcgetattr(0, &reader.oldtermios);
 	}
   
 	Command::currentCommand.prompt();  
