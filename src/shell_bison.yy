@@ -67,8 +67,48 @@ command:
 					tcsetpgrp(0, current);
 					tcgetattr(0, &reader.oldtermios);
 					tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-				}	
-		| 		ALIAS WORD WORD {
+				}
+		|		FG WORD {
+           			pid_t current = tcgetpgrp(0);
+					try {
+						int as_num = std::stoi(std::string($2));
+						if (as_num >= Command::currentCommand.m_jobs.size()) {
+							std::cerr<<"fg: no such job"<<std::endl;
+						} else {
+							job _back = Command::currentCommand.m_jobs[as_num];
+							tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+							if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
+						
+							waitpid(_back.pgid, 0, WUNTRACED);
+				
+							tcsetpgrp(0, current);
+							tcgetattr(0, &reader.oldtermios);
+							tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+						}
+				    } catch ( ... ) {
+						std::cerr<<"fg: \""<<$2<<"\" is not a number."
+								 <<std::endl;
+				    }
+				}
+		| 		BG {
+			        job _back = Command::currentCommand.m_jobs.back();
+					/* don't restore io, just resume. */
+			        if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
+				}
+		|		BG WORD {
+			        try {
+						int as_num = std::stoi(std::string($2));
+						if (as_num >= Command::currentCommand.m_jobs.size()) {
+							job _back = Command::currentCommand.m_jobs[as_num];
+							/* don't restore io, just resume */
+							if (kill(_back.pgid, SIGCONT) < 0) perror("kill");							
+						}
+				    } catch ( ... ) {
+						std::cerr<<"bg: \""<<$2<<"\" is not a number."
+								 <<std::endl;
+				    }
+				}
+		|		ALIAS WORD WORD {
 			       char * alias, * word, * equals;
 				   if (!(equals = strchr($2, '='))) {
 					   std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
