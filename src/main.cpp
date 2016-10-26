@@ -52,8 +52,9 @@ int main()
 		pid_t shell_pgid = getpid();
 		Command::currentCommand.m_pgid = shell_pgid;
 		if (setpgid(shell_pgid, shell_pgid) < 0) {
-		   perror("Couldn't construct our process group!");
-		   exit(1);
+		   perror("setpgid");
+		   std::cerr<<"pgid: "<<shell_pgid<<std::endl;
+		   /* exit(1); */
 		}
 	}
   
