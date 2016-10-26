@@ -59,11 +59,11 @@ command:
 		|		FG {
           			pid_t current = tcgetpgrp(0);
 			        job _back = Command::currentCommand.m_jobs.back();
-					tcsetpgrp(0, _back.pgid);
 			        tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-					if (kill(- _back.pgid, SIGCONT) < 0) perror("kill");
+					if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 
 					waitpid(_back.pgid, 0, WUNTRACED);
+				
 					tcsetpgrp(0, current);
 					tcgetattr(0, &reader.oldtermios);
 					tcsetattr(0, TCSADRAIN, &reader.oldtermios);

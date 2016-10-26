@@ -317,7 +317,7 @@ void Command::execute()
 
 	/* prep to save */
 	job current; int status;
-	current.pgid   = m_pgid;
+	current.pgid   = pid;
 	current.stdin  = m_stdin;
 	current.stdout = m_stdout;
 	current.stderr = m_stderr;
@@ -336,7 +336,7 @@ void Command::execute()
 		current.status = job_status::STOPPED;
 		m_jobs.push_back(current);
 		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
-				 <<"]+\tstopped"<<std::endl;
+				 <<"]+\tstopped\t"<<pid<<std::endl;
 	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
 										   WUNTRACED|WNOHANG)) > 0;) {
 	   const auto & x = m_job_map.find(_pid);
