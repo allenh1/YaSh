@@ -195,17 +195,18 @@ void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 
 void Command::clear()
 {
-   if (m_stdin  != 0) close(m_stdin);
-   if (m_stdout != 1) close(m_stdout);
-   if (m_stderr != 2) close(m_stderr);
+	if (m_stdin  != 0) close(m_stdin);
+	if (m_stdout != 1) close(m_stdout);
+	if (m_stderr != 2) close(m_stderr);
 
-   m_stdin = 0, m_stdout = 1, m_stderr = 2;
+	m_stdin = 0, m_stdout = 1, m_stderr = 2;
    
 	simpleCommands.clear(),
 		background = append = false,
 		numOfSimpleCommands = 0,
 		outFile.release(), inFile.release(),
-		errFile.release(), simpleCommands.shrink_to_fit();
+		errFile.release(), simpleCommands.shrink_to_fit(),
+		m_jobs.shrink_to_fit();
 	outSet = inSet = errSet = false;
 }
 
@@ -287,7 +288,7 @@ void Command::execute()
 		if (simpleCommands.at(x).get()->handle_builtins(fdin,
 														fdout,
 														fderr)) {
-		   goto cleanup;
+			goto cleanup;
 		} else if ((pid = fork()) < 0) {
 			/* fork failed */
 			perror("fork"); clear();
@@ -339,12 +340,12 @@ void Command::execute()
 				 <<"]+\tstopped\t"<<pid<<std::endl;
 	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
 										   WUNTRACED|WNOHANG)) > 0;) {
-	   const auto & x = m_job_map.find(_pid);
-	   if (x != m_job_map.end()) {
-		  /* x->second is the value */
-		  std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
-				   <<"]-\texited"<<std::endl;
-	   }
+		const auto & x = m_job_map.find(_pid);
+		if (x != m_job_map.end()) {
+			/* x->second is the value */
+			std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+					 <<"]-\texited"<<std::endl;
+		}
 	}
 	
 

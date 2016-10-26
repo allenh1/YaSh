@@ -187,7 +187,7 @@ void myunputc(int c) {
     return WORD;
 }
 
-[^ ^|\t\n>"]*[^ ^|\t\n>"]*  {
+[^ ^|\t\n>"][^ ^|\t\n>"]*  {
     yylval.string_val = new char[strlen(yytext) + 1];
     memset(yylval.string_val, 0, strlen(yytext) + 1);
     strcpy(yylval.string_val, yytext);

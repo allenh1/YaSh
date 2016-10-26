@@ -58,24 +58,35 @@ command:
 		| 		SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 		|		FG {
           			pid_t current = tcgetpgrp(0);
-			        job _back = Command::currentCommand.m_jobs.back();
-			        tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-					if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
+					if (Command::currentCommand.m_jobs.size()) {
+						job _back = Command::currentCommand.m_jobs.back();
+						Command::currentCommand.m_jobs.pop_back();
+						tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+						if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 
-					waitpid(_back.pgid, 0, WUNTRACED);
+						waitpid(_back.pgid, 0, WUNTRACED);
 				
-					tcsetpgrp(0, current);
-					tcgetattr(0, &reader.oldtermios);
-					tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+						tcsetpgrp(0, current);
+						tcgetattr(0, &reader.oldtermios);
+						tcsetattr(0, TCSADRAIN, &reader.oldtermios);
+					} else {
+						std::cerr<<"fg: no such job"<<std::endl;
+					}
 				}
 		|		FG WORD {
            			pid_t current = tcgetpgrp(0);
 					try {
-						int as_num = std::stoi(std::string($2));
-						if (as_num >= Command::currentCommand.m_jobs.size()) {
+						unsigned int as_num = std::stoi(std::string($2));
+						if (as_num >= Command::currentCommand.m_jobs.size() ||
+							Command::currentCommand.m_jobs.size() == 0) {
 							std::cerr<<"fg: no such job"<<std::endl;
 						} else {
 							job _back = Command::currentCommand.m_jobs[as_num];
+							/* remove the job from our list */
+							Command::currentCommand.m_jobs.erase(
+								Command::currentCommand.m_jobs.begin() + as_num,
+								Command::currentCommand.m_jobs.begin() + as_num + 1);
+							
 							tcsetattr(0, TCSADRAIN, &reader.oldtermios);
 							if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 						
@@ -100,6 +111,11 @@ command:
 						int as_num = std::stoi(std::string($2));
 						if (as_num >= Command::currentCommand.m_jobs.size()) {
 							job _back = Command::currentCommand.m_jobs[as_num];
+							/* erase */
+							Command::currentCommand.m_jobs.erase(
+								Command::currentCommand.m_jobs.begin() + as_num,
+								Command::currentCommand.m_jobs.begin() + as_num + 1);
+							
 							/* don't restore io, just resume */
 							if (kill(_back.pgid, SIGCONT) < 0) perror("kill");							
 						}
