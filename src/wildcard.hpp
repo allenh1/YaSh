@@ -3,13 +3,7 @@
 /* STL (C++) includes */
 #include <algorithm>
 #include <iostream>
-#include <queue>
-
-/* C includes */
-#include <string.h>
-#include <dirent.h>
-#include <regex.h>
-#include <fcntl.h>
+#include <glob.h>
 
 #include "command.hpp"
 
