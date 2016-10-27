@@ -37,9 +37,20 @@ int main()
 	if (is_interactive) {
 		/* loop until we are in the foreground */
 		for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
-			kill(- Command::currentCommand.m_pgid, SIGTTIN);
+		  if (kill(0, SIGTTIN) < 0) {
+			perror("kill");
+		  }
 		}
-
+		
+		/* go to our process group */
+		pid_t shell_pgid = getpid();
+	    if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) {
+		   perror("setpgid");
+		   std::cerr<<"pgid: "<<getpgrp()<<std::endl;
+		   std::cerr<<"pid: "<<getpid()<<std::endl;
+		   /* exit(1); */
+		}
+		Command::currentCommand.m_pgid = shell_pgid;
 		/* Ignore interactive and job-control signals */
 		signal(SIGINT,  SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
@@ -48,17 +59,8 @@ int main()
 		signal(SIGTTOU, SIG_IGN);
 		signal(SIGCHLD, SIG_IGN);
 
-		/* go to our process group */
-		Command::currentCommand.m_pgid = getpid();
-		if (setpgid(Command::currentCommand.m_pgid,
-					Command::currentCommand.m_pgid) < 0) {
-			perror("setpgid");
-			_exit(1);
-		} /* read_line will grab the terminal */
-
-		/* grab control */
-		tcsetpgrp(0, Command::currentCommand.m_pgid);
-		tcgetattr(0, &reader.oldtermios);
+		tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_pgid);
+		tcgetattr(STDIN_FILENO, &reader.oldtermios);
 	}
   
 	Command::currentCommand.prompt();  
