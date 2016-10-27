@@ -37,12 +37,14 @@ int main()
 	if (is_interactive) {
 		/* loop until we are in the foreground */
 		for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
-			kill(- Command::currentCommand.m_pgid, SIGTTIN);
+		  if (kill(0, SIGTTIN) < 0) {
+			perror("kill");
+		  }
 		}
 		
 		/* go to our process group */
 		pid_t shell_pgid = getpid();
-		if ((getpgrp() != getpid()) && (setpgid(shell_pgid, shell_pgid) < 0)) {
+	    if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) {
 		   perror("setpgid");
 		   std::cerr<<"pgid: "<<getpgrp()<<std::endl;
 		   std::cerr<<"pid: "<<getpid()<<std::endl;
@@ -55,7 +57,10 @@ int main()
 		signal(SIGTSTP, SIG_IGN);
 		signal(SIGTTIN, SIG_IGN);
 		signal(SIGTTOU, SIG_IGN);
-		signal(SIGCHLD, SIG_IGN);		
+		signal(SIGCHLD, SIG_IGN);
+
+		tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_pgid);
+		tcgetattr(STDIN_FILENO, &reader.oldtermios);
 	}
   
 	Command::currentCommand.prompt();  
