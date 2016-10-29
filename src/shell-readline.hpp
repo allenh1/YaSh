@@ -171,7 +171,7 @@ public:
 
    
 	void tty_raw_mode() {
-		pid_t pid = Command::currentCommand.m_pgid;
+		pid_t pid = Command::currentCommand.m_shell_pgid;
 		/* become a strong independent black woman */
 		tcsetpgrp(0, pid);
 		/* save defaults for later */

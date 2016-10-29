@@ -61,6 +61,7 @@ public:
 		m_interactive = _interactive;
 	}
 
+	pid_t m_shell_pgid = 0;
 	pid_t m_pgid = 0;
 	pid_t m_pid = 0;
 	std::map<std::string, std::vector<std::string> > m_aliases;
