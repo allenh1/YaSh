@@ -50,7 +50,7 @@ int main()
 		   std::cerr<<"pid: "<<getpid()<<std::endl;
 		   /* exit(1); */
 		}
-		Command::currentCommand.m_pgid = shell_pgid;
+		Command::currentCommand.m_shell_pgid = shell_pgid;
 		/* Ignore interactive and job-control signals */
 		signal(SIGINT,  SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
@@ -59,7 +59,7 @@ int main()
 		signal(SIGTTOU, SIG_IGN);
 		signal(SIGCHLD, SIG_IGN);
 
-		tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_pgid);
+		tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_shell_pgid);
 		tcgetattr(STDIN_FILENO, &reader.oldtermios);
 	}
   

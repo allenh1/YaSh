@@ -57,10 +57,11 @@ command:
 				}
 		| 		SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 		|		FG {
-          			pid_t current = tcgetpgrp(0);
+				   pid_t current = Command::currentCommand.m_shell_pgid;
 					if (Command::currentCommand.m_jobs.size()) {
-						job _back = Command::currentCommand.m_jobs.back();
+					   job _back = Command::currentCommand.m_jobs.back();
 						Command::currentCommand.m_jobs.pop_back();
+						tcsetpgrp(0, _back.pgid);
 						tcsetattr(0, TCSADRAIN, &reader.oldtermios);
 						if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 

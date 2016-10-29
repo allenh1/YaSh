@@ -203,7 +203,7 @@ void Command::clear()
    
 	simpleCommands.clear(),
 		background = append = false,
-		numOfSimpleCommands = 0,
+		numOfSimpleCommands = 0, m_pgid = 0,
 		outFile.release(), inFile.release(),
 		errFile.release(), simpleCommands.shrink_to_fit(),
 		m_jobs.shrink_to_fit();
@@ -318,7 +318,7 @@ void Command::execute()
 
 	/* prep to save */
 	job current; int status;
-	current.pgid   = pid;
+	current.pgid   = m_pgid;
 	current.stdin  = m_stdin;
 	current.stdout = m_stdout;
 	current.stderr = m_stderr;
@@ -330,7 +330,14 @@ void Command::execute()
 	 *   pid >   0 => wait for the specified pid
 	 */
 
-	if (!background) waitpid(pid, &status, WUNTRACED);
+	if (!background) {
+		/* put the job in the foreground */
+		if (m_interactive) {
+			tcsetpgrp(STDIN_FILENO, m_pgid);
+			waitpid(pid, &status, WUNTRACED);
+			tcsetpgrp(STDIN_FILENO, m_shell_pgid);
+		} else waitpid(pid, &status, WUNTRACED);
+	}
 	else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
 	
 	if (WIFSTOPPED(status)) {
@@ -354,10 +361,6 @@ void Command::execute()
 
 	/* Print new prompt if we are in a terminal. */
 	if (m_interactive) prompt();
-
-	/**
-	 * @todo put in foreground or background
-	 */
 }
 
 void Command::prompt()
