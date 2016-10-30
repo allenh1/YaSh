@@ -79,6 +79,23 @@ So, if you want to be boring, you can do the following.
 ```
  $ setenv PROMPT "YaSh => "
 ```
+Windows Installation:
+=====================
+Initially, Bash on Windows (which I shall refer to as BoW from hereon out)
+does not have the proper set of applications pre-installed, as evident of:
+```
+ $ ./autogen.sh
+```
+resulting in:
+```
+./autogen.sh: 4: ./autogen.sh: libtoolize: not found
+./autogen.sh: 5: ./autogen.sh: aclocal: not found
+./autogen.sh: 6: ./autogen.sh: automake: not found
+./autogen.sh: 7: ./autogen.sh: autoreconf: not found
+./autogen.sh: 8: ./autogen.sh: autoconf: not found
+```
+Therefore, the proper applications to install include: `autoconf` and `libtool`.
 
-
-
+```
+ $ sudo apt-get install build-essential autoconf libtool flex bison
+```
