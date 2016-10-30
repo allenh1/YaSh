@@ -22,14 +22,9 @@ public:
 	void execute();
 	void old_execute();
 	void clear();
-	
-	void wait_for_command(Command * cmd);
-	bool mark_process_status(pid_t, int);
+
 	void pushDir(const char * new_dir);
 	void popDir();
-   
-	void ctrlc_handler(int);
-	void sigchld_handler(int);
 	       
 	void insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand);
 
@@ -67,9 +62,7 @@ public:
 	pid_t m_pid = 0;
 	std::map<std::string, std::vector<std::string> > m_aliases;
 	std::map<pid_t, size_t> m_job_map;
-
 	std::vector<job> m_jobs;
-	std::map<pid_t, SimpleCommand> m_processes;
 
 	std::vector<std::string> wc_collector;// Wild card collection tool
    

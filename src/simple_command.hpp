@@ -50,17 +50,16 @@ struct SimpleCommand {
 		numOfArguments = 0;
 	};
 
-	void launch(int fdin, int fdout, int fderr,
-				int pgid, bool background, bool interactive);
-	void setup_process_io(int fdin, int fdout, int fderr);
-	void join_process_group(int pgid, bool background, bool interactive);
-	bool handle_builtins(int,int,int);
+	void launch(const int & fdin, const int & fdout, const int & fderr,
+				const int & pgid, const bool & background, const bool & interactive);
+	void setup_process_io(const int & fdin, const int & fdout, const int & fderr);
+	bool handle_builtins(const int &, const int &, const int&);
 	void handle_modified_commands();
 
-	bool handle_cd(int,int,int);
-	bool handle_cl(int,int,int);
-	bool handle_setenv(int,int,int);
-	bool handle_unsetenv(int,int,int);
+	bool handle_cd(const int &,const int &,const int &);
+	bool handle_cl(const int &, const int &, const int &);
+	bool handle_setenv(const int &, const int &, const int &);
+	bool handle_unsetenv(const int &, const int &, const int &);
 	bool handle_history();
 	bool completed = false;
 	bool stopped = false;

@@ -4,21 +4,22 @@
  * Launch the process with the given
  * file descriptors
  */
-void SimpleCommand::launch(int fdin, int fdout, int fderr,
-						   int pgid, bool background,
-						   bool interactive)
+void SimpleCommand::launch(const int & fdin, const int & fdout,
+						   const int & fderr, const int & pgid,
+						   const bool & background,
+						   const bool & interactive)
 {
-	pid_t pid;
+	pid_t pid, _pgid;
 	
 	if (interactive) {
 		/* move the pid into the group, and control the terminal */
 		pid = getpid();
 
-		if (pgid == 0) pgid = pid;
-		setpgid(pid, pgid);
+		if (pgid == 0) _pgid = pid;
+		setpgid(pid, _pgid);
 
 		/* grab terminal control */
-		if (!background) tcsetpgrp(0, pgid);
+		if (!background) tcsetpgrp(0, _pgid);
 
 		/* set signals to default handlers */
 		signal(SIGINT,  SIG_DFL);
@@ -37,7 +38,9 @@ void SimpleCommand::launch(int fdin, int fdout, int fderr,
 	_exit(1);
 }
 
-void SimpleCommand::setup_process_io(int fdin, int fdout, int fderr)
+void SimpleCommand::setup_process_io(const int & fdin,
+									 const int & fdout,
+									 const int & fderr)
 {
 	if (fdin != STDIN_FILENO) {
 		dup2(fdin, STDIN_FILENO);
@@ -51,7 +54,9 @@ void SimpleCommand::setup_process_io(int fdin, int fdout, int fderr)
 	}
 }
 
-bool SimpleCommand::handle_builtins(int fdin, int fdout, int fderr)
+bool SimpleCommand::handle_builtins(const int & fdin,
+									const int & fdout,
+									const int & fderr)
 {
 	if (handle_cd(fdin, fdout, fderr)) return true;
 	else if (handle_setenv(fdin, fdout, fderr)) return true;
@@ -68,7 +73,9 @@ void SimpleCommand::handle_modified_commands()
 	handle_printenv();
 }
 
-bool SimpleCommand::handle_cd(int fdin, int fdout, int fderr)
+bool SimpleCommand::handle_cd(const int & fdin,
+							  const int & fdout,
+							  const int & fderr)
 {
 	if (arguments[0] == std::string("cd")) {
 		setup_process_io(fdin, fdout, fderr);
@@ -193,7 +200,9 @@ void SimpleCommand::handle_printenv()
 	}
 }
 
-bool SimpleCommand::handle_setenv(int fdin, int fdout, int fderr)
+bool SimpleCommand::handle_setenv(const int & fdin,
+								  const int & fdout,
+								  const int & fderr)
 {
 	if (arguments[0] == std::string("setenv")) {
 		setup_process_io(fdin, fdout, fderr);
@@ -207,7 +216,9 @@ bool SimpleCommand::handle_setenv(int fdin, int fdout, int fderr)
 	} return false;
 }
 
-bool SimpleCommand::handle_unsetenv(int fdin, int fdout, int fderr)
+bool SimpleCommand::handle_unsetenv(const int & fdin,
+									const int & fdout,
+									const int & fderr)
 {
 	if (arguments[0] == std::string("unsetenv")) {
 		setup_process_io(fdin, fdout, fderr);
@@ -218,7 +229,9 @@ bool SimpleCommand::handle_unsetenv(int fdin, int fdout, int fderr)
 	} return false;
 }
 
-bool SimpleCommand::handle_cl(int fdin, int fdout, int fderr)
+bool SimpleCommand::handle_cl(const int & fdin,
+							  const int & fdout,
+							  const int & fderr)
 {
 	if (arguments[0] == std::string("cl")) {
 		setup_process_io(fdin, fdout, fderr);
