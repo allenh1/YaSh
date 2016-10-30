@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([YaSh],[0.0.5],[allen286@purdue.edu])
+AC_INIT([YaSh],[0.0.6-rc],[allen286@purdue.edu])
 AC_CONFIG_SRCDIR([src/command.cpp])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_AUX_DIR(config)
