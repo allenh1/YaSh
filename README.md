@@ -80,5 +80,70 @@ So, if you want to be boring, you can do the following.
  $ setenv PROMPT "YaSh => "
 ```
 
+Windows Installation (By Harrison Chen @mechaHarry):
+====================================================
+Initially, Bash on Windows does not have the proper set of applications pre-installed, 
+as evident of:
+```
+ $ ./autogen.sh
+```
+resulting in:
+```
+./autogen.sh: 4: ./autogen.sh: libtoolize: not found
+./autogen.sh: 5: ./autogen.sh: aclocal: not found
+./autogen.sh: 6: ./autogen.sh: automake: not found
+./autogen.sh: 7: ./autogen.sh: autoreconf: not found
+./autogen.sh: 8: ./autogen.sh: autoconf: not found
+```
+Therefore, the missing applications to install are as follows:
+`autoconf`, `libtool`, `flex', and `bison`.
+The command to install them is:
 
+```
+ $ sudo apt-get install build-essential autoconf libtool flex bison
+```
+
+When it prompts for 'y or n', press 'y' and 'enter' to proceed with the installation.
+Once installation is complete, proceed to the next step by running:
+```
+ $ ./configure --prefix=/usr
+```
+When 'configure' is complete, there is a specific 'Makefile' edit 
+to make the 'make' command work on Windows's Bash. 
+'cd' into 'src' and use your preferred terminal-text-editor,
+`pico`, `nano`, `vim`, or `emacs` to open the file named 'Makefile.am'
+```
+ $ cd src/
+```
+```
+ $ emacs Makefile.am
+```
+In here, locate the lines containing '-std=c++14'
+```
+...
+AM_CFLAGS = -g -O0 -lpthread -std=c++14
+AM_CXXFLAGS = -g -O0 -lpthread -std=c++14
+...
+AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++14
+...
+```
+and edit them to be '-std=c++11' like so:
+```
+...
+AM_CFLAGS = -g -O0 -lpthread -std=c++11
+AM_CXXFLAGS = -g -O0 -lpthread -std=c++11
+...
+AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++11
+...
+```
+Once this has been done, save and exit the text editor, then run make by:
+```
+ $ make
+```
+Your installation should be complete and the final step is to install and run YaSh
+```
+ $ sudo make install
+ $ yash
+```
+Welcome to YaSh on Bash on Ubuntu on Windows, otherwise known as YoBoUoW, pronounced yeahbwoi.
 
