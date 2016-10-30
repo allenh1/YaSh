@@ -1,5 +1,6 @@
 #ifndef __COMMAND_HPP__
 #define __COMMAND_HPP__
+#pragma once
 /* File Includes */
 #include "simple_command.hpp"
 #include "job.hpp"

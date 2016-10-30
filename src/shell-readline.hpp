@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <alloca.h>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
@@ -213,7 +214,7 @@ public:
 
 	void save_history();
 	void load_history();
-	const std::vector<std::string> & get_history();
+	const std::vector<std::string> & get_history() { return m_history; }
 	termios oldtermios;
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {

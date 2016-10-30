@@ -11,6 +11,7 @@ extern int yyparse();
 extern void yyrestart (FILE * in);
 extern void yyerror(const char * s);
 extern read_line reader;
+std::vector<std::string> * SimpleCommand::history = NULL;
 
 int main()
 {

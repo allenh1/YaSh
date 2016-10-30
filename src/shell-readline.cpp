@@ -9,6 +9,8 @@ read_line::read_line()
 		return;
 	} /* load current history */
 	load_history();
+
+	SimpleCommand::history = &m_history;
 }
 
 /** 
@@ -789,4 +791,3 @@ void read_line::load_history()
 	std::string _line; int x = 0;
 	for (; std::getline(history_file, _line); history_index++, m_history.push_back(_line + "\n"));
 }
-
