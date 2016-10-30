@@ -79,8 +79,9 @@ So, if you want to be boring, you can do the following.
 ```
  $ setenv PROMPT "YaSh => "
 ```
-Windows Installation:
-=====================
+
+Windows Installation (By Harrison Chen @mechaHarry):
+====================================================
 Initially, Bash on Windows does not have the proper set of applications pre-installed, 
 as evident of:
 ```
@@ -117,16 +118,7 @@ to make the 'make' command work on Windows's Bash.
 ```
  $ emacs Makefile.am
 ```
-In here, locate the lines containing '-std=c++11'
-```
-...
-AM_CFLAGS = -g -O0 -lpthread -std=c++11
-AM_CXXFLAGS = -g -O0 -lpthread -std=c++11
-...
-AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++11
-...
-```
-and edit them to be '-std=c++14' like so:
+In here, locate the lines containing '-std=c++14'
 ```
 ...
 AM_CFLAGS = -g -O0 -lpthread -std=c++14
@@ -135,7 +127,16 @@ AM_CXXFLAGS = -g -O0 -lpthread -std=c++14
 AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++14
 ...
 ```
-Once this has been done, save and exit the text editor and rerun make by:
+and edit them to be '-std=c++11' like so:
+```
+...
+AM_CFLAGS = -g -O0 -lpthread -std=c++11
+AM_CXXFLAGS = -g -O0 -lpthread -std=c++11
+...
+AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++11
+...
+```
+Once this has been done, save and exit the text editor, then run make by:
 ```
  $ make
 ```
