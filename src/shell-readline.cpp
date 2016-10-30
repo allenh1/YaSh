@@ -128,6 +128,16 @@ bool read_line::handle_enter(std::string & _line, char & input)
     return true;
 }
 
+/**
+ * This is a rather unfortunate issue.
+ * it seems that GCC optimizes this in a weird
+ * way and screws things up on ARM. So, we
+ * place these ugly pragmas here to make
+ * GCC stop optimizing and then allow it
+ * to resume with the last pragma.
+ */
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 /** 
  * @brief Handle ctrl + a
  *
@@ -144,20 +154,20 @@ bool read_line::handle_ctrl_a(std::string & _line)
     if (!_line.size()) return false;
 
     const size_t term_width = get_term_width();
-			
-    for (; _line.size();) {
-		m_buff.push(_line.back()); _line.pop_back();
-		/* Next check if we need to go up */
-		/* @todo this does not quite work -- but it's close */
-		if (_line.size() == term_width) {
-			if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) return false;
-			else if (!write_with_error(1, _line.c_str(), term_width - 3)) return false;
+		for (; _line.size();) {
+			m_buff.push(_line.back()); _line.pop_back();
+			/* Next check if we need to go up */
+			/* @todo this does not quite work -- but it's close */
+			if (_line.size() == term_width) {
+				if (!write_with_error(1, "\033[1A\x1b[33;1m$ \x1b[0m")) return false;
+				else if (!write_with_error(1, _line.c_str(), term_width - 3)) return false;
 
-			for (size_t k = 0; k < term_width - 2; ++k)
-				if (!write_with_error(1, "\b", 1)) return true;
-		} else if (!write_with_error(1, "\b", 1)) return false;
-    }
+				for (size_t k = 0; k < term_width - 2; ++k)
+					if (!write_with_error(1, "\b", 1)) return true;
+			} else if (!write_with_error(1, "\b", 1)) return false;
+		}
 }
+#pragma GCC pop_options
 
 /** 
  * @brief Handle ctrl + e
