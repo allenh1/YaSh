@@ -3,7 +3,6 @@ read_line::read_line()
 {
 	/* open history file */
 	std::string _file = tilde_expand("~/.cache/yash_history");
-	std::cerr<<"trying to open \""<<_file<<"\""<<std::endl;
 	m_history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
 	if (m_history_fd < 0) {
 		perror("open");
