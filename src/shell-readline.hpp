@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <alloca.h>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
@@ -34,7 +35,7 @@ extern int yyparse();
 class read_line
 {
 public:
-	read_line() { m_get_mode = 1; }
+	read_line();
 
 	bool write_with_error(int _fd, char & c);
 	bool write_with_error(int _fd, const char * s);
@@ -135,8 +136,11 @@ public:
 				if (ch1 == 91 && ch2 == 68 && !handle_left_arrow(_line)) continue;
 			}
 		}
-
-		_line += (char) 10 + '\0';
+		
+		if (_line.size()) {
+			if (!write_with_error(m_history_fd, _line.c_str(), _line.size())) return;
+			else if (!write_with_error(m_history_fd, "\n", 1)) return;
+		} _line += (char) 10 + '\0';
 		m_current_line_copy.clear();
 		m_history.push_back(_line);
 	}
@@ -208,6 +212,9 @@ public:
 		yyparse();
 	}
 
+	void save_history();
+	void load_history();
+	const std::vector<std::string> & get_history() { return m_history; }
 	termios oldtermios;
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
@@ -223,6 +230,7 @@ private:
 	std::vector<std::string> m_path;
 	ssize_t history_index = 0;
 	int fdin = 0;
+	int m_history_fd = 0;
 	std::string m_filename;
 	std::ifstream * m_ifstream;
 	int m_get_mode;

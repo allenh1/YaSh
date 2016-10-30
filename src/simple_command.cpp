@@ -64,6 +64,7 @@ void SimpleCommand::handle_modified_commands()
 {
 	handle_ls();
 	handle_grep();
+	handle_history();
 	handle_printenv();
 }
 
@@ -246,3 +247,26 @@ bool SimpleCommand::handle_cl(int fdin, int fdout, int fderr)
 	} return false;
 }
 
+bool SimpleCommand::handle_history()
+{
+	if (arguments[0] == std::string("history")) {
+		if (arguments.size() > 2) {
+			/* check for the --no-lineno option */
+			if (arguments[1] == std::string("--no-lineno")) {
+				for (const auto & x : *history) std::cout<<x;
+			} else {
+				std::cerr<<"history: invalid arguments"<<std::endl;
+				std::cerr<<"usage: history [--no-lineno]"<<std::endl;
+			}
+		} else {
+			/* get the length of the number, for formatting. */
+			std::string line = std::to_string(history->size());
+			unsigned short width = line.size() + 3; size_t x = 0;
+			std::string num;
+			for (const auto & _line : *history) {
+				num = std::to_string(x++) + ": ";
+				std::cout<<std::setw(width)<<num<<_line;
+			}
+		} exit(0);
+	}
+}

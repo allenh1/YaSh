@@ -1,5 +1,6 @@
 #ifndef __SIMPLE_COMMAND_HPP__
 #define __SIMPLE_COMMAND_HPP__
+#pragma once
 /* UNIX Includes */
 #include <sys/signal.h>
 #include <sys/types.h>
@@ -21,6 +22,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cstring>
 #include <sstream>
@@ -51,6 +53,7 @@ struct SimpleCommand {
 	void launch(int fdin, int fdout, int fderr,
 				int pgid, bool background, bool interactive);
 	void setup_process_io(int fdin, int fdout, int fderr);
+	void join_process_group(int pgid, bool background, bool interactive);
 	bool handle_builtins(int,int,int);
 	void handle_modified_commands();
 
@@ -58,12 +61,15 @@ struct SimpleCommand {
 	bool handle_cl(int,int,int);
 	bool handle_setenv(int,int,int);
 	bool handle_unsetenv(int,int,int);
+	bool handle_history();
 	bool completed = false;
 	bool stopped = false;
 	int status = -1;
 	void handle_ls();
 	void handle_grep();
 	void handle_printenv();
+
+	static std::vector<std::string> * history;
 	pid_t pid;
 };
 #endif
