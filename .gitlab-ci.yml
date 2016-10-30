@@ -17,7 +17,7 @@ tests:
     - make -j5
     - ln -sf $(pwd)/src/yash $(pwd)/shell
     - cd test
-	- export LC_COLLATE="C"
+    - export LC_COLLATE="C"
     - ./testall
 
 distribute:
