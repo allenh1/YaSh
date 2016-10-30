@@ -1,4 +1,17 @@
 #include "shell-readline.hpp"
+read_line::read_line()
+{
+	/* open history file */
+	std::string _file = tilde_expand("~/.cache/yash_history");
+	std::cerr<<"trying to open \""<<_file<<"\""<<std::endl;
+	m_history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
+	if (m_history_fd < 0) {
+		perror("open");
+		return;
+	} /* load current history */
+	load_history();
+}
+
 /** 
  * Wrapper for the write function, given a character.
  * 
@@ -769,3 +782,12 @@ bool read_line::handle_left_arrow(std::string & _line)
    }
    _line.pop_back();
 }
+
+void read_line::load_history()
+{
+	/* load history from ~/.cache/yash-history */
+	std::ifstream history_file(tilde_expand("~/.cache/yash_history"));
+	std::string _line; int x = 0;
+	for (; std::getline(history_file, _line); history_index++, m_history.push_back(_line + "\n"));
+}
+
