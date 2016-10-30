@@ -81,8 +81,8 @@ So, if you want to be boring, you can do the following.
 ```
 Windows Installation:
 =====================
-Initially, Bash on Windows (which I shall refer to as BoW from hereon out)
-does not have the proper set of applications pre-installed, as evident of:
+Initially, Bash on Windows does not have the proper set of applications pre-installed, 
+as evident of:
 ```
  $ ./autogen.sh
 ```
@@ -94,51 +94,37 @@ resulting in:
 ./autogen.sh: 7: ./autogen.sh: autoreconf: not found
 ./autogen.sh: 8: ./autogen.sh: autoconf: not found
 ```
-Therefore, the proper applications to install include:
-`autoconf`, `libtool`, `flex, and `bison`.
+Therefore, the missing applications to install are as follows:
+`autoconf`, `libtool`, `flex', and `bison`.
+The command to install them is:
 
 ```
  $ sudo apt-get install build-essential autoconf libtool flex bison
 ```
 
-When it prompts for 'y or n' key in 'y' press return-key to proceed with the installation.
-Once installation is complete, proceed to the next step by entering:
+When it prompts for 'y or n', press 'y' and 'enter' to proceed with the installation.
+Once installation is complete, proceed to the next step by running:
 ```
  $ ./configure --prefix=/usr
 ```
-followed by
-```
- $ make -j9
-```
-where the '-j9' is optional and make will work without it.
-
-At this point, you should notice a slew of errors and text outputs containing, specifically:
-```
-g++: error: unrecognized command line option -std=c++14
-make[3]: *** [main.o] Error 1
-make[3]: *** Waiting for unfinished jobs.....g++: error: unrecognized command line option -std=c++14
-make[3]: *** [command.o] Error 1
-g++: error: unrecognized command line option -std=c++14
-g++: error: unrecognized command line option -std=c++14
-```
-Do not fret, for this is an easy fix.
-Either 'cd' into 'src' and use your preferred terminal-text-editor [pico, nano, vim, or emacs]
-to open the file named 'Makefile.am'
+When 'configure' is complete, there is a specific 'Makefile' edit 
+to make the 'make' command work on Windows's Bash. 
+'cd' into 'src' and use your preferred terminal-text-editor,
+`pico`, `nano`, `vim`, or `emacs` to open the file named 'Makefile.am'
 ```
  $ cd src/
 ```
 ```
  $ emacs Makefile.am
 ```
-In here, find the lines containing '-std=c++11'
+In here, locate the lines containing '-std=c++11'
 ```
-if DEBUG
+...
 AM_CFLAGS = -g -O0 -lpthread -std=c++11
 AM_CXXFLAGS = -g -O0 -lpthread -std=c++11
-else
-AM_CFLAGS =  -O2 -fPIC -lpthread
+...
 AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++11
-endif
+...
 ```
 and edit them to be '-std=c++14' like so:
 ```
@@ -151,7 +137,7 @@ AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++14
 ```
 Once this has been done, save and exit the text editor and rerun make by:
 ```
- $ make -j9
+ $ make
 ```
 Your installation should be complete and the final step is to install and run YaSh
 ```
@@ -159,3 +145,4 @@ Your installation should be complete and the final step is to install and run Ya
  $ yash
 ```
 Welcome to YaSh on Bash on Ubuntu on Windows, otherwise known as YoBoUoW, pronounced yeahbwoi.
+
