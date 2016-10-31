@@ -444,7 +444,7 @@ void Command::pushDir(const char * new_dir) {
 	if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
 
 	wildcard_expand((char*)news.c_str());
-   
+
 	if(!wc_collector.size() && changedir(news)) {
 		m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
 	} else if(wc_collector.size()) {

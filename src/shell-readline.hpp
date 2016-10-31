@@ -1,4 +1,4 @@
-#ifndef __SHELL_READLINE_HPP__
+7#ifndef __SHELL_READLINE_HPP__
 #define __SHELL_READLINE_HPP__
 /* Linux Includes */
 #include <sys/ioctl.h>
