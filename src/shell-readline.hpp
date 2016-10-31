@@ -75,9 +75,10 @@ public:
 			// Echo the character to the screen
 			if (input >= 32 && input != 127) {
 				// Character is printable
-				if (input == '!' && !handle_bang(_line)) continue;
-	
-				if (m_buff.size()) {
+				if (input == '!') {
+					if (!handle_bang(_line)) continue;
+					else break;
+				} else if (m_buff.size()) {
 					/**
 					 * If the buffer has contents, they are
 					 * in the middle of a line.
