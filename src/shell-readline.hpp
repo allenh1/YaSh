@@ -1,4 +1,4 @@
-#ifndef __SHELL_READLINE_HPP__
+7#ifndef __SHELL_READLINE_HPP__
 #define __SHELL_READLINE_HPP__
 /* Linux Includes */
 #include <sys/ioctl.h>
@@ -75,9 +75,10 @@ public:
 			// Echo the character to the screen
 			if (input >= 32 && input != 127) {
 				// Character is printable
-				if (input == '!' && !handle_bang(_line)) continue;
-	
-				if (m_buff.size()) {
+				if (input == '!') {
+					if (!handle_bang(_line)) continue;
+					else break;
+				} else if (m_buff.size()) {
 					/**
 					 * If the buffer has contents, they are
 					 * in the middle of a line.
