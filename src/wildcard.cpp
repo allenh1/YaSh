@@ -23,7 +23,10 @@ void wildcard_expand(char * arg) {
 		glob((const char*)arg, GLOB_PERIOD, (int)NULL, &results);
 	} else { glob((const char*)arg, GLOB_ERR,(int)NULL, &results); }
 
+	Command::currentCommand.wc_collector.clear();
+	Command::currentCommand.wc_collector.shrink_to_fit();
+	
  	for(int i=0; i < results.gl_pathc; i++) {
 		Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
-	}  
+	}  globfree(&results);
 }
