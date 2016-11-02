@@ -1,58 +1,129 @@
-Ana-Gabriel (3):
-      Moved changedir to shell-utils, and added pushd and popd. Fix #21
-      fixed the syntax error output for pushd,     and printed the stack after pushd and popd
-      fixed some shit. But there still needs to be something that tests whether     a name returned by wildcard is a directory or not
+Version 0.0.6
 
-Hunter Allen (6):
-      Trying to reduce conflicts.
-      Removed shift and reduce conflicts in the bison code and refactored.
-      Uhm. That was bad.
-      Fixed a small invalid read issue.
-      Fixing some small performance things.
-      bump to v0.0.5
+Cleaned a small memory leak in the wildcard.
 
-Hunter L. Allen (34):
-      Uh. Ya. So... Subshell is hard @Purdrew2
-      FINALLY, Fix #1.
-      Added test cases.
-      Fixed the sorting order in the bison file.
-      Adding tests to CI.
-      Forgot a label.
-      No idea.
-      The freaking tab v space thing.
-      Ok. Pretty major changes. But, the leaks in #24 are fixed. The remaining leaks come from wildcard_expand, so @Anagabriel needs to look at what regcomp does. Cause apparently it calls malloc.
-      Ok. That should do it.
-      Fixed the leak in wildcard!
-      Got the first part working. Going to add a global flag now.
-      Actually, I don't think we necessarily need the global flag... I think that's a separate feature. So, if it is desired, please file as a separate issue. For now, I'm going to say close #25.
-      Todo: write a test for this. Somehow, this isn't simple.
-      Working on multi-line editing.
-      Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh into 16-multi-line-editor
-      Moving function headers around so that Ubuntu doesn't complain.
-      This is hard.
-      Backspace over two lines works!!!!!!!!!!
-      Re-indented and worked on backspace with multiple lines.
-      Updated readme.
-      Making the readline class cleaner and more readable. Cause... it's gross.
-      Continuing to refactor the shell-readline class.
-      Still working on yacc file.
-      That's probably as good as we're gonna get on the multi-line editor.
-      Ready for merge
-      Added debug mode compile flags.
-      Removed default C/C++ flags from autoconf.
-      Merge branch 'master' of http://allen-software.com/gitlab/allensoftware/YaSh
-      Added CHANGELOG
-      Tab complete over binaries works for exact matches.
-      Production for #12
-      Fixed small issue with the pushd and popd with wildcards.
-      Merge !25. Close #21
+Removed extraneous character.
 
-Hunter L. allen (7):
-      Merge branch '1-subshell' into 'master'
-      Merge branch '24-small-memory-leak' into 'master'
-      Merge branch '25-multi-argument-cd' into 'master'
-      Merge branch '16-multi-line-editor' into 'master'
-      Merge branch 'hunter-dev' into 'master'
-      Add changelog
-      Merge branch '12-tab-complete-with-binaries' into 'master'
+Made indentation scheme consistent.
 
+Fixed the !-<n> regression.
+
+Bump to version 0.0.6-rc
+
+Fixed the small ctrl + a issue on ARM. The fix isn't pretty,
+but is the best I can do for now.
+
+Working on ARM exclusive ctrl + a bug.
+
+Fixed extra tab in ci
+
+Made functions take const thing references.
+
+Removed unnecessary sort call from wildcard, as well as made the bash locale match that of our sort.
+
+Added history command with the `--no-lineno` function. Seems to be working nicely!
+
+Removed debug message.
+
+The shell now reads from a history file. YaSh is not persistant.
+
+Final adjustments and fixed wording of -std=c++14
+
+README updated with Hunter's proposals and some personal edits
+
+sorry the previous one I forgot to save in emacs, here is the real stuff
+
+I used kleenex and Windows should be more clear to install now
+
+Fix the small control z bug, and improve performance.
+
+Things are installing now. But I'm not quite pleased with this.
+
+Uh -- ok. I'm not sure about anything anymore.
+
+Ok. Some useful debug info now.
+
+Ok. Fixed the issue with the Bash dependency. Now we can launch from a broken version of YaSh...
+...
+...
+Progress.
+
+fixed wildcard using glob
+
+Remove the comment  blocking the SIGSTOP ignore.
+
+Fixed a small issue in the flex file, as well as managed work done by the jobs program. Fix #10.
+
+Added bg. Also added fg and bg with specified job numbers to resume.
+
+I DID IT. FG IS WORKING.
+
+Some good progress on fg. The window reappears now, but is... Not correct.
+
+Ok! So the jobs are actually stoppping!
+
+Gustavo Rodriquez-Rivera pointed out a small issue in the execute
+that leaked a file descriptor.
+
+This fixes it.
+
+In the future, we should use `ulimit -n 32` and test it.
+He also tried `strace -f -o t,.out yash`, but strace wasn't installed.
+
+Update README.md
+Failed to initialize the pid variable. Other than that, valrind seems to be ok with things.
+
+Fixed test case, uncommented the initial source, removed old execute from cpp file. Fix #31.
+
+Fixed printenv issue. Just. Stop laughing, please.
+
+Working on #33.
+
+Almost added printenv. goodnight.
+
+Added cl command to the new execute.
+
+Added setenv and unsetenv. Also fixed some small file descriptor issues.
+
+Fixed the readline issue. That was easy.
+
+CD is now working, and the SimpleCommand struct has been moved to its own header. I'm happy. You should be too.
+
+Implemented the new execute function.
+
+Added files to gitignore. Also completely broke everything. ... ... Progress.
+
+Saving status
+
+so ya don't like lingering comment code ey
+
+basic cl, ya know, cd and ls(with colors!)
+
+Moved the remaining keyboard handlers to the cpp file.
+
+Please re-indent and rebase!
+
+Moved delete key to the cpp file.
+
+Removed backspace from the shell-readline header.
+
+I. Fixed. It.
+
+Added test for issue 33.
+
+i hate you, hidden files
+
+Uh -- wut
+
+Moved ctrl + k to the .cpp file.
+
+Continuing to create smaller functions for read_line class.
+
+Moved some key combos out of the shell-readline () operator. Definitely making progress on cleaning this up!
+
+Moved the functions into the class. Also fixed the read_line class' indentation.
+
+Moved some functions out of shell-readline.hpp to make it a little cleaner. That was really, really, really obnoxious btw.
+
+Update README.md
+Update README.md
