@@ -55,4 +55,3 @@ AC_CONFIG_FILES([Makefile src/Makefile])
 
 # Output
 AC_OUTPUT
-
