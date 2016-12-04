@@ -81,8 +81,9 @@ command_word argument_list {
 	Command::currentCommand.insertSimpleCommand(Command::currentSimpleCommand);
 }
 | command_word {
-	if(pushd) std::cerr<<"pushd: no provided directory"<<std::endl;
-	else if(fg) {
+	if(pushd) {
+		std::cerr<<"pushd: no provided directory"<<std::endl; pushd=false;
+	} else if(fg) {
 		pid_t current = Command::currentCommand.m_shell_pgid;
 		if (Command::currentCommand.m_jobs.size()) {
 			job _back = Command::currentCommand.m_jobs.back();
@@ -98,11 +99,11 @@ command_word argument_list {
 			tcsetattr(0, TCSADRAIN, &reader.oldtermios);
 		} else {
 			std::cerr<<"fg: no such job"<<std::endl;
-		}
+		} fg=false;
 	} else if(bg) {
 		job _back = Command::currentCommand.m_jobs.back();
 		/* don't restore io, just resume. */
-		if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
+		if (kill(_back.pgid, SIGCONT) < 0) perror("kill"); bg=false;
 	} else
 		Command::currentCommand.insertSimpleCommand(Command::currentSimpleCommand);
 }
@@ -159,7 +160,7 @@ WORD {
 		} catch ( ... ) {
 			std::cerr<<"fg: \""<<$1<<"\" is not a number."
 					 <<std::endl;
-		}
+		} fg=false;
 	} else if(bg) {
 		try {
 			int as_num = std::stoi(std::string($1));
@@ -176,9 +177,9 @@ WORD {
 		} catch ( ... ) {
 			std::cerr<<"bg: \""<<$1<<"\" is not a number."
 					 <<std::endl;
-		}
+		} bg=false;
 	} else if(pushd) {
-		 Command::currentCommand.pushDir(strdup($1)); delete[] $1;
+		Command::currentCommand.pushDir(strdup($1)); delete[] $1; pushd=false;
 	} else {
 		for (auto && arg : Command::currentCommand.wc_collector) {
 			char * temp = strndup(arg.c_str(), arg.size());
@@ -187,7 +188,7 @@ WORD {
 		}
 		Command::currentCommand.wc_collector.clear();
 		Command::currentCommand.wc_collector.shrink_to_fit();
-	}
+	} 
 }
 | BACKTIK { Command::currentCommand.subShell($1); delete[] $1; }
 ;
