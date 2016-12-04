@@ -63,31 +63,17 @@ void myunputc(int c) {
 <LINE_COMMENT>[.]+ { /* Ignore anything in a line comment */ }
 
 ">" return GREAT;
-
 ">&" return GREATAND;
-                
 "<" return LESS;
-
 ">>" return TOOGREAT;
-
 ">>&" return TOOGREATAND;
-
 "|" return PIPE;
-
 "&" return AMPERSAND;
 
 "exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
 
-^"fg" { return FG; }
-
-^"bg" { return BG; }
-
 ^"source" { return SRC; }
-
 ^"alias" { return ALIAS; }
-
-^"pushd" { return PUSHD; }
-
 ^"popd" { return POPD; }
 
 `(\\.|[^`"])*` {
