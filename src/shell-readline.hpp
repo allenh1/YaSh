@@ -54,7 +54,7 @@ public:
 	bool handle_ctrl_d(std::string & _line);
 	bool handle_ctrl_e(std::string & _line);
 	bool handle_ctrl_k(std::string & _line);
-   
+	bool handle_ctrl_del(std::string & _line);	
 	bool handle_ctrl_arrow(std::string & _line);
 
 	bool handle_up_arrow(std::string & _line);
@@ -122,15 +122,17 @@ public:
 			else if ((input == 8 || input == 127) && !handle_backspace(_line)) continue;
 			else if (input == 9 && !handle_tab(_line)) continue;
 			else if (input == 27) {	
-				char ch1, ch2;
+				char ch1, ch2, ch3;
 				// Read the next two chars
 				if (!read_with_error(0, ch1)) continue;
 				else if (!read_with_error(0, ch2)) continue;
-		
+				else if (ch1 == 91 && ch2 == 51 && !read_with_error(0, ch3)) continue;
 				/* handle ctrl + arrow key */
-				if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;
-			
-				else if (ch1 == 91 && ch2 == 51 && !handle_delete(_line)) continue;
+				if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;			
+				else if (ch1 == 91 && ch2 == 51 && ch3 == 126
+						 && !handle_delete(_line)) continue;
+				else if (ch1 == 91 && ch2 == 51 && ch3 == 53
+						 && !handle_ctrl_del(_line)) continue;
 				if (ch1 == 91 && ch2 == 65 && !handle_up_arrow(_line)) continue;
 				if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) continue;
 				if (ch1 == 91 && ch2 == 67 && !handle_right_arrow(_line)) continue;
