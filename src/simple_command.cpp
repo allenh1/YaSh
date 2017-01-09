@@ -204,7 +204,12 @@ bool SimpleCommand::handle_setenv(const int & fdin,
 								  const int & fdout,
 								  const int & fderr)
 {
-	if (arguments[0] == std::string("setenv")) {
+	/* arguments.size() == 4 because of the extra NULL */
+	if (arguments[0] == std::string("setenv") && arguments.size() != 4) {
+		std::cerr<<"setenv: invalid arguments"<<std::endl;
+		std::cerr<<"usage: setenv [variable] [value]"<<std::endl;
+		return true;
+	} else if (arguments[0] == std::string("setenv")) {
 		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
@@ -220,7 +225,11 @@ bool SimpleCommand::handle_unsetenv(const int & fdin,
 									const int & fdout,
 									const int & fderr)
 {
-	if (arguments[0] == std::string("unsetenv")) {
+	if (arguments[0] == std::string("unsetenv") && arguments.size() != 3) {
+		std::cerr<<"unsetenv: invalid arguments"<<std::endl;
+		std::cerr<<"usage: unsetenv [variable]"<<std::endl;
+		return true;
+	} else if (arguments[0] == std::string("unsetenv")) {
 		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		strcpy(temp, arguments[1]);
