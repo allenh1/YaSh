@@ -237,8 +237,13 @@ void Command::print()
 void Command::execute()
 {
 	int fdpipe[2], fdin, fdout, fderr;
-	pid_t pid = 0;
+	pid_t pid = 0; tms start_cpu, end_cpu;
+	clock_t start_time, end_time;
 
+	/* clear the structs */
+	memset(&start_cpu, 0, sizeof(tms));
+	memset(&end_cpu, 0, sizeof(tms));
+	
 	/* check for dank memes */
 	char * dbg = getenv("SHELL_DBG");
 	if (dbg && !strcmp(dbg, "YES")) print();
@@ -259,6 +264,10 @@ void Command::execute()
 		}
 	}
 
+	/* start the clock */
+	m_time = true; /* @todo use the flex input */
+	if (m_time)	start_time = times(&start_cpu); /* @todo error check this */
+	
 	/* point fdin (fderr) to this pipeline's input (error) */
 	fdin = m_stdin; fderr = m_stderr;
 	for (int x = 0; x < numOfSimpleCommands; ++x) {
@@ -337,16 +346,34 @@ void Command::execute()
 			waitpid(pid, &status, WUNTRACED);
 			tcsetpgrp(STDIN_FILENO, m_shell_pgid);
 		} else waitpid(pid, &status, WUNTRACED);
-	}
-	else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+
+		/* stop times */
+		if (m_time) {
+			end_time = times(&end_cpu);
+			if (end_time == -1) std::cerr<<"Error Getting Times!"<<std::endl;
+			std::cout<<std::endl
+					 <<"User Time:  \t"
+					 <<(intmax_t) (end_cpu.tms_utime - start_cpu.tms_utime)
+					 <<std::endl
+					 <<"System Time:\t"
+					 <<(intmax_t) (end_cpu.tms_stime - start_cpu.tms_stime)
+					 <<std::endl
+					 <<"Real Time:  \t"
+					 <<(intmax_t) (end_time - start_time)
+					 <<std::endl;
+			m_time = false;
+		}
+	} else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
 	
 	if (WIFSTOPPED(status)) {
 		current.status = job_status::STOPPED;
 		m_jobs.push_back(current);
 		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
 				 <<"]+\tstopped\t"<<pid<<std::endl;
-	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
-										   WUNTRACED|WNOHANG)) > 0;) {
+	}
+
+	for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
+										 WUNTRACED|WNOHANG)) > 0;) {
 		const auto & x = m_job_map.find(_pid);
 		if (x != m_job_map.end()) {
 			/* x->second is the value */
@@ -354,8 +381,8 @@ void Command::execute()
 					 <<"]-\texited"<<std::endl;
 		}
 	}
-	
 
+	
 	/* Clear to prepare for next command */
 	clear();
 

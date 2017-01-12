@@ -85,6 +85,7 @@ private:
 	bool m_interactive = false;
 	bool stopped = false;
 	bool completed = false;
+	bool m_time = false;
 	int numOfSimpleCommands = 0;
 	
 	bool inSet  = false; int m_stdin  = 0;

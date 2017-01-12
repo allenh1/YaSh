@@ -3,6 +3,7 @@
 #pragma once
 /* UNIX Includes */
 #include <sys/signal.h>
+#include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
