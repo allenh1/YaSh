@@ -237,9 +237,8 @@ void Command::print()
 void Command::execute()
 {
 	int fdpipe[2], fdin, fdout, fderr;
-	pid_t pid = 0; struct rusage time_start, time_end;
+	pid_t pid = 0; struct rusage time_end;
 	
-	memset(&time_start, 0, sizeof(struct rusage));
 	memset(&time_end, 0, sizeof(struct rusage));
 	
 	/* check for dank memes */
@@ -262,9 +261,6 @@ void Command::execute()
 		}
 	}
 
-	/* start the clock */
-	if (m_time)	getrusage(RUSAGE_CHILDREN, &time_start);
-	
 	/* point fdin (fderr) to this pipeline's input (error) */
 	fdin = m_stdin; fderr = m_stderr;
 	for (int x = 0; x < numOfSimpleCommands; ++x) {
@@ -343,24 +339,6 @@ void Command::execute()
 			waitpid(pid, &status, WUNTRACED);
 			tcsetpgrp(STDIN_FILENO, m_shell_pgid);
 		} else waitpid(pid, &status, WUNTRACED);
-
-		/* stop times */
-		if (m_time) {
-			getrusage(RUSAGE_CHILDREN, &time_end); /* do error checking */
-			timeval udiff = time_end.ru_utime - time_start.ru_utime;
-			timeval sdiff = time_end.ru_stime - time_start.ru_stime;
-			
-			std::cout<<std::endl
-					 <<"User Time:  \t"
-					 <<udiff.tv_sec<<"."<<udiff.tv_usec
-					 <<std::endl
-					 <<"System Time:\t"
-					 <<sdiff.tv_sec<<"."<<sdiff.tv_usec
-					 <<std::endl
-					 <<"Real Time:  \t" /* not sure how to get this one... */
-					 <<std::endl;
-			m_time = false;
-		}
 	} else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
 	
 	if (WIFSTOPPED(status)) {
@@ -380,7 +358,22 @@ void Command::execute()
 		}
 	}
 
-	
+	/* stop times */
+	if (m_time) {
+		getrusage(-1, &time_end); /* do error checking */
+			
+		std::cout<<std::endl
+				 <<"User Time:  \t"
+				 <<time_end.ru_utime.tv_sec<<"."<<time_end.ru_utime.tv_usec
+				 <<std::endl
+				 <<"System Time:\t"
+				 <<time_end.ru_stime.tv_sec<<"."<<time_end.ru_stime.tv_usec
+				 <<std::endl
+				 <<"Real Time:  \t" /* not sure how to get this one... */
+				 <<std::endl;
+		m_time = false;
+	}
+		
 	/* Clear to prepare for next command */
 	clear();
 
