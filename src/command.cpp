@@ -237,12 +237,10 @@ void Command::print()
 void Command::execute()
 {
 	int fdpipe[2], fdin, fdout, fderr;
-	pid_t pid = 0; tms start_cpu, end_cpu;
-	clock_t start_time, end_time;
-
-	/* clear the structs */
-	memset(&start_cpu, 0, sizeof(tms));
-	memset(&end_cpu, 0, sizeof(tms));
+	pid_t pid = 0; struct rusage time_start, time_end;
+	
+	memset(&time_start, 0, sizeof(struct rusage));
+	memset(&time_end, 0, sizeof(struct rusage));
 	
 	/* check for dank memes */
 	char * dbg = getenv("SHELL_DBG");
@@ -266,7 +264,7 @@ void Command::execute()
 
 	/* start the clock */
 	m_time = true; /* @todo use the flex input */
-	if (m_time)	start_time = times(&start_cpu); /* @todo error check this */
+	if (m_time)	getrusage(RUSAGE_CHILDREN, &time_start);
 	
 	/* point fdin (fderr) to this pipeline's input (error) */
 	fdin = m_stdin; fderr = m_stderr;
@@ -349,17 +347,18 @@ void Command::execute()
 
 		/* stop times */
 		if (m_time) {
-			end_time = times(&end_cpu);
-			if (end_time == -1) std::cerr<<"Error Getting Times!"<<std::endl;
+			getrusage(RUSAGE_CHILDREN, &time_end); /* do error checking */
+			timeval udiff = time_end.ru_utime - time_start.ru_utime;
+			timeval sdiff = time_end.ru_stime - time_start.ru_stime;
+			
 			std::cout<<std::endl
 					 <<"User Time:  \t"
-					 <<(intmax_t) (end_cpu.tms_utime - start_cpu.tms_utime)
+					 <<udiff.tv_sec<<"."<<udiff.tv_usec
 					 <<std::endl
 					 <<"System Time:\t"
-					 <<(intmax_t) (end_cpu.tms_stime - start_cpu.tms_stime)
+					 <<sdiff.tv_sec<<"."<<sdiff.tv_usec
 					 <<std::endl
-					 <<"Real Time:  \t"
-					 <<(intmax_t) (end_time - start_time)
+					 <<"Real Time:  \t" /* not sure how to get this one... */
 					 <<std::endl;
 			m_time = false;
 		}

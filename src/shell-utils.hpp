@@ -2,6 +2,7 @@
 #define __SHELL_UTILS_HPP__
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <unistd.h>
 #include <signal.h>
@@ -23,6 +24,12 @@ std::string env_expand(std::string s);
 std::vector<std::string> vector_split(std::string s, char delim);
 bool changedir(std::string & s);
 bool is_directory(std::string s);
+
+/**
+ * Adapted from:
+ *  https://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
+ */
+timeval operator - (timeval & t1, timeval & t2);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }

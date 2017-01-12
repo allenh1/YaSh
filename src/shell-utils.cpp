@@ -218,3 +218,28 @@ std::vector<std::string> vector_split(std::string s, char delim) {
 	for (;std::getline(ss, item, delim); elems.push_back(std::move(item)));
 	return elems;
 }
+
+
+timeval operator - (timeval & t1, timeval & t2)
+{
+	/* Perform the carry for the later subtraction by updating y. */
+	if (t1.tv_usec < t2.tv_usec) {
+		int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
+		t2.tv_usec -= 1000000 * nsec;
+		t2.tv_sec += nsec;
+	} if (t1.tv_usec - t2.tv_usec > 1000000) {
+		int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
+		t2.tv_usec += 1000000 * nsec;
+		t2.tv_sec -= nsec;
+	}
+
+	/**
+	 * Compute the time remaining to wait.
+	 * tv_usec is certainly positive.
+	 */
+	timeval result; memset(&result, 0, sizeof(timeval));
+	result.tv_sec = t1.tv_sec - t2.tv_sec;
+	result.tv_usec = t1.tv_usec - t2.tv_usec;
+
+	return result;
+}
