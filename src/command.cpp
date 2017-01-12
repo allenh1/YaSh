@@ -263,7 +263,6 @@ void Command::execute()
 	}
 
 	/* start the clock */
-	m_time = true; /* @todo use the flex input */
 	if (m_time)	getrusage(RUSAGE_CHILDREN, &time_start);
 	
 	/* point fdin (fderr) to this pipeline's input (error) */
