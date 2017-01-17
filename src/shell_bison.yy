@@ -72,6 +72,7 @@ command_line { Command::currentCommand.execute(); }
 		free(alias); free(word); delete[] $2; delete[] $3;
 	}
 }
+| TIME NEWLINE { Command::currentCommand.prompt(); }
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
 ;

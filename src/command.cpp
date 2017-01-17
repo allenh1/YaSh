@@ -207,7 +207,7 @@ void Command::clear()
 		outFile.release(), inFile.release(),
 		errFile.release(), simpleCommands.shrink_to_fit(),
 		m_jobs.shrink_to_fit();
-	outSet = inSet = errSet = false;
+	outSet = inSet = errSet = m_time = false;
 }
 
 void Command::print()
@@ -237,9 +237,27 @@ void Command::print()
 void Command::execute()
 {
 	int fdpipe[2], fdin, fdout, fderr;
-	pid_t pid = 0; struct rusage time_end;
-	
-	memset(&time_end, 0, sizeof(struct rusage));
+	pid_t pid = 0;
+
+	time_t rs, us, ss;
+	int rsf, usf, ssf;
+	int cpu;
+
+	struct rusage selfb, selfa;
+	struct rusage kidsb, kidsa;
+
+	struct timeval real, user, sys;
+	struct timeval before, after;
+
+	struct timezone dtz; /* @todo this is not posix compliant */
+
+	if (m_time) {
+		/* get the time of day */
+		gettimeofday(&before, &dtz);
+		/* call rusage */
+		getrusage(RUSAGE_SELF, &selfb);
+		getrusage(RUSAGE_CHILDREN, &selfb);
+	}	
 	
 	/* check for dank memes */
 	char * dbg = getenv("SHELL_DBG");
@@ -360,18 +378,31 @@ void Command::execute()
 
 	/* stop times */
 	if (m_time) {
-		getrusage(-1, &time_end); /* do error checking */
-			
-		std::cout<<std::endl
-				 <<"User Time:  \t"
-				 <<time_end.ru_utime.tv_sec<<"."<<time_end.ru_utime.tv_usec
-				 <<std::endl
-				 <<"System Time:\t"
-				 <<time_end.ru_stime.tv_sec<<"."<<time_end.ru_stime.tv_usec
-				 <<std::endl
-				 <<"Real Time:  \t" /* not sure how to get this one... */
-				 <<std::endl;
-		m_time = false;
+		gettimeofday(&after, &dtz);		
+		getrusage(RUSAGE_SELF, &selfa); /* @todo do error checking */
+		getrusage(RUSAGE_CHILDREN, &kidsa); /* @todo do error checking */
+
+		rs = us = ss = 0;
+		rsf = usf = ssf = 0;
+
+		/* get the real time */
+		real = after - before;
+		timeval_to_secs(&real, &rs, &rsf); /* convert time */
+
+
+		addtimeval(&user, difftimeval(&after, &selfb.ru_utime, &selfa.ru_utime),
+				   difftimeval(&before, &kidsb.ru_utime, &kidsa.ru_utime));
+		timeval_to_secs (&user, &us, &usf);
+
+		addtimeval(&sys, difftimeval(&after, &selfb.ru_stime, &selfa.ru_stime),
+				   difftimeval(&before, &kidsb.ru_stime, &kidsa.ru_stime));
+		timeval_to_secs (&sys, &ss, &ssf);
+
+		/* display the times */
+		fprintf(stderr, "\n  Real:\t%d.%03ds", rs, rsf);
+		fprintf(stderr, "\n  User:\t%d.%03ds", us, usf);
+		fprintf(stderr, "\nSystem:\t%d.%03ds", ss, ssf);
+		std::cerr<<std::endl;
 	}
 		
 	/* Clear to prepare for next command */

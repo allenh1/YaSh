@@ -243,3 +243,55 @@ timeval operator - (timeval & t1, timeval & t2)
 
 	return result;
 }
+
+/* This is from bash */
+struct timeval * difftimeval(struct timeval * d,
+							 struct timeval * t1,
+							 struct timeval * t2)
+{
+	d->tv_sec = t2->tv_sec - t1->tv_sec;
+	d->tv_usec = t2->tv_usec - t1->tv_usec;
+
+	if (d->tv_usec < 0)	{
+		d->tv_usec += 1000000;
+		d->tv_sec -= 1;
+
+		if (d->tv_sec < 0) d->tv_sec = d->tv_usec = 0;
+	} return d;  
+}
+
+/* also from bash */
+struct timeval * addtimeval (struct timeval * d,
+							 struct timeval * t1,
+							 struct timeval * t2)
+{
+	d->tv_sec = t1->tv_sec + t2->tv_sec;
+	d->tv_usec = t1->tv_usec + t2->tv_usec;
+
+	if (d->tv_usec >= 1000000) {
+		d->tv_usec -= 1000000;
+		d->tv_sec += 1;
+	} return d;
+}
+
+/* more things I stole from bash */
+void timeval_to_secs (struct timeval * tvp,
+					  time_t * sp,
+					  int * sfp)
+{
+	int rest;
+
+	*sp = tvp->tv_sec;
+
+	*sfp = tvp->tv_usec % 1000000; /* pretty much a no-op */
+	rest = *sfp % 1000;
+	*sfp = (*sfp * 1000) / 1000000;
+	
+	if (rest >= 500) *sfp += 1;
+
+	/* Sanity check */
+	if (*sfp >= 1000) {
+		*sp += 1;
+		*sfp -= 1000;
+	}
+} 
