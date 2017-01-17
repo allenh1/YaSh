@@ -15,7 +15,7 @@ void SimpleCommand::launch(const int & fdin, const int & fdout,
 		/* move the pid into the group, and control the terminal */
 		pid = getpid();
 
-		if (pgid == 0) _pgid = pid;
+		_pgid = (pgid == 0) ? pid : pgid;
 		setpgid(pid, _pgid);
 
 		/* grab terminal control */
