@@ -2,9 +2,11 @@
 #define __SIMPLE_COMMAND_HPP__
 #pragma once
 /* UNIX Includes */
+#include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 
 /* Linux Includes */

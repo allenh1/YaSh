@@ -3,7 +3,7 @@
 %token	<string_val> BACKTIK
 
 %token 	NOTOKEN GREAT NEWLINE GTFO LESS TOOGREAT TOOGREATAND PIPE AMPERSAND
-%token GREATAND TAB SRC ANDAND ALIAS GETS POPD
+%token GREATAND TAB SRC ANDAND ALIAS GETS POPD TIME
 
 %union	{
 	char   *string_val;
@@ -72,6 +72,7 @@ command_line { Command::currentCommand.execute(); }
 		free(alias); free(word); delete[] $2; delete[] $3;
 	}
 }
+| TIME NEWLINE { Command::currentCommand.prompt(); }
 | NEWLINE { Command::currentCommand.prompt(); }
 | error NEWLINE { yyerrok; std::cout<<std::endl; Command::currentCommand.prompt(); }
 ;
@@ -243,11 +244,17 @@ background:
 AMPERSAND { Command::currentCommand.setBackground(true); }
 ;
 
+time:
+TIME { Command::currentCommand.set_time(true); }
+;
+
 command_line:
 pipe_list io_modifier_list background NEWLINE 
-|	pipe_list io_modifier_list NEWLINE 
-|	pipe_list background NEWLINE 
-|	pipe_list NEWLINE 
+|	time pipe_list io_modifier_list NEWLINE
+|	pipe_list io_modifier_list NEWLINE
+|	pipe_list background NEWLINE
+|	time pipe_list NEWLINE
+|	pipe_list NEWLINE
 ;
 
 %%

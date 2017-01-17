@@ -57,9 +57,14 @@ public:
 		m_interactive = _interactive;
 	}
 
+	void set_time(const bool & _time) {
+		m_time = _time;
+	}
+
 	pid_t m_shell_pgid = 0;
 	pid_t m_pgid = 0;
 	pid_t m_pid = 0;
+   
 	std::map<std::string, std::vector<std::string> > m_aliases;
 	std::map<pid_t, size_t> m_job_map;
 	std::vector<job> m_jobs;
@@ -82,9 +87,10 @@ private:
 
 	bool append = false;
 	bool background = false;
+	bool m_time = false;
 	bool m_interactive = false;
 	bool stopped = false;
-	bool completed = false;
+	bool completed = false;	
 	int numOfSimpleCommands = 0;
 	
 	bool inSet  = false; int m_stdin  = 0;

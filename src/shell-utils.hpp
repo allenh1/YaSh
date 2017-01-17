@@ -2,6 +2,7 @@
 #define __SHELL_UTILS_HPP__
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <unistd.h>
 #include <signal.h>
@@ -23,6 +24,30 @@ std::string env_expand(std::string s);
 std::vector<std::string> vector_split(std::string s, char delim);
 bool changedir(std::string & s);
 bool is_directory(std::string s);
+
+/**
+ * Adapted from:
+ *  https://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
+ */
+timeval operator - (timeval & t1, timeval & t2);
+
+/**
+ * Stolen from: bash
+ *  This function is how bash subtracts times
+ */
+struct timeval * difftimeval(struct timeval * d, struct timeval * t1, struct timeval * t2);
+
+/**
+ * Stolen from: bash
+ *  This is how bash adds times
+ */
+struct timeval * addtimeval(struct timeval * d, struct timeval * t1, struct timeval * t2);
+
+/**
+ * Stolen from: bash
+ *  This converts a timeval * to seconds and thousandths of a second.
+ */
+void timeval_to_secs(struct timeval * tvp, time_t * sp, int * sfp);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }

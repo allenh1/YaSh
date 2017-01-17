@@ -72,6 +72,7 @@ void myunputc(int c) {
 
 "exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
 
+^"time" { return TIME; }
 ^"source" { return SRC; }
 ^"alias" { return ALIAS; }
 ^"popd" { return POPD; }

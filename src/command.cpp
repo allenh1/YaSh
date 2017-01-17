@@ -207,7 +207,7 @@ void Command::clear()
 		outFile.release(), inFile.release(),
 		errFile.release(), simpleCommands.shrink_to_fit(),
 		m_jobs.shrink_to_fit();
-	outSet = inSet = errSet = false;
+	outSet = inSet = errSet = m_time = false;
 }
 
 void Command::print()
@@ -239,6 +239,26 @@ void Command::execute()
 	int fdpipe[2], fdin, fdout, fderr;
 	pid_t pid = 0;
 
+	time_t rs, us, ss;
+	int rsf, usf, ssf;
+	int cpu;
+
+	struct rusage selfb, selfa;
+	struct rusage kidsb, kidsa;
+
+	struct timeval real, user, sys;
+	struct timeval before, after;
+
+	struct timezone dtz; /* @todo this is not posix compliant */
+
+	if (m_time) {
+		/* get the time of day */
+		gettimeofday(&before, &dtz);
+		/* call rusage */
+		getrusage(RUSAGE_SELF, &selfb);
+		getrusage(RUSAGE_CHILDREN, &selfb);
+	}	
+	
 	/* check for dank memes */
 	char * dbg = getenv("SHELL_DBG");
 	if (dbg && !strcmp(dbg, "YES")) print();
@@ -337,16 +357,17 @@ void Command::execute()
 			waitpid(pid, &status, WUNTRACED);
 			tcsetpgrp(STDIN_FILENO, m_shell_pgid);
 		} else waitpid(pid, &status, WUNTRACED);
-	}
-	else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+	} else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
 	
 	if (WIFSTOPPED(status)) {
 		current.status = job_status::STOPPED;
 		m_jobs.push_back(current);
 		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
 				 <<"]+\tstopped\t"<<pid<<std::endl;
-	} for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
-										   WUNTRACED|WNOHANG)) > 0;) {
+	}
+
+	for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
+										 WUNTRACED|WNOHANG)) > 0;) {
 		const auto & x = m_job_map.find(_pid);
 		if (x != m_job_map.end()) {
 			/* x->second is the value */
@@ -354,8 +375,36 @@ void Command::execute()
 					 <<"]-\texited"<<std::endl;
 		}
 	}
-	
 
+	/* stop times */
+	if (m_time) {
+		gettimeofday(&after, &dtz);		
+		getrusage(RUSAGE_SELF, &selfa); /* @todo do error checking */
+		getrusage(RUSAGE_CHILDREN, &kidsa); /* @todo do error checking */
+
+		rs = us = ss = 0;
+		rsf = usf = ssf = 0;
+
+		/* get the real time */
+		real = after - before;
+		timeval_to_secs(&real, &rs, &rsf); /* convert time */
+
+
+		addtimeval(&user, difftimeval(&after, &selfb.ru_utime, &selfa.ru_utime),
+				   difftimeval(&before, &kidsb.ru_utime, &kidsa.ru_utime));
+		timeval_to_secs (&user, &us, &usf);
+
+		addtimeval(&sys, difftimeval(&after, &selfb.ru_stime, &selfa.ru_stime),
+				   difftimeval(&before, &kidsb.ru_stime, &kidsa.ru_stime));
+		timeval_to_secs (&sys, &ss, &ssf);
+
+		/* display the times */
+		fprintf(stderr, "\n  Real:\t%d.%03ds", rs, rsf);
+		fprintf(stderr, "\n  User:\t%d.%03ds", us, usf);
+		fprintf(stderr, "\nSystem:\t%d.%03ds", ss, ssf);
+		std::cerr<<std::endl;
+	}
+		
 	/* Clear to prepare for next command */
 	clear();
 
