@@ -236,7 +236,8 @@ void Command::print()
 
 void Command::execute()
 {
-	int fdpipe[2], fdin, fdout, fderr;
+	int fdin = 0, fdout = 1, fderr = 2;
+	int fdpipe[2];
 	pid_t pid = 0;
 
 	time_t rs, us, ss;
@@ -337,7 +338,8 @@ void Command::execute()
 	}
 
 	/* prep to save */
-	job current; int status;
+	job current;
+	int status = -1; /* shut up, GCC */
 	current.pgid   = m_pgid;
 	current.stdin  = m_stdin;
 	current.stdout = m_stdout;
