@@ -38,19 +38,13 @@ int main()
 	if (is_interactive) {
 		/* loop until we are in the foreground */
 		for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
-		  if (kill(0, SIGTTIN) < 0) {
-			perror("kill");
-		  }
+			if (kill(0, SIGTTIN) < 0) perror("kill");
 		}
 		
 		/* go to our process group */
 		pid_t shell_pgid = getpid();
-	    if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) {
-		   perror("setpgid");
-		   std::cerr<<"pgid: "<<getpgrp()<<std::endl;
-		   std::cerr<<"pid: "<<getpid()<<std::endl;
-		   /* exit(1); */
-		}
+	    if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) perror("setpgid");
+
 		Command::currentCommand.m_shell_pgid = shell_pgid;
 		/* Ignore interactive and job-control signals */
 		signal(SIGINT,  SIG_IGN);
@@ -69,3 +63,4 @@ int main()
 
 	return 0;
 }
+

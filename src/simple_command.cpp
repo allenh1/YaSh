@@ -9,7 +9,7 @@ void SimpleCommand::launch(const int & fdin, const int & fdout,
 						   const bool & background,
 						   const bool & interactive)
 {
-	pid_t pid, _pgid;
+	pid_t _pgid;
 	
 	if (interactive) {
 		/* move the pid into the group, and control the terminal */
