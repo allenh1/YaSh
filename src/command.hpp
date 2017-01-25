@@ -32,6 +32,8 @@ public:
 	void set_out_file(char * _fd);
 	void set_err_file(char * _fd);
 
+	void send_to_foreground(const int & process_num, bool & fg);
+
 	void setAlias(const char * _from, const char * _to);
 
 	void subShell(char * arg);

@@ -85,22 +85,7 @@ command_word argument_list {
 	if(pushd) {
 		std::cerr<<"pushd: no provided directory"<<std::endl; pushd=false;
 	} else if(fg) {
-		pid_t current = Command::currentCommand.m_shell_pgid;
-		if (Command::currentCommand.m_jobs.size()) {
-			job _back = Command::currentCommand.m_jobs.back();
-			Command::currentCommand.m_jobs.pop_back();
-			tcsetpgrp(0, _back.pgid);
-			tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-			if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
-
-			waitpid(_back.pgid, 0, WUNTRACED);
-				
-			tcsetpgrp(0, current);
-			tcgetattr(0, &reader.oldtermios);
-			tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-		} else {
-			std::cerr<<"fg: no such job"<<std::endl;
-		} fg=false;
+	    Command::currentCommand.send_to_foreground(-1, fg);
 	} else if(bg) {
 		job _back = Command::currentCommand.m_jobs.back();
 		/* don't restore io, just resume. */
