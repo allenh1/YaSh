@@ -542,12 +542,35 @@ void Command::send_to_foreground(const int & process_num,
 		tcsetpgrp(0, _back.pgid);
 		tcsetattr(0, TCSADRAIN, &_oldtermios);
 		if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
+
+		/* prep to save */
+		int status = -1; /* shut up, GCC */
+		/* waitpid:
+		 *   pid <  -1 => wait for absolute value of pid
+		 *   pid == -1 => wait for any child process
+		 *   pid ==  0 => wait for any child whose pgid is ours
+		 *   pid >   0 => wait for the specified pid
+		 */
+
+		if (!background) {
+			/* put the job in the foreground */
+			if (m_interactive) {
+				tcsetpgrp(STDIN_FILENO, m_pgid);
+				waitpid(_back.pgid, &status, WUNTRACED);
+				tcsetpgrp(STDIN_FILENO, m_shell_pgid);
+			} else waitpid(_back.pgid, &status, WUNTRACED);
+		} else m_jobs.push_back(_back), m_job_map[m_pgid] = m_jobs.size() - 1;
+	
+		if (WIFSTOPPED(status)) {
+			_back.status = job_status::STOPPED;
+			m_jobs.push_back(_back);
+			std::cout<<"["<<(m_job_map[_back.pgid] = m_jobs.size() - 1)
+					 <<"]+\tstopped\t"<<_back.pgid<<std::endl;
+		}
 		
-		waitpid(_back.pgid, 0, WUNTRACED);
-		
-		tcsetpgrp(0, current);
-		tcgetattr(0, &_oldtermios);
-		tcsetattr(0, TCSADRAIN, &_oldtermios);
+		// tcsetpgrp(0, current);
+		// tcgetattr(0, &_oldtermios);
+		// tcsetattr(0, TCSADRAIN, &_oldtermios);
 	} else {
 		std::cerr<<"fg: no such job"<<std::endl;
 	} fg=false;	
