@@ -85,7 +85,7 @@ command_word argument_list {
 	if(pushd) {
 		std::cerr<<"pushd: no provided directory"<<std::endl; pushd=false;
 	} else if(fg) {
-	    Command::currentCommand.send_to_foreground(-1, fg);
+	    Command::currentCommand.send_to_foreground(-1, fg, reader.oldtermios);
 	} else if(bg) {
 		job _back = Command::currentCommand.m_jobs.back();
 		/* don't restore io, just resume. */
@@ -116,33 +116,19 @@ argument_list argument
 argument:
 WORD {	
 	std::string temp = tilde_expand(std::string($1));
-	delete[] $1;
 	char * expand_upon_me = strndup(temp.c_str(), temp.size());
 	wildcard_expand(expand_upon_me); free(expand_upon_me);
 
 	if(fg) {
 		pid_t current = tcgetpgrp(0);
 		try {
-			unsigned int as_num = std::stoi(std::string($1));
-			if (as_num >= Command::currentCommand.m_jobs.size() ||
-				Command::currentCommand.m_jobs.size() == 0) {
+			int as_num = std::stoi(std::string($1));
+			if (as_num >= Command::currentCommand.m_jobs.size()) {
 				std::cerr<<"fg: no such job"<<std::endl;
 			} else {
-				job _back = Command::currentCommand.m_jobs[as_num];
-				/* remove the job from our list */
-				Command::currentCommand.m_jobs.erase(
-					Command::currentCommand.m_jobs.begin() + as_num,
-					Command::currentCommand.m_jobs.begin() + as_num + 1);
-							
-				tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
-						
-				waitpid(_back.pgid, 0, WUNTRACED);
-				
-				tcsetpgrp(0, current);
-				tcgetattr(0, &reader.oldtermios);
-				tcsetattr(0, TCSADRAIN, &reader.oldtermios);
-			}
+			  	Command::currentCommand.send_to_foreground(
+				   as_num, fg, reader.oldtermios);
+		    }
 		} catch ( ... ) {
 			std::cerr<<"fg: \""<<$1<<"\" is not a number."
 					 <<std::endl;
@@ -174,7 +160,7 @@ WORD {
 		}
 		Command::currentCommand.wc_collector.clear();
 		Command::currentCommand.wc_collector.shrink_to_fit();
-	} 
+	} delete[] $1;
 }
 | BACKTIK { Command::currentCommand.subShell($1); delete[] $1; }
 ;

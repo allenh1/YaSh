@@ -531,22 +531,23 @@ void Command::popDir() {
 	std::cout<<std::endl;
 }
 
-void Command::send_to_foreground(const int & process_num, bool & fg)
+void Command::send_to_foreground(const int & process_num,
+								 bool & fg,
+								 termios & _oldtermios)
 {
 	pid_t current = m_shell_pgid;
 	if (m_jobs.size()) {
 		job _back = m_jobs.back();
 		m_jobs.pop_back();
 		tcsetpgrp(0, _back.pgid);
-		termios old;
-		tcsetattr(0, TCSADRAIN, &old);
+		tcsetattr(0, TCSADRAIN, &_oldtermios);
 		if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 		
 		waitpid(_back.pgid, 0, WUNTRACED);
 		
 		tcsetpgrp(0, current);
-		tcgetattr(0, &old);
-		tcsetattr(0, TCSADRAIN, &old);
+		tcgetattr(0, &_oldtermios);
+		tcsetattr(0, TCSADRAIN, &_oldtermios);
 	} else {
 		std::cerr<<"fg: no such job"<<std::endl;
 	} fg=false;	
