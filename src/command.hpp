@@ -65,6 +65,8 @@ public:
 		m_time = _time;
 	}
 
+	void print_jobs();
+	
 	pid_t m_shell_pgid = 0;
 	pid_t m_pgid = 0;
 	pid_t m_pid = 0;
@@ -76,6 +78,12 @@ public:
 	std::vector<std::string> wc_collector;// Wild card collection tool
    
 	bool printPrompt = true;
+
+	/**
+	 * Returns a string for the command the user ran
+	 */
+	friend std::string get_command_text(Command & cmd);
+
 private:
 	std::vector<std::string> string_split(std::string s, char delim) {
 		std::vector<std::string> elems; std::stringstream ss(s);
@@ -104,4 +112,9 @@ private:
 	std::vector<std::string> m_dir_stack;   
 	std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
 };
+
+/**
+ * Returns a string for the command the user ran
+ */
+std::string get_command_text(Command & cmd);
 #endif

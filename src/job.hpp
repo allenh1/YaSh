@@ -14,14 +14,17 @@ struct job
 {
 	pid_t pgid;
 
-	int stdin;
-	int stdout;
-	int stderr;
+	int m_stdin;
+	int m_stdout;
+	int m_stderr;
 
+	std::string command;
+
+	/* @todo do we still need this? */
 	void restore_io() {
-		dup2(stdin,  0); close(stdin);
-		dup2(stdout, 1); close(stdout);
-		dup2(stderr, 2); close(stderr);
+		dup2(m_stdin,  0); close(m_stdin);
+		dup2(m_stdout, 1); close(m_stdout);
+		dup2(m_stderr, 2); close(m_stderr);
 	}
 
 	job_status status;

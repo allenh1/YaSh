@@ -2,7 +2,8 @@
 
 std::vector<int> m_background;
 
-SimpleCommand::SimpleCommand() { /** Used to call malloc for five stuffs here **/ }
+SimpleCommand::SimpleCommand()
+{ SimpleCommand::p_jobs = & Command::currentCommand.m_jobs; }
 
 void SimpleCommand::insertArgument(char * argument)
 {
@@ -341,11 +342,12 @@ void Command::execute()
 	/* prep to save */
 	job current;
 	int status = -1; /* shut up, GCC */
-	current.pgid   = m_pgid;
-	current.stdin  = m_stdin;
-	current.stdout = m_stdout;
-	current.stderr = m_stderr;
-	current.status = job_status::RUNNING;
+	current.pgid     = m_pgid;
+	current.command  = get_command_text(std::ref(*this));
+	current.m_stdin  = m_stdin;
+	current.m_stdout = m_stdout;
+	current.m_stderr = m_stderr;
+	current.status   = job_status::RUNNING;
 	/* waitpid:
 	 *   pid <  -1 => wait for absolute value of pid
 	 *   pid == -1 => wait for any child process
@@ -577,4 +579,20 @@ void Command::send_to_foreground(ssize_t job_num,
 	} else {
 		std::cerr<<"fg: no such job"<<std::endl;
 	} fg=false;	
+}
+
+std::string get_command_text(Command & cmd)
+{
+	/* beggining of the string */
+	std::string ret = "";
+	bool first_cmd = true, first_arg = true;
+	
+	for (auto & x : cmd.simpleCommands) {
+		ret += (first_cmd) ? (first_cmd = false, "") : " |";		
+		for (auto & y : x.get()->arguments) {
+			if (y == NULL) continue; /* skip over the first one */
+			ret += ((first_arg) ? (first_arg = false, "")
+					: std::string(" ")) + y;
+		}
+	} return ret;
 }
