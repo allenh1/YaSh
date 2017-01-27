@@ -32,7 +32,7 @@ public:
 	void set_out_file(char * _fd);
 	void set_err_file(char * _fd);
 
-	void send_to_foreground(const int & process_num,
+	void send_to_foreground(ssize_t process_num,
 							bool & fg,
 							termios & _oldtermios);
 

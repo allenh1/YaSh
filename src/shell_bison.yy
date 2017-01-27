@@ -144,7 +144,7 @@ WORD {
 					Command::currentCommand.m_jobs.begin() + as_num + 1);
 							
 				/* don't restore io, just resume */
-				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");							
+				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 			}
 		} catch ( ... ) {
 			std::cerr<<"bg: \""<<$1<<"\" is not a number."
