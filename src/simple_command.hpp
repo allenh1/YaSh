@@ -38,6 +38,7 @@
 /* File Includes */
 #include "shell-utils.hpp"
 #include "wildcard.hpp"
+#include "job.hpp"
 
 /* Command Data Structure */
 struct SimpleCommand {
@@ -63,15 +64,19 @@ struct SimpleCommand {
 	bool handle_cl(const int &, const int &, const int &);
 	bool handle_setenv(const int &, const int &, const int &);
 	bool handle_unsetenv(const int &, const int &, const int &);
-	bool handle_history();
+
+	void handle_ls();
+	void handle_grep();
+	void handle_jobs();
+	void handle_history();
+	void handle_printenv();
+
 	bool completed = false;
 	bool stopped = false;
 	int status = -1;
-	void handle_ls();
-	void handle_grep();
-	void handle_printenv();
 
 	static std::vector<std::string> * history;
+	static std::vector<job> * p_jobs;
 	pid_t pid;
 };
 #endif

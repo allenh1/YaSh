@@ -69,6 +69,7 @@ void SimpleCommand::handle_modified_commands()
 {
 	handle_ls();
 	handle_grep();
+	handle_jobs();
 	handle_history();
 	handle_printenv();
 }
@@ -269,7 +270,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
 	} return false;
 }
 
-bool SimpleCommand::handle_history()
+void SimpleCommand::handle_history()
 {
 	if (arguments[0] == std::string("history")) {
 		if (arguments.size() > 2) {
@@ -288,6 +289,32 @@ bool SimpleCommand::handle_history()
 			for (const auto & _line : *history) {
 				num = std::to_string(x++) + ": ";
 				std::cout<<std::setw(width)<<num<<_line;
+			}
+		} exit(0);
+	}
+}
+
+void SimpleCommand::handle_jobs()
+{
+	if (arguments[0] == std::string("jobs")) {
+		if (arguments.size() > 2) {
+			/* check argument count */
+			std::cerr<<"jobs: invalid arguments"<<std::endl;
+			std::cerr<<"usage: jobs"<<std::endl;			
+		} else {
+			/* get the length of the number, for formatting. */
+			std::string line = std::to_string(p_jobs->size());
+			unsigned short width = line.size() + 3; size_t x = 0;
+			std::string num;
+			for (const auto & _job : *p_jobs) {
+				num = std::string("[") + std::to_string(x++) + "]: ";
+				std::string _line = _job.command;
+				std::cout<<std::setw(width)<<num<<_line<<":\t\t(";
+				if (_job.status == job_status::STOPPED) {
+					std::cout<<"stopped)"<<std::endl;
+				} else if (_job.status == job_status::RUNNING) {
+					std::cout<<"running)"<<std::endl;
+				}
 			}
 		} exit(0);
 	}
