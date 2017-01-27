@@ -250,7 +250,8 @@ void Command::execute()
 	struct timeval real, user, sys;
 	struct timeval before, after;
 
-	struct timezone dtz; /* @todo this is not posix compliant */
+	/* @todo this is not posix compliant */	
+	struct timezone dtz;
 
 	if (m_time) {
 		/* get the time of day */
@@ -529,4 +530,51 @@ void Command::popDir() {
 	}
 	for(auto && a: m_dir_stack) std::cout<<a<<" ";
 	std::cout<<std::endl;
+}
+
+void Command::send_to_foreground(ssize_t job_num,
+								 bool & fg,
+								 termios & _oldtermios)
+{
+	pid_t current = m_shell_pgid;
+	if (m_jobs.size()) {
+		/* did they pass an argument? */
+		job_num = (job_num < 0) ? m_jobs.size() - 1 : job_num;
+		job _job = m_jobs[job_num];
+		m_jobs.erase( /* remove the job */
+			m_jobs.begin() + job_num,
+			m_jobs.begin() + job_num + 1);
+		
+		tcsetpgrp(0, _job.pgid);
+		tcsetattr(0, TCSADRAIN, &_oldtermios);
+		if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
+
+		/* prep to save */
+		int status = -1; /* shut up, GCC */
+		/* waitpid:
+		 *   pid <  -1 => wait for absolute value of pid
+		 *   pid == -1 => wait for any child process
+		 *   pid ==  0 => wait for any child whose pgid is ours
+		 *   pid >   0 => wait for the specified pid
+		 */
+
+		if (!background) {
+			/* put the job in the foreground */
+			if (m_interactive) {
+				tcsetpgrp(STDIN_FILENO, m_pgid);
+				waitpid(_job.pgid, &status, WUNTRACED);
+				tcsetpgrp(STDIN_FILENO, m_shell_pgid);
+			} else waitpid(_job.pgid, &status, WUNTRACED);
+		} else m_jobs.push_back(_job), m_job_map[m_pgid] = m_jobs.size() - 1;
+
+		/* check if the job is stopped */
+		if (WIFSTOPPED(status)) {
+			_job.status = job_status::STOPPED;
+			m_jobs.push_back(_job);
+			std::cout<<"["<<(m_job_map[_job.pgid] = m_jobs.size() - 1)
+					 <<"]+\tstopped\t"<<_job.pgid<<std::endl;
+		}
+	} else {
+		std::cerr<<"fg: no such job"<<std::endl;
+	} fg=false;	
 }

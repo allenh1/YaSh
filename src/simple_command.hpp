@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 
 /* Linux Includes */
+#include <termios.h>
 #include <unistd.h>
 #include <signal.h>
 #include <dirent.h>
