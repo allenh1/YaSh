@@ -1,129 +1,24 @@
-Version 0.0.6
-
-Cleaned a small memory leak in the wildcard.
-
-Removed extraneous character.
-
-Made indentation scheme consistent.
-
-Fixed the !-<n> regression.
-
-Bump to version 0.0.6-rc
-
-Fixed the small ctrl + a issue on ARM. The fix isn't pretty,
-but is the best I can do for now.
-
-Working on ARM exclusive ctrl + a bug.
-
-Fixed extra tab in ci
-
-Made functions take const thing references.
-
-Removed unnecessary sort call from wildcard, as well as made the bash locale match that of our sort.
-
-Added history command with the `--no-lineno` function. Seems to be working nicely!
-
-Removed debug message.
-
-The shell now reads from a history file. YaSh is not persistant.
-
-Final adjustments and fixed wording of -std=c++14
-
-README updated with Hunter's proposals and some personal edits
-
-sorry the previous one I forgot to save in emacs, here is the real stuff
-
-I used kleenex and Windows should be more clear to install now
-
-Fix the small control z bug, and improve performance.
-
-Things are installing now. But I'm not quite pleased with this.
-
-Uh -- ok. I'm not sure about anything anymore.
-
-Ok. Some useful debug info now.
-
-Ok. Fixed the issue with the Bash dependency. Now we can launch from a broken version of YaSh...
-...
-...
-Progress.
-
-fixed wildcard using glob
-
-Remove the comment  blocking the SIGSTOP ignore.
-
-Fixed a small issue in the flex file, as well as managed work done by the jobs program. Fix #10.
-
-Added bg. Also added fg and bg with specified job numbers to resume.
-
-I DID IT. FG IS WORKING.
-
-Some good progress on fg. The window reappears now, but is... Not correct.
-
-Ok! So the jobs are actually stoppping!
-
-Gustavo Rodriquez-Rivera pointed out a small issue in the execute
-that leaked a file descriptor.
-
-This fixes it.
-
-In the future, we should use `ulimit -n 32` and test it.
-He also tried `strace -f -o t,.out yash`, but strace wasn't installed.
-
-Update README.md
-Failed to initialize the pid variable. Other than that, valrind seems to be ok with things.
-
-Fixed test case, uncommented the initial source, removed old execute from cpp file. Fix #31.
-
-Fixed printenv issue. Just. Stop laughing, please.
-
-Working on #33.
-
-Almost added printenv. goodnight.
-
-Added cl command to the new execute.
-
-Added setenv and unsetenv. Also fixed some small file descriptor issues.
-
-Fixed the readline issue. That was easy.
-
-CD is now working, and the SimpleCommand struct has been moved to its own header. I'm happy. You should be too.
-
-Implemented the new execute function.
-
-Added files to gitignore. Also completely broke everything. ... ... Progress.
-
-Saving status
-
-so ya don't like lingering comment code ey
-
-basic cl, ya know, cd and ls(with colors!)
-
-Moved the remaining keyboard handlers to the cpp file.
-
-Please re-indent and rebase!
-
-Moved delete key to the cpp file.
-
-Removed backspace from the shell-readline header.
-
-I. Fixed. It.
-
-Added test for issue 33.
-
-i hate you, hidden files
-
-Uh -- wut
-
-Moved ctrl + k to the .cpp file.
-
-Continuing to create smaller functions for read_line class.
-
-Moved some key combos out of the shell-readline () operator. Definitely making progress on cleaning this up!
-
-Moved the functions into the class. Also fixed the read_line class' indentation.
-
-Moved some functions out of shell-readline.hpp to make it a little cleaner. That was really, really, really obnoxious btw.
-
-Update README.md
-Update README.md
+6574711 Merge branch '0.0.7-production' into 'master'
+12b9f44 Production for 0.0.7
+afc2dfd Version bump.
+dcb9a07 Merge branch '41-instant-crash-regression' into 'master'
+e71d8b8 Finished #41
+a2be7d1 Merge branch '42-jobs-command' into 'master'
+13be6ea Implemented the jobs command.
+3f1f126 Merge branch '47-better-jobs-control' into 'master'
+2c4d922 Implemented better jobs control.
+6ff90eb Jobs resumed with `fg` may be stopped and started again!
+3725894 It's a little better...
+b222719 Created a `send_to_foreground` function. It does not quite work. I need to change the parameters to include a pointer to the termios. At this point, I think this might just go to the `shell-utils.hpp` file, instead of being a member function for `command.hpp`. Not entirely sure about this yet.
+75cfed2 Merge branch '45-first-command-weirdness'
+2c87c5f Miscelaneous cleanup.
+3a26e83 Fixed #45
+38c7cd3 Merge branch 'mr-origin-41'
+42b75ea Phew. Ok. Done with #3.
+a1939bf More experimentation
+4cc35ca Added "time" to the grammar.
+246aaf6 Made this use getrusage instead, and wrote a subtraction operator for timevals.
+05f9cdb Tried to implement the time command. Not sure why we're getting '0' for everything, but... This should work maybe?
+c4a0f19 Merge branch '35-arg-count-for-builtins'
+6cab970 Updated the version number to post v0.0.6
+4d47eb1 Added checks for number of arguments in setenv/unsetenv
