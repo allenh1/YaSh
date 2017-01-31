@@ -32,7 +32,7 @@ std::string longest_substring(const std::vector<std::string> & _vct) {
 size_t size_of_longest(const std::vector<std::string> & _vct) {
 	size_t max = 0;
 	for (auto && x : _vct) max = (x.size() > max) ? x.size() : max;
-	return max;
+	return max == 0 ? 1 : max;
 }
 
 /** 
@@ -45,7 +45,7 @@ size_t size_of_longest(const std::vector<std::string> & _vct) {
 void printEvenly(std::vector<std::string> & _vct) {
 	size_t longst = size_of_longest(_vct); std::string * y;
 	struct winsize w; ioctl(1, TIOCGWINSZ, &w);
-
+	
 	/* If the length is too long, print on its own line */
 	if (longst >= w.ws_col) {
 		for (auto && x : _vct) std::cout<<x<<std::endl;
@@ -224,11 +224,11 @@ timeval operator - (timeval & t1, timeval & t2)
 {
 	/* Perform the carry for the later subtraction by updating y. */
 	if (t1.tv_usec < t2.tv_usec) {
-		int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
+		register int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
 		t2.tv_usec -= 1000000 * nsec;
 		t2.tv_sec += nsec;
 	} if (t1.tv_usec - t2.tv_usec > 1000000) {
-		int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
+		register int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
 		t2.tv_usec += 1000000 * nsec;
 		t2.tv_sec -= nsec;
 	}
@@ -237,7 +237,7 @@ timeval operator - (timeval & t1, timeval & t2)
 	 * Compute the time remaining to wait.
 	 * tv_usec is certainly positive.
 	 */
-	timeval result; memset(&result, 0, sizeof(timeval));
+	timeval result;
 	result.tv_sec = t1.tv_sec - t2.tv_sec;
 	result.tv_usec = t1.tv_usec - t2.tv_usec;
 
@@ -245,54 +245,54 @@ timeval operator - (timeval & t1, timeval & t2)
 }
 
 /* This is from bash */
-struct timeval * difftimeval(struct timeval * d,
-							 struct timeval * t1,
-							 struct timeval * t2)
+timeval & difftimeval(timeval & d,
+					  timeval & t1,
+					  timeval & t2)
 {
-	d->tv_sec = t2->tv_sec - t1->tv_sec;
-	d->tv_usec = t2->tv_usec - t1->tv_usec;
+	d.tv_sec = t2.tv_sec - t1.tv_sec;
+	d.tv_usec = t2.tv_usec - t1.tv_usec;
 
-	if (d->tv_usec < 0)	{
-		d->tv_usec += 1000000;
-		d->tv_sec -= 1;
+	if (d.tv_usec < 0)	{
+		d.tv_usec += 1000000;
+		d.tv_sec -= 1;
 
-		if (d->tv_sec < 0) d->tv_sec = d->tv_usec = 0;
-	} return d;  
+		if (d.tv_sec < 0) d.tv_sec = d.tv_usec = 0;
+	} return d;
 }
 
 /* also from bash */
-struct timeval * addtimeval (struct timeval * d,
-							 struct timeval * t1,
-							 struct timeval * t2)
+timeval & addtimeval (timeval & d,
+					  timeval & t1,
+					  timeval & t2)
 {
-	d->tv_sec = t1->tv_sec + t2->tv_sec;
-	d->tv_usec = t1->tv_usec + t2->tv_usec;
+	d.tv_sec = t1.tv_sec + t2.tv_sec;
+	d.tv_usec = t1.tv_usec + t2.tv_usec;
 
-	if (d->tv_usec >= 1000000) {
-		d->tv_usec -= 1000000;
-		d->tv_sec += 1;
+	if (d.tv_usec >= 1000000) {
+		d.tv_usec -= 1000000;
+		d.tv_sec += 1;
 	} return d;
 }
 
 /* more things I stole from bash */
-void timeval_to_secs (struct timeval * tvp,
-					  time_t * sp,
-					  int * sfp)
+void timeval_to_secs (timeval & tvp,
+					  time_t & sp,
+					  int & sfp)
 {
 	int rest;
 
-	*sp = tvp->tv_sec;
+	sp = tvp.tv_sec;
 
-	*sfp = tvp->tv_usec % 1000000; /* pretty much a no-op */
-	rest = *sfp % 1000;
-	*sfp = (*sfp * 1000) / 1000000;
-	
-	if (rest >= 500) *sfp += 1;
+	sfp = tvp.tv_usec % 1000000; /* pretty much a no-op */
+	rest = sfp % 1000;
+	sfp = (sfp * 1000) / 1000000;
+
+	if (rest >= 500) sfp += 1;
 
 	/* Sanity check */
-	if (*sfp >= 1000) {
-		*sp += 1;
-		*sfp -= 1000;
+	if (sfp >= 1000) {
+		sp += 1;
+		sfp -= 1000;
 	}
 } 
 

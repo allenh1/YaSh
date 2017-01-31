@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([YaSh],[0.0.7-rc],[allen286@purdue.edu])
+AC_INIT([YaSh],[0.0.7],[allen286@purdue.edu])
 AC_CONFIG_SRCDIR([src/command.cpp])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_AUX_DIR(config)
@@ -40,6 +40,8 @@ AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h stdlib.h string.h termios.h unistd.h])
+AC_CHECK_HEADERS([alloca.h regex.h sys/ioctl.h sys/types.h sys/wait.h])
+AC_CHECK_HEADERS([sys/stat.h dirent.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

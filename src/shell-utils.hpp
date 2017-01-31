@@ -35,19 +35,19 @@ timeval operator - (timeval & t1, timeval & t2);
  * Stolen from: bash
  *  This function is how bash subtracts times
  */
-struct timeval * difftimeval(struct timeval * d, struct timeval * t1, struct timeval * t2);
+timeval & difftimeval(timeval & d, timeval & t1, timeval & t2);
 
 /**
  * Stolen from: bash
  *  This is how bash adds times
  */
-struct timeval * addtimeval(struct timeval * d, struct timeval * t1, struct timeval * t2);
+timeval & addtimeval(timeval & d, timeval & t1, timeval & t2);
 
 /**
  * Stolen from: bash
  *  This converts a timeval * to seconds and thousandths of a second.
  */
-void timeval_to_secs(struct timeval * tvp, time_t * sp, int * sfp);
+void timeval_to_secs(timeval & tvp, time_t & sp, int & sfp);
 
 struct Lensort {
 	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
