@@ -392,16 +392,16 @@ void Command::execute()
 
 		/* get the real time */
 		real = after - before;
-		timeval_to_secs(&real, &rs, &rsf); /* convert time */
+		timeval_to_secs(real, rs, rsf); /* convert time */
 
 
-		addtimeval(&user, difftimeval(&after, &selfb.ru_utime, &selfa.ru_utime),
-				   difftimeval(&before, &kidsb.ru_utime, &kidsa.ru_utime));
-		timeval_to_secs (&user, &us, &usf);
+		addtimeval(user, difftimeval(after, selfb.ru_utime, selfa.ru_utime),
+				   difftimeval(before, kidsb.ru_utime, kidsa.ru_utime));
+		timeval_to_secs (user, us, usf);
 
-		addtimeval(&sys, difftimeval(&after, &selfb.ru_stime, &selfa.ru_stime),
-				   difftimeval(&before, &kidsb.ru_stime, &kidsa.ru_stime));
-		timeval_to_secs (&sys, &ss, &ssf);
+		addtimeval(sys, difftimeval(after, selfb.ru_stime, selfa.ru_stime),
+				   difftimeval(before, kidsb.ru_stime, kidsa.ru_stime));
+		timeval_to_secs (sys, ss, ssf);
 
 		/* display the times */
 		fprintf(stderr, "\n  Real:\t%d.%03ds", rs, rsf);
