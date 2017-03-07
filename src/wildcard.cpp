@@ -6,7 +6,7 @@ void wildcard_expand(char * arg) {
 		Command::currentSimpleCommand->insertArgument(arg);
 		return;
 	}
-  
+
 	bool hidden = false;
 
 	char * a = arg;
