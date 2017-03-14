@@ -70,7 +70,7 @@ void myunputc(int c) {
 "|" return PIPE;
 "&" return AMPERSAND;
 
-"exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
+^"exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
 
 ^"time" { return TIME; }
 ^"source" { return SRC; }
@@ -170,6 +170,7 @@ void myunputc(int c) {
 \"(\\.|[^"])*\" {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
+	Command::currentCommand.set_expand(false);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
     return WORD;
 }

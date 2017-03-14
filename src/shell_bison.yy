@@ -104,7 +104,7 @@ WORD {
 	else if(!strcmp(_ptr, "bg")) bg=true;
 	else if(!strcmp(_ptr, "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
-	free(_ptr);				
+	free(_ptr);	
 }
 ;
 
