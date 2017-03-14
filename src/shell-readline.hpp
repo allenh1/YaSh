@@ -131,7 +131,7 @@ public:
 				if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;			
 				else if (ch1 == 91 && ch2 == 51 && ch3 == 126
 						 && !handle_delete(_line)) continue;
-				else if (ch1 == 91 && ch2 == 51 && ch3 == 53
+				else if (ch1 == 91 && ch2 == 51 && ch3 == 59
 						 && !handle_ctrl_del(_line)) continue;
 				if (ch1 == 91 && ch2 == 65 && !handle_up_arrow(_line)) continue;
 				if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) continue;

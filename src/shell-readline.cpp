@@ -555,8 +555,33 @@ bool read_line::handle_backspace(std::string & _line)
 
 bool read_line::handle_ctrl_del(std::string & _line)
 {
-	char ch4;
-	if (!read_with_error(
+	char ch4, ch5;
+	/* read the 53 and the 126 char */
+	if (!read_with_error(0, ch4)
+		|| !read_with_error(0, ch5)) return false;
+	/* if not 126, go away */
+	if (ch4 != 53 || ch5 != 126) return false;
+
+	/* clear remaining output */
+	size_t len = m_buff.size();
+	char space[len], bspace[len];
+	memset(space, ' ', len);
+	memset(bspace, '\b', len);
+	if (!write_with_error(1, space, len)) return false;
+	else if (!write_with_error(1, bspace, len)) return false;
+	
+    /* pop off stack until a space, or the end */
+	for (char c = 'a'; c != ' ' && m_buff.size(); c = m_buff.top(), m_buff.pop());
+	if (!m_buff.size()) return false;
+	/* print out the residual buffer */
+	len = m_buff.size();
+	char bspace2[len];
+	std::stack<char> temp = m_buff;
+	char c = temp.top(); temp.pop();
+	for (; write_with_error(1, c) && temp.size();
+		 c = temp.top(), temp.pop());
+	memset(bspace2, '\b', len);
+	return !write_with_error(1, bspace2, len);
 }
 
 /** 
