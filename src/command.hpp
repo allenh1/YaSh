@@ -20,7 +20,6 @@ public:
 	void prompt();
 	void print();
 	void execute();
-	void old_execute();
 	void clear();
 
 	void pushDir(const char * new_dir);
@@ -46,7 +45,8 @@ public:
 	const bool & outIsSet() { return outSet; }
 	const bool & errIsSet() { return errSet; }
 	const bool & is_interactive() { return m_interactive; }
-	
+	const bool & get_expand() { return m_expand; }
+
 	void setAppend(const bool & ap) { append = ap; }
 	void setBackground(const bool & bg) { background = bg; }
 
@@ -63,6 +63,10 @@ public:
 
 	void set_time(const bool & _time) {
 		m_time = _time;
+	}
+
+	void set_expand(const bool & _expand) {
+		m_expand = _expand;
 	}
 
 	void print_jobs();
@@ -101,8 +105,10 @@ private:
 	bool background = false;
 	bool m_time = false;
 	bool m_interactive = false;
+	bool m_expand = true;
 	bool stopped = false;
-	bool completed = false;	
+	bool completed = false;
+
 	int numOfSimpleCommands = 0;
 	
 	bool inSet  = false; int m_stdin  = 0;
