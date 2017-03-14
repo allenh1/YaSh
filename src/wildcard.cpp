@@ -2,7 +2,8 @@
 
 void wildcard_expand(char * arg) {
 	// return if arg does not contain * or ?
-	if(!strchr(arg, '*') && !strchr(arg, '?')) {
+	if((!strchr(arg, '*') && !strchr(arg, '?'))
+	   || !Command::currentCommand.get_expand()) {
 		Command::currentSimpleCommand->insertArgument(arg);
 		return;
 	}

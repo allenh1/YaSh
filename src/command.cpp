@@ -13,43 +13,43 @@ void SimpleCommand::insertArgument(char * argument)
 
     /* exists == m_aliases.end() => we are inserting an alias */
     if (exists != Command::currentCommand.m_aliases.end()) {
-	auto to_insert = exists->second;
-	for (auto && str : to_insert) {
-	    char * toPush = strndup(str.c_str(), str.size());
-	    arguments.push_back(toPush); ++numOfArguments;
-	}
+		auto to_insert = exists->second;
+		for (auto && str : to_insert) {
+			char * toPush = strndup(str.c_str(), str.size());
+			arguments.push_back(toPush); ++numOfArguments;
+		}
     } else {
 	    
-	std::string arga = tilde_expand(as_string);
-	std::string arg  = env_expand(arga);
+		std::string arga = tilde_expand(as_string);
+		std::string arg  = env_expand(arga);
 
-	char * str = strndup(arg.c_str(), arg.size());
-	int index; char * t_str = str;
-	char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
+		char * str = strndup(arg.c_str(), arg.size());
+		int index; char * t_str = str;
+		char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
 
-	for (index = 0; *str; ++str) {
-	    if (*str == '\\' && *(str + 1) == '\"') {
-		temp[index++] = '\"'; ++str;
-	    } else if (*str == '\\' && *(str + 1) == '&') {
-		temp[index++] = '&'; ++str;
-	    } else if (*str == '\\' && *(str + 1) == '#') {
-		temp[index++] = '#'; ++str;
-	    } else if (*str == '\\' && *(str + 1) == '<') {
-		temp[index++] = '<'; ++str;
-	    } else if (*str == '\\' && *(str + 1) == '\\' && *(str+2) == '\\') {
-		temp[index++] = '\\'; ++str; ++str;
-	    } else if (*str == '\\' && *(str + 1) == '\\'){
-		temp[index++] = '\\'; ++str;
-	    } else if (*str == '\\' && *(str + 1) == ' ') {
-		temp[index++] = ' '; ++str;
-	    } else {
-		temp[index++] = *str;
-	    }
-	} free(t_str);
-	char * toPush = new char[index + 1]; memset(toPush, 0, index + 1);
-	strcpy(toPush, temp);
-	arguments.push_back(toPush), ++numOfArguments;
-	free(temp);
+		for (index = 0; *str; ++str) {
+			if (*str == '\\' && *(str + 1) == '\"') {
+				temp[index++] = '\"'; ++str;
+			} else if (*str == '\\' && *(str + 1) == '&') {
+				temp[index++] = '&'; ++str;
+			} else if (*str == '\\' && *(str + 1) == '#') {
+				temp[index++] = '#'; ++str;
+			} else if (*str == '\\' && *(str + 1) == '<') {
+				temp[index++] = '<'; ++str;
+			} else if (*str == '\\' && *(str + 1) == '\\' && *(str+2) == '\\') {
+				temp[index++] = '\\'; ++str; ++str;
+			} else if (*str == '\\' && *(str + 1) == '\\'){
+				temp[index++] = '\\'; ++str;
+			} else if (*str == '\\' && *(str + 1) == ' ') {
+				temp[index++] = ' '; ++str;
+			} else {
+				temp[index++] = *str;
+			}
+		} free(t_str);
+		char * toPush = new char[index + 1]; memset(toPush, 0, index + 1);
+		strcpy(toPush, temp);
+		arguments.push_back(toPush), ++numOfArguments;
+		free(temp);
     }
 }
 
@@ -60,20 +60,20 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
     if (pipe(fdpipe) < 0) return -1;
     else if ((pid = fork()) < 0) return -1;
     else if (pid == 0) {
-	/** Child Process: write into the pipe **/
-	close(fdpipe[0]);   // close unused read end
-	dup2(fdpipe[1], 1); // stdout to pipe
-	dup2(fdpipe[1], 2); // stderr to pipe
-	close(fdpipe[1]);
+		/** Child Process: write into the pipe **/
+		close(fdpipe[0]);   // close unused read end
+		dup2(fdpipe[1], 1); // stdout to pipe
+		dup2(fdpipe[1], 2); // stderr to pipe
+		close(fdpipe[1]);
 
-	if (execvp(cmd[0], cmd)) return -1;
-	_exit(0);
+		if (execvp(cmd[0], cmd)) return -1;
+		_exit(0);
     } else {
-	/** Parent Process: read from the pipe **/
-	close(fdpipe[1]);   // close unused write end
-	for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
-	if (x == buffSize) return -1;
-	waitpid(pid, NULL, 0);
+		/** Parent Process: read from the pipe **/
+		close(fdpipe[1]);   // close unused write end
+		for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
+		if (x == buffSize) return -1;
+		waitpid(pid, NULL, 0);
     } return 0;
 }
 
@@ -89,10 +89,10 @@ void Command::set_in_file(char * _fd) {
     m_stdin = open(_fd, O_RDONLY, 0600);
 
     if (m_stdin < 0) {
-	perror("open");
-	inSet = false;
-	inFile = NULL;
-	m_stdin = 0;
+		perror("open");
+		inSet = false;
+		inFile = NULL;
+		m_stdin = 0;
     }
 }
 
@@ -103,10 +103,10 @@ void Command::set_out_file(char * _fd) {
     m_stdout = open(_fd, get_output_flags(), 0600);
 
     if (m_stdout < 0) {
-	perror("open");
-	outSet = false;
-	outFile = NULL;
-	m_stdout = 1;
+		perror("open");
+		outSet = false;
+		outFile = NULL;
+		m_stdout = 1;
     }
 }
 
@@ -117,10 +117,10 @@ void Command::set_err_file(char * _fd) {
     m_stderr = open(_fd, get_output_flags(), 0600);
 
     if (m_stderr < 0) {
-	perror("open");
-	errSet = false;
-	errFile = NULL;
-	m_stderr = 2;
+		perror("open");
+		errSet = false;
+		errFile = NULL;
+		m_stderr = 2;
     }
 }
 
@@ -132,57 +132,57 @@ void Command::subShell(char * arg)
     int tmpin = dup(0); int tmpout = dup(1); int tmperr = dup(2);
   
     if (pipe(cmd_pipe) == -1) {
-	perror("cmd_pipe");
-	return;
+		perror("cmd_pipe");
+		return;
     } else if (pipe(out_pipe) == -1) {
-	perror("out_pipe");
-	return;
+		perror("out_pipe");
+		return;
     }
 
     dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
     dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
   
     if ((pid = fork()) == -1) {
-	perror("subshell fork");
-	return;
+		perror("subshell fork");
+		return;
     } else if (pid == 0) {
-	/* Child Process */
-	close(out_pipe[0]); /* close the read end of the out pipe */
-	close(cmd_pipe[1]); /* close the write end of the cmd pipe */
+		/* Child Process */
+		close(out_pipe[0]); /* close the read end of the out pipe */
+		close(cmd_pipe[1]); /* close the write end of the cmd pipe */
 
-	dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
-	dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
+		dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
+		dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
 
-	execlp("yash", "yash", NULL);
-	perror("subshell exec");
-	_exit(1);
+		execlp("yash", "yash", NULL);
+		perror("subshell exec");
+		_exit(1);
     } else if (pid != 0) {
-	/* Parent Process */
-	char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
-	char * c = NULL;
+		/* Parent Process */
+		char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
+		char * c = NULL;
 	
-	close(out_pipe[1]); /* close the write end of the out pipe */
-	close(cmd_pipe[0]); /* close the read end of the cmd pipe */
+		close(out_pipe[1]); /* close the write end of the out pipe */
+		close(cmd_pipe[0]); /* close the read end of the cmd pipe */
 
-	/* write the command to the write end of the cmd pipe */
-	for (c = arg; *c && write(cmd_pipe[1], c++, 1););
+		/* write the command to the write end of the cmd pipe */
+		for (c = arg; *c && write(cmd_pipe[1], c++, 1););
 
-	/* Close pipe so subprocess isn't waiting */
-	dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
+		/* Close pipe so subprocess isn't waiting */
+		dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
 	
-	waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
+		waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
 
-	//std::cerr<<"Child rage quit"<<std::endl;
+		//std::cerr<<"Child rage quit"<<std::endl;
 	
-	/* read from the out pipe and store in a buffer */
-	for (c = buff; read(out_pipe[0], c++, 1););
+		/* read from the out pipe and store in a buffer */
+		for (c = buff; read(out_pipe[0], c++, 1););
 
-	std::cerr<<"Read from buffer"<<std::endl;
-	size_t buff_len = c - buff; /* this is the number of characters read */
+		std::cerr<<"Read from buffer"<<std::endl;
+		size_t buff_len = c - buff; /* this is the number of characters read */
 
-	/* Push the buffer onto stdin */
-	for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
-	free(buff); /* release the buffer */
+		/* Push the buffer onto stdin */
+		for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
+		free(buff); /* release the buffer */
     }
 
     /* restore default IO */
@@ -204,11 +204,11 @@ void Command::clear()
     m_stdin = 0, m_stdout = 1, m_stderr = 2;
    
     simpleCommands.clear(),
-	background = append = false,
-	numOfSimpleCommands = 0, m_pgid = 0,
-	outFile.release(), inFile.release(),
-	errFile.release(), simpleCommands.shrink_to_fit(),
-	m_jobs.shrink_to_fit();
+		background = append = false,
+		numOfSimpleCommands = 0, m_pgid = 0,
+		outFile.release(), inFile.release(),
+		errFile.release(), simpleCommands.shrink_to_fit(),
+		m_jobs.shrink_to_fit(), m_expand = true;
     outSet = inSet = errSet = m_time = false;
 }
 
@@ -221,18 +221,18 @@ void Command::print()
     std::cout<<"  --- ----------------------------------------------------------"<<std::endl;
 
     for (int i = 0; i < numOfSimpleCommands; i++) {
-	printf("  %-3d ", i);
-	for (int j = 0; j < simpleCommands[i]->numOfArguments; j++) {
-	    std::cout<<"\""<< simpleCommands[i]->arguments[j] <<"\" \t";
-	}
+		printf("  %-3d ", i);
+		for (int j = 0; j < simpleCommands[i]->numOfArguments; j++) {
+			std::cout<<"\""<< simpleCommands[i]->arguments[j] <<"\" \t";
+		}
     }
 
     std::cout<<std::endl<<std::endl;
     std::cout<<"  Output       Input        Error        Background"<<std::endl;
     std::cout<<"  ------------ ------------ ------------ ------------"<<std::endl;
     printf("  %-12s %-12s %-12s %-12s\n", outFile.get()?outFile.get():"default",
-	   inFile.get()?inFile.get():"default", errFile.get()?errFile.get():"default",
-	   background?"YES":"NO");
+		   inFile.get()?inFile.get():"default", errFile.get()?errFile.get():"default",
+		   background?"YES":"NO");
     std::cout<<std::endl<<std::endl;
 }
 
@@ -357,58 +357,58 @@ void Command::execute()
      */
 
     if (!background) {
-	/* put the job in the foreground */
-	if (m_interactive) {
-	    tcsetpgrp(STDIN_FILENO, m_pgid);
-	    waitpid(pid, &status, WUNTRACED);
-	    tcsetpgrp(STDIN_FILENO, m_shell_pgid);
-	} else waitpid(pid, &status, WUNTRACED);
+		/* put the job in the foreground */
+		if (m_interactive) {
+			tcsetpgrp(STDIN_FILENO, m_pgid);
+			waitpid(pid, &status, WUNTRACED);
+			tcsetpgrp(STDIN_FILENO, m_shell_pgid);
+		} else waitpid(pid, &status, WUNTRACED);
     } else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
 	
     if (WIFSTOPPED(status)) {
-	current.status = job_status::STOPPED;
-	m_jobs.push_back(current);
-	std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
-		 <<"]+\tstopped\t"<<pid<<std::endl;
+		current.status = job_status::STOPPED;
+		m_jobs.push_back(current);
+		std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
+				 <<"]+\tstopped\t"<<pid<<std::endl;
     }
 
     for (pid_t _pid = 0; (_pid = waitpid(-1, &status,
-					 WUNTRACED|WNOHANG)) > 0;) {
-	const auto & x = m_job_map.find(_pid);
-	if (x != m_job_map.end()) {
-	    /* x->second is the value */
-	    std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
-		     <<"]-\texited"<<std::endl;
-	}
+										 WUNTRACED|WNOHANG)) > 0;) {
+		const auto & x = m_job_map.find(_pid);
+		if (x != m_job_map.end()) {
+			/* x->second is the value */
+			std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+					 <<"]-\texited"<<std::endl;
+		}
     }
 
     /* stop times */
     if (m_time) {
-	gettimeofday(&after, &dtz);		
-	getrusage(RUSAGE_SELF, &selfa); /* @todo do error checking */
-	getrusage(RUSAGE_CHILDREN, &kidsa); /* @todo do error checking */
+		gettimeofday(&after, &dtz);		
+		getrusage(RUSAGE_SELF, &selfa); /* @todo do error checking */
+		getrusage(RUSAGE_CHILDREN, &kidsa); /* @todo do error checking */
 
-	rs = us = ss = 0;
-	rsf = usf = ssf = 0;
+		rs = us = ss = 0;
+		rsf = usf = ssf = 0;
 
-	/* get the real time */
-	real = after - before;
-	timeval_to_secs(real, rs, rsf); /* convert time */
+		/* get the real time */
+		real = after - before;
+		timeval_to_secs(real, rs, rsf); /* convert time */
 
 
-	addtimeval(user, difftimeval(after, selfb.ru_utime, selfa.ru_utime),
-		   difftimeval(before, kidsb.ru_utime, kidsa.ru_utime));
-	timeval_to_secs (user, us, usf);
+		addtimeval(user, difftimeval(after, selfb.ru_utime, selfa.ru_utime),
+				   difftimeval(before, kidsb.ru_utime, kidsa.ru_utime));
+		timeval_to_secs (user, us, usf);
 
-	addtimeval(sys, difftimeval(after, selfb.ru_stime, selfa.ru_stime),
-		   difftimeval(before, kidsb.ru_stime, kidsa.ru_stime));
-	timeval_to_secs (sys, ss, ssf);
+		addtimeval(sys, difftimeval(after, selfb.ru_stime, selfa.ru_stime),
+				   difftimeval(before, kidsb.ru_stime, kidsa.ru_stime));
+		timeval_to_secs (sys, ss, ssf);
 
-	/* display the times */
-	fprintf(stderr, "\n  Real:\t%d.%03lds", rs, rsf);
-	fprintf(stderr, "\n  User:\t%d.%03lds", us, usf);
-	fprintf(stderr, "\nSystem:\t%d.%03lds", ss, ssf);
-	std::cerr<<std::endl;
+		/* display the times */
+		fprintf(stderr, "\n  Real:\t%d.%03lds", rs, rsf);
+		fprintf(stderr, "\n  User:\t%d.%03lds", us, usf);
+		fprintf(stderr, "\nSystem:\t%d.%03lds", ss, ssf);
+		std::cerr<<std::endl;
     }
 		
     /* Clear to prepare for next command */
@@ -426,31 +426,31 @@ void Command::prompt()
     else PROMPT = std::string("default");
 
     if (isatty(0) && PROMPT == std::string("default")) {
-	std::string _user = std::string(getenv("USER"));
-	char buffer[100]; std::string _host;
-	if (!gethostname(buffer, 100)) _host = std::string(buffer);
-	else _host = std::string("localhost");
-	char * _wd = NULL, * _hme = NULL;
-	char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
-	eval_to_buffer(_pwd, cdirbuff, 2048);
-	std::string _cdir = std::string(cdirbuff);
-	char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
-	if (setenv("PWD", _curr_dur, 1)) perror("setenv");
-	std::string _home = std::string(_hme = getenv("HOME"));
+		std::string _user = std::string(getenv("USER"));
+		char buffer[100]; std::string _host;
+		if (!gethostname(buffer, 100)) _host = std::string(buffer);
+		else _host = std::string("localhost");
+		char * _wd = NULL, * _hme = NULL;
+		char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
+		eval_to_buffer(_pwd, cdirbuff, 2048);
+		std::string _cdir = std::string(cdirbuff);
+		char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
+		if (setenv("PWD", _curr_dur, 1)) perror("setenv");
+		std::string _home = std::string(_hme = getenv("HOME"));
 
-	// Replace the user home with ~
-	if (strstr(_curr_dur, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
+		// Replace the user home with ~
+		if (strstr(_curr_dur, _hme)) _cdir.replace(0, _home.size(), std::string("~"));
 
-	if (_user != std::string("root")) {
-	    std::cout<<"\x1b[36;1m"<<_user<<"@"<<_host<<" ";
-	    std::cout<<"\x1b[33;1m"<<_cdir<<"$ "<<"\x1b[0m";
-	    fflush(stdout);
-	} else {
-	    // Root prompt is cooler than you
-	    std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
-	    std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
-	    fflush(stdout);
-	} free(_curr_dur);
+		if (_user != std::string("root")) {
+			std::cout<<"\x1b[36;1m"<<_user<<"@"<<_host<<" ";
+			std::cout<<"\x1b[33;1m"<<_cdir<<"$ "<<"\x1b[0m";
+			fflush(stdout);
+		} else {
+			// Root prompt is cooler than you
+			std::cout<<"\x1b[31;1m"<<_user<<"@"<<_host<<" ";
+			std::cout<<"\x1b[35;1m"<<_cdir<<"# "<<"\x1b[0m";
+			fflush(stdout);
+		} free(_curr_dur);
     } else fflush(stdout);
 }
 
@@ -485,11 +485,11 @@ void Command::pushDir(const char * new_dir) {
     char * _pwd = getenv("PWD");
    
     if (_pwd == NULL) {
-	perror("pwd");
-	return;
+		perror("pwd");
+		return;
     } else if (new_dir == NULL || *new_dir == '\0') {
-	std::cerr<<"Invalid new directory!"<<std::endl;
-	return;
+		std::cerr<<"Invalid new directory!"<<std::endl;
+		return;
     }
    
     std::string curr_dir = std::string(getenv("PWD"));
@@ -501,17 +501,17 @@ void Command::pushDir(const char * new_dir) {
     wildcard_expand((char*)news.c_str());
 
     if(!wc_collector.size() && changedir(news)) {
-	m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
+		m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
     } else if(wc_collector.size()) {
 	  
-	for (int y = wc_collector.size() - 1; y--; ) {
-	    auto x = wc_collector[y];
-	    if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
-	} if (m_dir_stack.size()) {
-	    changedir(m_dir_stack[0]);
-	    m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
-	    m_dir_stack.push_back(curr_dir);
-	} else goto clear_and_exit;
+		for (int y = wc_collector.size() - 1; y--; ) {
+			auto x = wc_collector[y];
+			if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
+		} if (m_dir_stack.size()) {
+			changedir(m_dir_stack[0]);
+			m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
+			m_dir_stack.push_back(curr_dir);
+		} else goto clear_and_exit;
     } else goto clear_and_exit;
    
     for(auto && a: m_dir_stack) std::cout<<a<<" ";
@@ -523,62 +523,62 @@ clear_and_exit:
 
 void Command::popDir() {
     if (!m_dir_stack.size()) {
-	std::cerr<<"No directories left to pop!"<<std::endl;
-	return;
+		std::cerr<<"No directories left to pop!"<<std::endl;
+		return;
     }
    
     std::string dir = tilde_expand(m_dir_stack.front());
     if(changedir(dir)) {
-	m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
+		m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
     }
     for(auto && a: m_dir_stack) std::cout<<a<<" ";
     std::cout<<std::endl;
 }
 
 void Command::send_to_foreground(ssize_t job_num,
-				 bool & fg,
-				 termios & _oldtermios)
+								 bool & fg,
+								 termios & _oldtermios)
 {
     pid_t current = m_shell_pgid;
     if (m_jobs.size()) {
-	/* did they pass an argument? */
-	job_num = (job_num < 0) ? m_jobs.size() - 1 : job_num;
-	job _job = m_jobs[job_num];
-	m_jobs.erase( /* remove the job */
-	    m_jobs.begin() + job_num,
-	    m_jobs.begin() + job_num + 1);
+		/* did they pass an argument? */
+		job_num = (job_num < 0) ? m_jobs.size() - 1 : job_num;
+		job _job = m_jobs[job_num];
+		m_jobs.erase( /* remove the job */
+			m_jobs.begin() + job_num,
+			m_jobs.begin() + job_num + 1);
 		
-	tcsetpgrp(0, _job.pgid);
-	tcsetattr(0, TCSADRAIN, &_oldtermios);
-	if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
+		tcsetpgrp(0, _job.pgid);
+		tcsetattr(0, TCSADRAIN, &_oldtermios);
+		if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
 
-	/* prep to save */
-	int status = -1; /* shut up, GCC */
-	/* waitpid:
-	 *   pid <  -1 => wait for absolute value of pid
-	 *   pid == -1 => wait for any child process
-	 *   pid ==  0 => wait for any child whose pgid is ours
-	 *   pid >   0 => wait for the specified pid
-	 */
+		/* prep to save */
+		int status = -1; /* shut up, GCC */
+		/* waitpid:
+		 *   pid <  -1 => wait for absolute value of pid
+		 *   pid == -1 => wait for any child process
+		 *   pid ==  0 => wait for any child whose pgid is ours
+		 *   pid >   0 => wait for the specified pid
+		 */
 
-	if (!background) {
-	    /* put the job in the foreground */
-	    if (m_interactive) {
-		tcsetpgrp(STDIN_FILENO, m_pgid);
-		waitpid(_job.pgid, &status, WUNTRACED);
-		tcsetpgrp(STDIN_FILENO, m_shell_pgid);
-	    } else waitpid(_job.pgid, &status, WUNTRACED);
-	} else m_jobs.push_back(_job), m_job_map[m_pgid] = m_jobs.size() - 1;
+		if (!background) {
+			/* put the job in the foreground */
+			if (m_interactive) {
+				tcsetpgrp(STDIN_FILENO, m_pgid);
+				waitpid(_job.pgid, &status, WUNTRACED);
+				tcsetpgrp(STDIN_FILENO, m_shell_pgid);
+			} else waitpid(_job.pgid, &status, WUNTRACED);
+		} else m_jobs.push_back(_job), m_job_map[m_pgid] = m_jobs.size() - 1;
 
-	/* check if the job is stopped */
-	if (WIFSTOPPED(status)) {
-	    _job.status = job_status::STOPPED;
-	    m_jobs.push_back(_job);
-	    std::cout<<"["<<(m_job_map[_job.pgid] = m_jobs.size() - 1)
-		     <<"]+\tstopped\t"<<_job.pgid<<std::endl;
-	}
+		/* check if the job is stopped */
+		if (WIFSTOPPED(status)) {
+			_job.status = job_status::STOPPED;
+			m_jobs.push_back(_job);
+			std::cout<<"["<<(m_job_map[_job.pgid] = m_jobs.size() - 1)
+					 <<"]+\tstopped\t"<<_job.pgid<<std::endl;
+		}
     } else {
-	std::cerr<<"fg: no such job"<<std::endl;
+		std::cerr<<"fg: no such job"<<std::endl;
     } fg=false;	
 }
 
@@ -589,11 +589,11 @@ std::string get_command_text(Command & cmd)
     bool first_cmd = true, first_arg = true;
 	
     for (auto & x : cmd.simpleCommands) {
-	ret += (first_cmd) ? (first_cmd = false, "") : " |";		
-	for (auto & y : x.get()->arguments) {
-	    if (y == NULL) continue; /* skip over the first one */
-	    ret += ((first_arg) ? (first_arg = false, "")
-		    : std::string(" ")) + y;
-	}
+		ret += (first_cmd) ? (first_cmd = false, "") : " |";		
+		for (auto & y : x.get()->arguments) {
+			if (y == NULL) continue; /* skip over the first one */
+			ret += ((first_arg) ? (first_arg = false, "")
+					: std::string(" ")) + y;
+		}
     } return ret;
 }

@@ -170,9 +170,7 @@ void myunputc(int c) {
 \"(\\.|[^"])*\" {
     yylval.string_val = new char[strlen(yytext) - 1];
     memset(yylval.string_val, 0, strlen(yytext) - 1);
-	if (strchr(yytext, '*')) {
-		/* escape the '*' */
-	}
+	Command::currentCommand.set_expand(false);
     strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
     return WORD;
 }
