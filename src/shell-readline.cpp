@@ -593,10 +593,6 @@ bool read_line::handle_ctrl_del(std::string & _line)
  */
 bool read_line::handle_delete(std::string & _line)
 {
-	char ch3;
-
-	if (!read_with_error(0, ch3)) return false;
-
 	if (!m_buff.size()) return false;
 	if (!_line.size()) {
 		m_buff.pop();
