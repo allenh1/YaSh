@@ -565,8 +565,15 @@ bool read_line::handle_ctrl_del(std::string & _line)
 	/* clear remaining output */
 	size_t len = m_buff.size();
 	char space[len], bspace[len];
-	memset(space, ' ', len);
-	memset(bspace, '\b', len);
+
+	std::thread space_out([&space, len] () {
+			memset(space, ' ', len);
+		});
+	std::thread black_out([&bspace, len] () {
+			memset(bspace, '\b', len);
+		});
+	space_out.join(); black_out.join();
+
 	if (!write_with_error(1, space, len)) return false;
 	else if (!write_with_error(1, bspace, len)) return false;
 	
