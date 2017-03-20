@@ -405,9 +405,9 @@ void Command::execute()
 		timeval_to_secs (sys, ss, ssf);
 
 		/* display the times */
-		fprintf(stderr, "\n  Real:\t%d.%03lds", rs, rsf);
-		fprintf(stderr, "\n  User:\t%d.%03lds", us, usf);
-		fprintf(stderr, "\nSystem:\t%d.%03lds", ss, ssf);
+		fprintf(stderr, "\n  Real:\t%ld.%03ds", rs, rsf);
+		fprintf(stderr, "\n  User:\t%ld.%03ds", us, usf);
+		fprintf(stderr, "\nSystem:\t%ld.%03ds", ss, ssf);
 		std::cerr<<std::endl;
     }
 		

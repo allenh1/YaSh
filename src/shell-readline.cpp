@@ -1,4 +1,17 @@
 #include "shell-readline.hpp"
+
+/** 
+ * Constructor for a read_line.
+ *
+ * read_line is a function object
+ * that handles keyboard input with
+ * a series of callback functions.
+ *
+ * A call to the () operator will
+ * read the next line of input from the user.
+ * This is done reactively.
+ * 
+ */
 read_line::read_line()
 {
 	/* create history dir */
@@ -534,9 +547,48 @@ bool read_line::handle_backspace(std::string & _line)
 		else if (!write_with_error(1, " ", 1)) return false;
 		else if (!write_with_error(1, "\b", 1)) return false;
 		_line.pop_back();
-	} if (((size_t) history_index == m_history.size()) && m_current_line_copy.size()) m_current_line_copy.pop_back();
+	} if (((size_t) history_index == m_history.size()) &&
+		  m_current_line_copy.size()) m_current_line_copy.pop_back();
 
 	return true;
+}
+
+bool read_line::handle_ctrl_del(std::string & _line)
+{
+	char ch4, ch5;
+	/* read the 53 and the 126 char */
+	if (!read_with_error(0, ch4)
+		|| !read_with_error(0, ch5)) return false;
+	/* if not 126, go away */
+	if (ch4 != 53 || ch5 != 126) return false;
+
+	/* clear remaining output */
+	size_t len = m_buff.size();
+	char space[len], bspace[len];
+
+	std::thread space_out([&space, len] () {
+			memset(space, ' ', len);
+		});
+	std::thread black_out([&bspace, len] () {
+			memset(bspace, '\b', len);
+		});
+	space_out.join(); black_out.join();
+
+	if (!write_with_error(1, space, len)) return false;
+	else if (!write_with_error(1, bspace, len)) return false;
+	
+    /* pop off stack until a space, or the end */
+	for (char c = 'a'; c != ' ' && m_buff.size(); c = m_buff.top(), m_buff.pop());
+	if (!m_buff.size()) return false;
+	/* print out the residual buffer */
+	len = m_buff.size();
+	char bspace2[len];
+	std::stack<char> temp = m_buff;
+	char c = temp.top(); temp.pop();
+	for (; write_with_error(1, c) && temp.size();
+		 c = temp.top(), temp.pop());
+	memset(bspace2, '\b', len);
+	return !write_with_error(1, bspace2, len);
 }
 
 /** 
@@ -548,43 +600,38 @@ bool read_line::handle_backspace(std::string & _line)
  */
 bool read_line::handle_delete(std::string & _line)
 {
-	char ch3;
-
-	if (!read_with_error(0, ch3)) return false;
-
-	if (ch3 == 126) {
-		if (!m_buff.size()) return false;
-		if (!_line.size()) {
-			m_buff.pop();
-			std::stack<char> temp = m_buff;
-			for (char d = 0; temp.size();) {
-				if (write_with_error(1, &(d = (temp.top())), 1)) temp.pop();
-				else return false;
-			}
-			if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
-			for (int x = m_buff.size() + 1; x-- && write_with_error(1, "\b", 1););
-			return false;
+	if (!m_buff.size()) return false;
+	if (!_line.size()) {
+		m_buff.pop();
+		std::stack<char> temp = m_buff;
+		for (char d = 0; temp.size();) {
+			if (write_with_error(1, &(d = (temp.top())), 1)) temp.pop();
+			else return false;
 		}
+		if (!write(1, " ", 1)) std::cerr<<"WAT.\n";
+		for (int x = m_buff.size() + 1; x-- && write_with_error(1, "\b", 1););
+		return false;
+	}
 
-		if (m_buff.size()) {
-			// Buffer!
-			std::stack<char> temp = m_buff;
-			temp.pop();
-			for (char d = 0; temp.size(); ) {
-				d = temp.top(); temp.pop();
-				if (!write_with_error(1, d)) return false;
-			}
-			char b = ' ';
-			if (!write_with_error(1, " ", 1)) return false;
-			else if (!write_with_error(1, "\b", 1)) return false;
-			m_buff.pop();
-			// Move cursor to current position.
-			for (size_t x = 0; x < m_buff.size(); ++x) {
-				if (!write_with_error(1, "\b", 1)) return false;
-			}
-		} else return false;
-		if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
-	} return true;
+	if (m_buff.size()) {
+		// Buffer!
+		std::stack<char> temp = m_buff;
+		temp.pop();
+		for (char d = 0; temp.size(); ) {
+			d = temp.top(); temp.pop();
+			if (!write_with_error(1, d)) return false;
+		}
+		char b = ' ';
+		if (!write_with_error(1, " ", 1)) return false;
+		else if (!write_with_error(1, "\b", 1)) return false;
+		m_buff.pop();
+		// Move cursor to current position.
+		for (size_t x = 0; x < m_buff.size(); ++x) {
+			if (!write_with_error(1, "\b", 1)) return false;
+		}
+	} else return false;
+	if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
+	return false;
 }
 
 /** 
@@ -754,7 +801,7 @@ bool read_line::handle_right_arrow(std::string & _line)
  * @param _line Current line of text.
  * 
  * @return False to continue, true to break.
-*/
+ */
 bool read_line::handle_left_arrow(std::string & _line)
 {
 	if (!_line.size()) return false;
