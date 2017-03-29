@@ -110,7 +110,7 @@ total=`expr $grade1 + $grade2 + $grade3 + $grade4 + $grade5 + \
 totalmax=`expr $grade1max + $grade2max + $grade3max + $grade4max \
             + $grade5max + $grade6max + $grade7max + $grade8max \
             + $grade9max + $grade10max + $grade11max + $grade12max \
-			+ $grade13max + $grade53`
+			+ $grade13max + $grade53max`
 
 echo   "-------------------------------------------------"
 echo   "User:  $1 "
