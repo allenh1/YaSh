@@ -24,32 +24,8 @@ void SimpleCommand::insertArgument(char * argument)
 		std::string arg  = env_expand(arga);
 
 		char * str = strndup(arg.c_str(), arg.size());
-		int index; char * t_str = str;
-		char * temp = (char*) calloc(arg.size() + 1, sizeof(char));
 
-		for (index = 0; *str; ++str) {
-			if (*str == '\\' && *(str + 1) == '\"') {
-				temp[index++] = '\"'; ++str;
-			} else if (*str == '\\' && *(str + 1) == '&') {
-				temp[index++] = '&'; ++str;
-			} else if (*str == '\\' && *(str + 1) == '#') {
-				temp[index++] = '#'; ++str;
-			} else if (*str == '\\' && *(str + 1) == '<') {
-				temp[index++] = '<'; ++str;
-			} else if (*str == '\\' && *(str + 1) == '\\' && *(str+2) == '\\') {
-				temp[index++] = '\\'; ++str; ++str;
-			} else if (*str == '\\' && *(str + 1) == '\\'){
-				temp[index++] = '\\'; ++str;
-			} else if (*str == '\\' && *(str + 1) == ' ') {
-				temp[index++] = ' '; ++str;
-			} else {
-				temp[index++] = *str;
-			}
-		} free(t_str);
-		char * toPush = new char[index + 1]; memset(toPush, 0, index + 1);
-		strcpy(toPush, temp);
-		arguments.push_back(toPush), ++numOfArguments;
-		free(temp);
+		arguments.push_back(str), ++numOfArguments;
     }
 }
 
