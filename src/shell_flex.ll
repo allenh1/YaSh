@@ -184,6 +184,7 @@ void strbufWrite(char c) {
 \"	{
 	BEGIN QUOTED_STRING;
 	stringIndex = 0;
+	Command::currentCommand.set_expand(false);
 	strbuf = (char*)malloc((strbufSize = DEFAULT_STRBUF_SIZE)*sizeof(char));
 }
 
@@ -213,7 +214,7 @@ void strbufWrite(char c) {
 (([^ \"\t\n\|\>\<\&\[\]])|(\\.))+ {
 	yylval.string_val = new char[strlen(yytext) + 1];
 	strcpy(yylval.string_val, yytext);
-	int strs_len = strlen(yylval.string_val);
+	size_t strs_len = strlen(yylval.string_val);
 	for( int i = 0; i < strs_len; i++ ) {
 		if( yylval.string_val[i] == '\\' ) {
 			for( int j = i; j < strs_len; j++ ) {
