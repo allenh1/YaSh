@@ -45,10 +45,25 @@ void myunputc(int c) {
     unput(c);
 }
 
+/* Utils copied from esh for handling quoted strings in fancy flex mode stuff */
+char* strbuf = NULL;
+int stringIndex = 0;
+int strbufSize = 0;
+#define DEFAULT_STRBUF_SIZE 256
+void strbufWrite(char c) {
+	//printf("strbufWrite(%c)\n",c);
+	if( stringIndex >= strbufSize ) {
+		strbuf = (char*)realloc(strbuf,sizeof(char)*(strbufSize*=2));
+	}
+	strbuf[stringIndex++] = c;
+}
+/* end fancy string utils */
+
 %}
 
 %option noyywrap
 
+%x QUOTED_STRING
 %x LINE_COMMENT
 %%
 
@@ -166,12 +181,33 @@ void myunputc(int c) {
   free(string);
 }
 
+\"	{
+	BEGIN QUOTED_STRING;
+	stringIndex = 0;
+	strbuf = (char*)malloc((strbufSize = DEFAULT_STRBUF_SIZE)*sizeof(char));
+}
 
-\"(\\.|[^"])*\" {
-    yylval.string_val = new char[strlen(yytext) - 1];
-    memset(yylval.string_val, 0, strlen(yytext) - 1);
-    strncpy(yylval.string_val, yytext + 1, strlen(yytext + 1) - 1);
-    return WORD;
+<QUOTED_STRING>\\n {
+	strbufWrite('\n');
+}
+<QUOTED_STRING>\\t {
+	strbufWrite('\t');
+}
+<QUOTED_STRING>\\\" {
+	strbufWrite('\"');
+}
+<QUOTED_STRING>\" {
+	strbufWrite('\0');
+	yylval.string_val = strbuf;
+	BEGIN 0;
+	return WORD;
+}
+<QUOTED_STRING>\n {
+	std::cout<<"> "<<std::flush;
+	strbufWrite('\n');
+}
+<QUOTED_STRING>. {
+	strbufWrite(*yytext);
 }
 
 (([^ \"\t\n\|\>\<\&\[\]])|(\\.))+ {
