@@ -50,7 +50,7 @@ void SimpleCommand::setup_process_io(const int & fdin,
 		close(fdout);
 	} if (fderr != STDERR_FILENO) {
 		dup2(fderr, STDERR_FILENO);
-		close(fderr);	  
+		close(fderr);
 	}
 }
 
@@ -79,7 +79,6 @@ bool SimpleCommand::handle_cd(const int & fdin,
 							  const int & fderr)
 {
 	if (arguments[0] == std::string("cd")) {
-		setup_process_io(fdin, fdout, fderr);
 		std::string curr_dir = std::string(getenv("PWD"));
 		int cd; std::string new_dir;
 
@@ -211,7 +210,6 @@ bool SimpleCommand::handle_setenv(const int & fdin,
 		std::cerr<<"usage: setenv [variable] [value]"<<std::endl;
 		return true;
 	} else if (arguments[0] == std::string("setenv")) {
-		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
 		strcpy(temp, arguments[1]); strcpy(pemt, arguments[2]);
@@ -231,7 +229,6 @@ bool SimpleCommand::handle_unsetenv(const int & fdin,
 		std::cerr<<"usage: unsetenv [variable]"<<std::endl;
 		return true;
 	} else if (arguments[0] == std::string("unsetenv")) {
-		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		strcpy(temp, arguments[1]);
 		if (unsetenv(temp) == -1) perror("unsetenv");		
@@ -244,7 +241,6 @@ bool SimpleCommand::handle_cl(const int & fdin,
 							  const int & fderr)
 {
 	if (arguments[0] == std::string("cl")) {
-		setup_process_io(fdin, fdout, fderr);
 		if (arguments.size() > 2) {
 			char ** temp = new char*[arguments.size()+2];
 			temp[0] = strdup("ls");
@@ -255,6 +251,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
 
 			pid_t pid = fork();
 			if (pid == 0) {
+				setup_process_io(fdin, fdout, fderr);
 				execvp(temp[0],temp);
 				perror("execlp");
 				_exit(1);
