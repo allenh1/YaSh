@@ -57,6 +57,9 @@ struct SimpleCommand {
 	void launch(const int & fdin, const int & fdout, const int & fderr,
 				const int & pgid, const bool & background, const bool & interactive);
 	void setup_process_io(const int & fdin, const int & fdout, const int & fderr);
+	void save_io(const int & fdin, const int & fdout, const int & fderr,
+		int & saved_fdin, int & saved_fdout, int & saved_fderr);
+	void resume_io(const int & fdin, const int & fdout, const int & fderr);
 	bool handle_builtins(const int &, const int &, const int&);
 	void handle_modified_commands();
 

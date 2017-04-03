@@ -50,7 +50,45 @@ void SimpleCommand::setup_process_io(const int & fdin,
 		close(fdout);
 	} if (fderr != STDERR_FILENO) {
 		dup2(fderr, STDERR_FILENO);
-		close(fderr);	  
+		close(fderr);
+	}
+}
+
+void SimpleCommand::save_io(const int & fdin,
+							const int & fdout,
+							const int & fderr,
+							int & saved_fdin,
+							int & saved_fdout,
+							int & saved_fderr)
+{
+	if (fdin != STDIN_FILENO) {
+		saved_fdin = dup(STDIN_FILENO);
+	} else {
+		saved_fdin = -1; /* No dup needed */
+	} if (fdout != STDOUT_FILENO) {
+		saved_fdout = dup(STDOUT_FILENO);
+	} else {
+		saved_fdout = -1; /* No dup needed */
+	} if (fderr != STDERR_FILENO) {
+		saved_fderr = dup(STDERR_FILENO);
+	} else {
+		saved_fderr = -1; /* No dup needed */
+	}
+}
+
+void SimpleCommand::resume_io(const int & saved_fdin,
+							  const int & saved_fdout,
+							  const int & saved_fderr)
+{
+	if (saved_fdin != -1) {
+		dup2(saved_fdin, STDIN_FILENO);
+		close(saved_fdin);
+	} if (saved_fdout != -1) {
+		dup2(saved_fdout, STDOUT_FILENO);
+		close(saved_fdout);
+	} if (saved_fderr != -1) {
+		dup2(saved_fderr, STDERR_FILENO);
+		close(saved_fderr);
 	}
 }
 
@@ -79,6 +117,10 @@ bool SimpleCommand::handle_cd(const int & fdin,
 							  const int & fderr)
 {
 	if (arguments[0] == std::string("cd")) {
+		int saved_fdin;
+		int saved_fdout;
+		int saved_fderr;
+		save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
 		setup_process_io(fdin, fdout, fderr);
 		std::string curr_dir = std::string(getenv("PWD"));
 		int cd; std::string new_dir;
@@ -131,12 +173,14 @@ bool SimpleCommand::handle_cd(const int & fdin,
 			std::string new_dir(replacement); free(replacement);
 			if (!changedir(new_dir)) {
 				perror("cd");		 
+				resume_io(saved_fdin, saved_fdout, saved_fderr);
 				return true;
 			}
 		} else if (arguments.size() == 2) {
 			std::string _empty = "";
 			if (!changedir(_empty)) {
 				perror("cd");
+				resume_io(saved_fdin, saved_fdout, saved_fderr);
 				return true;
 			}		
 			setenv("PWD", getenv("HOME"), 1);
@@ -154,6 +198,7 @@ bool SimpleCommand::handle_cd(const int & fdin,
 		}
 		setenv("PWD", curr_dir.c_str(), 1);
 		// Regardless of errors, cd has finished.
+		resume_io(saved_fdin, saved_fdout, saved_fderr);
 		return true;
 	}
 	return false;
@@ -211,6 +256,10 @@ bool SimpleCommand::handle_setenv(const int & fdin,
 		std::cerr<<"usage: setenv [variable] [value]"<<std::endl;
 		return true;
 	} else if (arguments[0] == std::string("setenv")) {
+		int saved_fdin;
+		int saved_fdout;
+		int saved_fderr;
+		save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
 		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		char * pemt = (char*) calloc(strlen(arguments[2]) + 2, sizeof(char));
@@ -218,6 +267,7 @@ bool SimpleCommand::handle_setenv(const int & fdin,
 		int result = setenv(temp, pemt, 1);
 		if (result) perror("setenv");
 		free(temp); free(pemt);
+		resume_io(saved_fdin, saved_fdout, saved_fderr);
 		return true;
 	} return false;
 }
@@ -231,10 +281,15 @@ bool SimpleCommand::handle_unsetenv(const int & fdin,
 		std::cerr<<"usage: unsetenv [variable]"<<std::endl;
 		return true;
 	} else if (arguments[0] == std::string("unsetenv")) {
+		int saved_fdin;
+		int saved_fdout;
+		int saved_fderr;
+		save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
 		setup_process_io(fdin, fdout, fderr);
 		char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
 		strcpy(temp, arguments[1]);
 		if (unsetenv(temp) == -1) perror("unsetenv");		
+		resume_io(saved_fdin, saved_fdout, saved_fderr);
 		free(temp); return true;
 	} return false;
 }
@@ -244,8 +299,12 @@ bool SimpleCommand::handle_cl(const int & fdin,
 							  const int & fderr)
 {
 	if (arguments[0] == std::string("cl")) {
-		setup_process_io(fdin, fdout, fderr);
 		if (arguments.size() > 2) {
+			int saved_fdin;
+			int saved_fdout;
+			int saved_fderr;
+			save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
+			setup_process_io(fdin, fdout, fderr);
 			char ** temp = new char*[arguments.size()+2];
 			temp[0] = strdup("ls");
 			temp[1] = strdup("--color=auto");
@@ -255,6 +314,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
 
 			pid_t pid = fork();
 			if (pid == 0) {
+				setup_process_io(fdin, fdout, fderr);
 				execvp(temp[0],temp);
 				perror("execlp");
 				_exit(1);
@@ -264,7 +324,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
 				free(temp[y]);
 				temp[y] = NULL;
 			} delete[] temp;
-
+			resume_io(saved_fdin, saved_fdout, saved_fderr);
 			return true;
 		} else std::cerr<< "Usage: cl, no args given" << std::endl;	
 	} return false;
