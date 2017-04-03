@@ -314,6 +314,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
 
 			pid_t pid = fork();
 			if (pid == 0) {
+				setup_process_io(fdin, fdout, fderr);
 				execvp(temp[0],temp);
 				perror("execlp");
 				_exit(1);
