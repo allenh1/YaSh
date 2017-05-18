@@ -59,10 +59,12 @@ int Command::get_output_flags()
 }
 
 void Command::set_in_file(char * _fd) {
-    inFile = std::unique_ptr<char>(_fd);
-    inSet = true;
+	std::string expanded = tilde_expand(_fd);
+	char * fd = strndup(expanded.c_str(), expanded.size());
+    inFile = std::unique_ptr<char>(fd);
+    inSet = true; free(_fd);
 
-    m_stdin = open(_fd, O_RDONLY, 0600);
+    m_stdin = open(fd, O_RDONLY, 0600);
 
     if (m_stdin < 0) {
 		perror("open");
@@ -73,10 +75,12 @@ void Command::set_in_file(char * _fd) {
 }
 
 void Command::set_out_file(char * _fd) {
-    outFile = std::unique_ptr<char>(_fd);
-    outSet = true;
+	std::string expanded = tilde_expand(_fd);
+	char * fd = strndup(expanded.c_str(), expanded.size());    
+    outFile = std::unique_ptr<char>(fd);
+    outSet = true; free(_fd);
 
-    m_stdout = open(_fd, get_output_flags(), 0600);
+    m_stdout = open(fd, get_output_flags(), 0600);
 
     if (m_stdout < 0) {
 		perror("open");
@@ -87,10 +91,12 @@ void Command::set_out_file(char * _fd) {
 }
 
 void Command::set_err_file(char * _fd) {
-    errFile = std::unique_ptr<char>(_fd);
-    errSet = true;
+	std::string expanded = tilde_expand(_fd);
+	char * fd = strndup(expanded.c_str(), expanded.size());    
+    errFile = std::unique_ptr<char>(fd);
+    errSet = true; free(_fd);
 
-    m_stderr = open(_fd, get_output_flags(), 0600);
+    m_stderr = open(fd, get_output_flags(), 0600);
 
     if (m_stderr < 0) {
 		perror("open");
