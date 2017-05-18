@@ -98,6 +98,11 @@ grade53max=5
 echo "--- issue 53 regression -- ($grade53max pts)"
 ./issue-53-test && grade53=`expr $grade53 "+" 5`
 
+grade58=0
+grade58max=5
+echo "--- issue 58 regression -- ($grade58max pts)"
+./issue-58-test && grade58=`expr $grade58 "+" 5`
+
 # grade25=0
 # grade25max=5
 # echo "--- Multi-Arg cd -- ($grade-25max pts)"
@@ -105,12 +110,12 @@ echo "--- issue 53 regression -- ($grade53max pts)"
 
 total=`expr $grade1 + $grade2 + $grade3 + $grade4 + $grade5 + \
             $grade6 + $grade7 + $grade8 + $grade9 + $grade10 + \
-			$grade11 + $grade12 + $grade13 + $grade53`
+			$grade11 + $grade12 + $grade13 + $grade53 + $grade58`
 
 totalmax=`expr $grade1max + $grade2max + $grade3max + $grade4max \
             + $grade5max + $grade6max + $grade7max + $grade8max \
             + $grade9max + $grade10max + $grade11max + $grade12max \
-			+ $grade13max + $grade53max`
+			+ $grade13max + $grade53max + $grade58max`
 
 echo   "-------------------------------------------------"
 echo   "User:  $1 "
@@ -129,6 +134,7 @@ printf "subshell:                %-3d%s%-3d\n" $grade11 " of " $grade11max
 printf "tilde expansion:         %-3d%s%-3d\n" $grade12 " of " $grade12max
 printf "issue 33:                %-3d%s%-3d\n" $grade13 " of " $grade13max
 printf "issue 53:                %-3d%s%-3d\n" $grade53 " of " $grade53max
+printf "issue 58:                %-3d%s%-3d\n" $grade58 " of " $grade58max
 echo   "--------------------------------------------------"
 printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax
 
