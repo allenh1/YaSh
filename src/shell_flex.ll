@@ -208,7 +208,6 @@ void strbufWrite(char c) {
 	strbufWrite('\n');
 }
 <QUOTED_STRING>. {
-    Command::currentCommand.set_expand(true);
 	strbufWrite(*yytext);
 }
 
