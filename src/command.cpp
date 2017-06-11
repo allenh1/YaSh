@@ -23,7 +23,9 @@ void SimpleCommand::insertArgument(char * argument)
 		std::string arga = tilde_expand(as_string);
 		std::string arg  = env_expand(arga);
 
-		char * str = strndup(arg.c_str(), arg.size());
+        char * str = new char[arg.size() + 1];
+        memcpy(str, arg.c_str(), arg.size());
+        str[arg.size()] = '\0';
 
 		arguments.push_back(str), ++numOfArguments;
     }
@@ -48,8 +50,13 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
 		/** Parent Process: read from the pipe **/
 		close(fdpipe[1]);   // close unused write end
 		for (memset(outBuff, 0, buffSize);x = read(fdpipe[0], outBuff, buffSize););
-		if (x == buffSize) return -1;
+		if (x == buffSize) {
+            close(fdpipe[0]);
+            return -1;
+        }
+
 		waitpid(pid, NULL, 0);
+        close(fdpipe[0]);
     } return 0;
 }
 

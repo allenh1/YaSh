@@ -15,20 +15,14 @@
 read_line::read_line()
 {
 	/* create history dir */
-	mkdir(tilde_expand("~/.cache\0").c_str(), 0700);
+	mkdir(tilde_expand("~/.cache").c_str(), 0700);
 	/**
 	 * @todo Do we need error checks? Probably not...
 	 * but we might look into it.
 	 */
 	
-	/* open history file */
-	std::string _file = tilde_expand("~/.cache/yash_history");
-	m_history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
-	if (m_history_fd < 0) {
-		perror("open");
-		return;
-	} /* load current history */
-	load_history();
+    /* load current history */
+    load_history();
 
 	SimpleCommand::history = &m_history;
 }
