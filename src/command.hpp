@@ -15,108 +15,108 @@ enum job_status;
 class Command
 {
 public:
-	Command();
+    Command();
 
-	void prompt();
-	void print();
-	void execute();
-	void clear();
+    void prompt();
+    void print();
+    void execute();
+    void clear();
 
-	void pushDir(const char * new_dir);
-	void popDir();
-	       
-	void insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand);
+    void pushDir(const char * new_dir);
+    void popDir();
 
-	void set_in_file(char * _fd);
-	void set_out_file(char * _fd);
-	void set_err_file(char * _fd);
+    void insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand);
 
-	void send_to_foreground(ssize_t process_num,
-							bool & fg,
-							termios & _oldtermios);
+    void set_in_file(char * _fd);
+    void set_out_file(char * _fd);
+    void set_err_file(char * _fd);
 
-	void setAlias(const char * _from, const char * _to);
+    void send_to_foreground(ssize_t process_num,
+                            bool & fg,
+                            termios & _oldtermios);
 
-	void subShell(char * arg);
+    void setAlias(const char * _from, const char * _to);
 
-	int status = -1;
+    void subShell(char * arg);
+
+    int status = -1;
 	
-	const bool & inIsSet()  { return inSet; }
-	const bool & outIsSet() { return outSet; }
-	const bool & errIsSet() { return errSet; }
-	const bool & is_interactive() { return m_interactive; }
-	const bool & get_expand() { return m_expand; }
+    const bool & inIsSet()  { return inSet; }
+    const bool & outIsSet() { return outSet; }
+    const bool & errIsSet() { return errSet; }
+    const bool & is_interactive() { return m_interactive; }
+    const bool & get_expand() { return m_expand; }
 
-	void setAppend(const bool & ap) { append = ap; }
-	void setBackground(const bool & bg) { background = bg; }
+    void setAppend(const bool & ap) { append = ap; }
+    void setBackground(const bool & bg) { background = bg; }
 
-	static Command currentCommand;
-	static std::shared_ptr<SimpleCommand> currentSimpleCommand;
+    static Command currentCommand;
+    static std::shared_ptr<SimpleCommand> currentSimpleCommand;
 
-	const int & get_stdin()  { return m_stdin; }
-	const int & get_stdout() { return m_stdout; }
-	const int & get_stderr() { return m_stderr; }
+    const int & get_stdin()  { return m_stdin; }
+    const int & get_stdout() { return m_stdout; }
+    const int & get_stderr() { return m_stderr; }
 
-	void set_interactive(const bool & _interactive) {
-		m_interactive = _interactive;
-	}
+    void set_interactive(const bool & _interactive) {
+        m_interactive = _interactive;
+    }
 
-	void set_time(const bool & _time) {
-		m_time = _time;
-	}
+    void set_time(const bool & _time) {
+        m_time = _time;
+    }
 
-	void set_expand(const bool & _expand) {
-		m_expand = _expand;
-	}
+    void set_expand(const bool & _expand) {
+        m_expand = _expand;
+    }
 
-	void print_jobs();
+    void print_jobs();
 	
-	pid_t m_shell_pgid = 0;
-	pid_t m_pgid = 0;
-	pid_t m_pid = 0;
+    pid_t m_shell_pgid = 0;
+    pid_t m_pgid = 0;
+    pid_t m_pid = 0;
    
-	std::map<std::string, std::vector<std::string> > m_aliases;
-	std::map<pid_t, size_t> m_job_map;
-	std::vector<job> m_jobs;
+    std::map<std::string, std::vector<std::string> > m_aliases;
+    std::map<pid_t, size_t> m_job_map;
+    std::vector<job> m_jobs;
 
-	std::vector<std::string> wc_collector;// Wild card collection tool
+    std::vector<std::string> wc_collector;// Wild card collection tool
    
-	bool printPrompt = true;
+    bool printPrompt = true;
 
-	/**
-	 * Returns a string for the command the user ran
-	 */
-	friend std::string get_command_text(Command & cmd);
+    /**
+     * Returns a string for the command the user ran
+     */
+    friend std::string get_command_text(Command & cmd);
 
 private:
-	std::vector<std::string> string_split(std::string s, char delim) {
-		std::vector<std::string> elems; std::stringstream ss(s);
-		for (std::string item;std::getline(ss, item, delim); elems.push_back(item));
-		return elems;
-	}
+    std::vector<std::string> string_split(std::string s, char delim) {
+        std::vector<std::string> elems; std::stringstream ss(s);
+        for (std::string item;std::getline(ss, item, delim); elems.push_back(item));
+        return elems;
+    }
 
-	int get_output_flags();
+    int get_output_flags();
 
-	std::unique_ptr<char> outFile;
-	std::unique_ptr<char> inFile;
-	std::unique_ptr<char> errFile;
+    std::unique_ptr<char> outFile;
+    std::unique_ptr<char> inFile;
+    std::unique_ptr<char> errFile;
 
-	bool append = false;
-	bool background = false;
-	bool m_time = false;
-	bool m_interactive = false;
-	bool m_expand = true;
-	bool stopped = false;
-	bool completed = false;
+    bool append = false;
+    bool background = false;
+    bool m_time = false;
+    bool m_interactive = false;
+    bool m_expand = true;
+    bool stopped = false;
+    bool completed = false;
 
-	int numOfSimpleCommands = 0;
+    int numOfSimpleCommands = 0;
 	
-	bool inSet  = false; int m_stdin  = 0;
-	bool outSet = false; int m_stdout = 1;
-	bool errSet = false; int m_stderr = 2;
+    bool inSet  = false; int m_stdin  = 0;
+    bool outSet = false; int m_stdout = 1;
+    bool errSet = false; int m_stderr = 2;
 
-	std::vector<std::string> m_dir_stack;   
-	std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
+    std::vector<std::string> m_dir_stack;   
+    std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
 };
 
 /**
