@@ -141,8 +141,11 @@ public:
 		}
 		
 		if (_line.size()) {
-			if (!write_with_error(m_history_fd, _line.c_str(), _line.size())) return;
-			else if (!write_with_error(m_history_fd, "\n", 1)) return;
+            std::string _file = tilde_expand("~/.cache/yash_history");
+            int history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
+			if (!write_with_error(history_fd, _line.c_str(), _line.size())) return;
+			else if (!write_with_error(history_fd, "\n", 1)) return;
+            close(history_fd);
 		} _line += (char) 10 + '\0';
 		m_current_line_copy.clear();
 		m_history.push_back(_line);

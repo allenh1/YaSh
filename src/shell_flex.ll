@@ -185,7 +185,7 @@ void strbufWrite(char c) {
 	BEGIN QUOTED_STRING;
 	stringIndex = 0;
 	Command::currentCommand.set_expand(false);
-	strbuf = (char*)malloc((strbufSize = DEFAULT_STRBUF_SIZE)*sizeof(char));
+	strbuf = new char[(strbufSize = DEFAULT_STRBUF_SIZE)];
 }
 
 <QUOTED_STRING>\\n {
