@@ -1,0 +1,25 @@
+#!/bin/bash
+
+rm -f csh-out shell-out
+echo "issue-48: run multiple commands"
+touch yash-in
+
+echo "mkdir -p a/second && cd a/second" > yash-in
+echo "pwd" >> yash-in
+correct="$(pwd)/a/second"
+echo "$correct" > yash-out.org
+
+../src/yash < yash-in > yash-out 2>&1
+
+rm -rf a
+
+diff yash-out yash-out.org
+if [ $? -ne 0 ]
+then
+    echo "Failed to run multiple commands"
+    rm -f yash-out yash-out.org
+    exit -1
+fi
+echo issue-48-test OK
+rm -f yash-out yash-out.org
+exit 0

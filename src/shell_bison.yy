@@ -26,7 +26,7 @@
 #include "shell-utils.hpp"
 #include "wildcard.hpp"
 
-int yylex();  
+int yylex();
 int yyparse();
 
 void yyrestart (FILE * in);
@@ -34,12 +34,12 @@ void yyerror(const char * s);
 
 extern read_line reader;
 
-bool fg=false, bg=false, pushd=false; 
+bool fg=false, bg=false, pushd=false;
 %}
 
 %%
  /**
-  * Lex: 
+  * Lex:
   * <reg. exp> <whitespace> <action>
   *
   * <reg. exp>: beginning of line up to first non-escaped white space.
@@ -47,24 +47,23 @@ bool fg=false, bg=false, pushd=false;
   * <action>: A single C statement. Multiple statements are wrapped in braces.
   */
 
-goal:	
-commands
+goal:	commands
 ;
 
-commands: 
+commands:
 commands command
-| command 
+| command
 ;
 
-command:	
-command_line { Command::currentCommand.execute(); }
+command:
+full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
 | SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
 	char * alias, * word, * equals;
 	if (!(equals = strchr($2, '='))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
-	} else {	
+	} else {
 		alias = strndup($2, strlen($2) - 1);
 		/* word = WORD + length before '=' + 1 (for '='). */
 		word  = strdup($3);
@@ -104,7 +103,7 @@ WORD {
 	else if(!strcmp(_ptr, "bg")) bg=true;
 	else if(!strcmp(_ptr, "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
-	free(_ptr);	
+	free(_ptr);
 }
 ;
 
@@ -114,7 +113,7 @@ argument_list argument
 ;
 
 argument:
-WORD {	
+WORD {
 	std::string temp = tilde_expand(std::string($1));
 	char * expand_upon_me = strndup(temp.c_str(), temp.size());
 	wildcard_expand(expand_upon_me); free(expand_upon_me);
@@ -142,8 +141,8 @@ WORD {
 				Command::currentCommand.m_jobs.erase(
 					Command::currentCommand.m_jobs.begin() + as_num,
 					Command::currentCommand.m_jobs.begin() + as_num + 1);
-							
-				/* don't restore io, just resume */
+
+                /* don't restore io, just resume */
 				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
 			}
 		} catch ( ... ) {
@@ -202,12 +201,12 @@ GREAT WORD {
 ;
 
 io_modifier_list:
-io_modifier_list io_modifier 
+io_modifier_list io_modifier
 |	io_modifier
 ;
 
 pipe_list:
-pipe_list PIPE cmd_and_arg 
+pipe_list PIPE cmd_and_arg
 |	cmd_and_arg
 ;
 
@@ -220,13 +219,22 @@ TIME { Command::currentCommand.set_time(true); }
 ;
 
 command_line:
-pipe_list io_modifier_list background NEWLINE 
-|	time pipe_list io_modifier_list NEWLINE
-|	pipe_list io_modifier_list NEWLINE
-|	pipe_list background NEWLINE
-|	time pipe_list NEWLINE
-|	pipe_list NEWLINE
+pipe_list io_modifier_list background
+|	time pipe_list io_modifier_list
+|	pipe_list io_modifier_list
+|	pipe_list background
+|	time pipe_list
+|	pipe_list
 ;
+
+full_command:
+command_line {
+     Command::currentCommand.printPrompt = false;
+     Command::currentCommand.execute();
+     Command::currentCommand.printPrompt = true;
+   } ANDAND full_command
+|  command_line NEWLINE
+|  NEWLINE
 
 %%
 

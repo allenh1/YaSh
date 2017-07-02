@@ -77,6 +77,7 @@ void strbufWrite(char c) {
 <LINE_COMMENT>[\n] BEGIN(INITIAL);
 <LINE_COMMENT>[.]+ { /* Ignore anything in a line comment */ }
 
+"&&" return ANDAND;
 ">" return GREAT;
 ">&" return GREATAND;
 "<" return LESS;
