@@ -32,7 +32,6 @@ void SimpleCommand::insertArgument(char * argument)
             arguments.push_back(toPush); ++numOfArguments;
         }
     } else {
-	    
         std::string arga = tilde_expand(as_string);
         std::string arg  = env_expand(arga);
 
@@ -96,7 +95,7 @@ void Command::set_in_file(char * _fd) {
 
 void Command::set_out_file(char * _fd) {
     std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());    
+    char * fd = strndup(expanded.c_str(), expanded.size());
     outFile = std::unique_ptr<char>(fd);
     outSet = true;
 
@@ -112,7 +111,7 @@ void Command::set_out_file(char * _fd) {
 
 void Command::set_err_file(char * _fd) {
     std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());    
+    char * fd = strndup(expanded.c_str(), expanded.size());
     errFile = std::unique_ptr<char>(fd);
     errSet = true;
 
@@ -143,7 +142,6 @@ void Command::subShell(char * arg)
 
     dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
     dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
-  
     if ((pid = fork()) == -1) {
         perror("subshell fork");
         return;
@@ -162,7 +160,6 @@ void Command::subShell(char * arg)
         /* Parent Process */
         char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
         char * c = NULL;
-	
         close(out_pipe[1]); /* close the write end of the out pipe */
         close(cmd_pipe[0]); /* close the read end of the cmd pipe */
 
@@ -171,11 +168,8 @@ void Command::subShell(char * arg)
 
         /* Close pipe so subprocess isn't waiting */
         dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
-	
         waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
 
-        //std::cerr<<"Child rage quit"<<std::endl;
-	
         /* read from the out pipe and store in a buffer */
         for (c = buff; read(out_pipe[0], c++, 1););
 
@@ -204,7 +198,7 @@ void Command::clear()
     if (m_stderr != 2) close(m_stderr);
 
     m_stdin = 0, m_stdout = 1, m_stderr = 2;
-   
+
     simpleCommands.clear(),
         background = append = false,
         numOfSimpleCommands = 0, m_pgid = 0,
@@ -217,8 +211,8 @@ void Command::clear()
 void Command::print()
 {
     std::cout<<std::endl<<std::endl;
-    std::cout<<"              COMMAND TABLE                "<<std::endl;  
-    std::cout<<std::endl; 
+    std::cout<<"              COMMAND TABLE                "<<std::endl;
+    std::cout<<std::endl;
     std::cout<<"  #   Simple Commands"<<std::endl;
     std::cout<<"  --- ----------------------------------------------------------"<<std::endl;
 
@@ -254,7 +248,7 @@ void Command::execute()
     struct timeval real, user, sys;
     struct timeval before, after;
 
-    /* @todo this is not posix compliant */	
+    /* @todo this is not posix compliant */
     struct timezone dtz;
 
     if (m_time) {
@@ -263,8 +257,7 @@ void Command::execute()
         /* call rusage */
         getrusage(RUSAGE_SELF, &selfb);
         getrusage(RUSAGE_CHILDREN, &selfb);
-    }	
-	
+    }
     /* check for dank memes */
     char * dbg = getenv("SHELL_DBG");
     if (dbg && !strcmp(dbg, "YES")) print();
@@ -285,11 +278,15 @@ void Command::execute()
         }
     }
 
+    auto clear_and_prompt = make_scope_exit([this]() {
+            clear();
+            if (m_interactive) prompt();
+        });
     /* point fdin (fderr) to this pipeline's input (error) */
     fdin = m_stdin; fderr = m_stderr;
     for (int x = 0; x < numOfSimpleCommands; ++x) {
         /* manage commands */
-        std::vector<char *> curr = simpleCommands.at(x).get()->arguments;		
+        std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
         char ** d_args;
         curr.push_back((char *) NULL);
         d_args = curr.data();
@@ -302,7 +299,6 @@ void Command::execute()
             if (pipe(fdpipe)) {
                 /* pipe failed */
                 perror("pipe");
-                clear(); prompt();
                 return;
             }
         }
@@ -311,19 +307,17 @@ void Command::execute()
         if (x != numOfSimpleCommands - 1) fdout = fdpipe[1];
         else fdout = m_stdout;
 
-        if (simpleCommands.at(x).get()->handle_builtins(fdin,
-                                                        fdout,
-                                                        fderr)) {
+        if (simpleCommands.at(x).get()->handle_builtins(
+                fdin, fdout, fderr) {
             goto cleanup;
         } else if ((pid = fork()) < 0) {
             /* fork failed */
-            perror("fork"); clear();
-            prompt(); return;
+            perror("fork");
+            return;
         } else if (pid == 0) {
             /* child process: exec into the process group */
-            simpleCommands.at(x).get()->launch(fdin, fdout, fderr,
-                                               m_pgid, background,
-                                               m_interactive);			
+            simpleCommands.at(x).get()->launch(
+                fdin, fdout, fderr, m_pgid, background, m_interactive);
         } else {
             /* parent process */
             simpleCommands.at(x).get()->pid = pid;
@@ -366,7 +360,7 @@ void Command::execute()
             tcsetpgrp(STDIN_FILENO, m_shell_pgid);
         } else waitpid(pid, &status, WUNTRACED);
     } else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
-	
+
     if (WIFSTOPPED(status)) {
         current.status = job_status::STOPPED;
         m_jobs.push_back(current);
@@ -386,7 +380,7 @@ void Command::execute()
 
     /* stop times */
     if (m_time) {
-        gettimeofday(&after, &dtz);		
+        gettimeofday(&after, &dtz);
         getrusage(RUSAGE_SELF, &selfa); /* @todo do error checking */
         getrusage(RUSAGE_CHILDREN, &kidsa); /* @todo do error checking */
 
@@ -412,12 +406,6 @@ void Command::execute()
         fprintf(stderr, "\nSystem:\t%ld.%03ds", ss, ssf);
         std::cerr<<std::endl;
     }
-		
-    /* Clear to prepare for next command */
-    clear();
-
-    /* Print new prompt if we are in a terminal. */
-    if (m_interactive) prompt();
 }
 
 void Command::prompt()
@@ -472,7 +460,7 @@ void Command::setAlias(const char * _from, const char * _to)
 {
     std::string from(_from); std::string to(_to);
     std::vector<std::string> split = splitta(to, ' ');
-	
+
     /**
      * We really don't care if the alias has been
      * set. We should just overwrite the current
@@ -485,7 +473,6 @@ void Command::setAlias(const char * _from, const char * _to)
 
 void Command::pushDir(const char * new_dir) {
     char * _pwd = getenv("PWD");
-   
     if (_pwd == NULL) {
         perror("pwd");
         return;
@@ -493,11 +480,10 @@ void Command::pushDir(const char * new_dir) {
         std::cerr<<"Invalid new directory!"<<std::endl;
         return;
     }
-   
     std::string curr_dir = std::string(getenv("PWD"));
     std::string news(new_dir);
-
     news = tilde_expand(news);
+
     if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
 
     wildcard_expand((char*)news.c_str());
@@ -505,7 +491,6 @@ void Command::pushDir(const char * new_dir) {
     if(!wc_collector.size() && changedir(news)) {
         m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
     } else if(wc_collector.size()) {
-	  
         for (int y = wc_collector.size() - 1; y--; ) {
             auto x = wc_collector[y];
             if (is_directory(x)) m_dir_stack.insert(m_dir_stack.begin(), x);
@@ -515,7 +500,7 @@ void Command::pushDir(const char * new_dir) {
             m_dir_stack.push_back(curr_dir);
         } else goto clear_and_exit;
     } else goto clear_and_exit;
-   
+
     for(auto && a: m_dir_stack) std::cout<<a<<" ";
     if(!m_dir_stack.empty()) std::cout<<std::endl;
 clear_and_exit:
@@ -528,7 +513,6 @@ void Command::popDir() {
         std::cerr<<"No directories left to pop!"<<std::endl;
         return;
     }
-   
     std::string dir = tilde_expand(m_dir_stack.front());
     if(changedir(dir)) {
         m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin()+1);
@@ -549,7 +533,6 @@ void Command::send_to_foreground(ssize_t job_num,
         m_jobs.erase( /* remove the job */
             m_jobs.begin() + job_num,
             m_jobs.begin() + job_num + 1);
-		
         tcsetpgrp(0, _job.pgid);
         tcsetattr(0, TCSADRAIN, &_oldtermios);
         if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
@@ -581,7 +564,7 @@ void Command::send_to_foreground(ssize_t job_num,
         }
     } else {
         std::cerr<<"fg: no such job"<<std::endl;
-    } fg=false;	
+    } fg=false;
 }
 
 std::string get_command_text(Command & cmd)
@@ -589,9 +572,8 @@ std::string get_command_text(Command & cmd)
     /* beggining of the string */
     std::string ret = "";
     bool first_cmd = true, first_arg = true;
-	
     for (auto & x : cmd.simpleCommands) {
-        ret += (first_cmd) ? (first_cmd = false, "") : " |";		
+        ret += (first_cmd) ? (first_cmd = false, "") : " |";
         for (auto & y : x.get()->arguments) {
             if (y == NULL) continue; /* skip over the first one */
             ret += ((first_arg) ? (first_arg = false, "")
