@@ -24,9 +24,7 @@
 int mygetc (FILE * f) {
 	static char * p = NULL;
 	static int get_file = 0;
-	
 	char ch;
-	
 	if (!Command::currentCommand.is_interactive()) return getc(f);
 	if (p == NULL || *p == 0) {
 		if (lastLine != NULL) free(lastLine);
@@ -44,7 +42,6 @@ int mygetc (FILE * f) {
 	}
 	ch = *p;
 	++p;
-	
 	return ch;
 }
 
@@ -83,7 +80,7 @@ void strbufWrite(char c) {
 
 \n { return NEWLINE; }
 
-[ ] 	{ /* Discard spaces */ }	
+[ ] 	{ /* Discard spaces */ }
 
 \t { /* tabs */ return TAB; }
 
@@ -126,13 +123,11 @@ void strbufWrite(char c) {
     free(string);
     return 1;
   }
-		
   /* Housekeeping shit */
   int tempIn  = dup(0);
   int tempOut = dup(1);
   dup2(pipeOne[1], 1); close(pipeOne[1]);
   dup2(pipeTwo[0], 0); close(pipeTwo[0]);
-		
   // Get ready world.
   pid_t ret = fork(); //Deekeeds
   switch(ret) {
@@ -146,7 +141,6 @@ void strbufWrite(char c) {
 	  dup2(pipeTwo[1], 1);
 	  close(pipeOne[0]);
 	  close(pipeTwo[1]);
-				
 	  // Set up for self call
 	  char* args[2];
 	  args[0] = strdup("/proc/self/exe"); //Call self
@@ -164,12 +158,10 @@ void strbufWrite(char c) {
 		/* Write to pipe. */
 		size_t length = strlen(string), i = 0;
 		for(;i < length && write(1, string + i,1); i++);
-				
 		//Housekeeping
 		dup2(tempOut, 1);
 		close(tempOut);
 		close(pipeTwo[1]);
-				
 		// Read from pipe.
 		char* temp = buffer;
 		char c = 0;
@@ -180,16 +172,13 @@ void strbufWrite(char c) {
 		  temp++;
 
 		} temp--;
-				
 		/* Clear uneeded things */
 		while(temp>=buffer){unput(*temp); temp--;}
-				
 		// Final housecleaning
 		dup2(tempIn, 0);
 		close(tempIn);
 		break;
-	  } 
-
+	  }
 	/* Wait for all processes */
   } waitpid(ret,NULL,0);
 
