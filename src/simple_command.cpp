@@ -19,12 +19,11 @@
  * file descriptors
  */
 void SimpleCommand::launch(const int & fdin, const int & fdout,
-						   const int & fderr, const int & pgid,
-						   const bool & background,
-						   const bool & interactive)
+                           const int & fderr, const int & pgid,
+                           const bool & background,
+                           const bool & interactive)
 {
     pid_t _pgid;
-	
     if (interactive) {
         /* move the pid into the group, and control the terminal */
         pid = getpid();
@@ -41,8 +40,8 @@ void SimpleCommand::launch(const int & fdin, const int & fdout,
         signal(SIGTSTP, SIG_DFL);
         signal(SIGTTIN, SIG_DFL);
         signal(SIGTTOU, SIG_DFL);
-        signal(SIGCHLD, SIG_DFL);	  
-    } setup_process_io(fdin, fdout, fderr); 
+        signal(SIGCHLD, SIG_DFL);
+    } setup_process_io(fdin, fdout, fderr);
 
     /* handle special commands */
     handle_modified_commands();
@@ -53,8 +52,8 @@ void SimpleCommand::launch(const int & fdin, const int & fdout,
 }
 
 void SimpleCommand::setup_process_io(const int & fdin,
-									 const int & fdout,
-									 const int & fderr)
+                                     const int & fdout,
+                                     const int & fderr)
 {
     if (fdin != STDIN_FILENO) {
         dup2(fdin, STDIN_FILENO);
@@ -69,11 +68,11 @@ void SimpleCommand::setup_process_io(const int & fdin,
 }
 
 void SimpleCommand::save_io(const int & fdin,
-							const int & fdout,
-							const int & fderr,
-							int & saved_fdin,
-							int & saved_fdout,
-							int & saved_fderr)
+                            const int & fdout,
+                            const int & fderr,
+                            int & saved_fdin,
+                            int & saved_fdout,
+                            int & saved_fderr)
 {
     if (fdin != STDIN_FILENO) {
         saved_fdin = dup(STDIN_FILENO);
@@ -91,8 +90,8 @@ void SimpleCommand::save_io(const int & fdin,
 }
 
 void SimpleCommand::resume_io(const int & saved_fdin,
-							  const int & saved_fdout,
-							  const int & saved_fderr)
+                              const int & saved_fdout,
+                              const int & saved_fderr)
 {
     if (saved_fdin != -1) {
         dup2(saved_fdin, STDIN_FILENO);
@@ -107,8 +106,8 @@ void SimpleCommand::resume_io(const int & saved_fdin,
 }
 
 bool SimpleCommand::handle_builtins(const int & fdin,
-									const int & fdout,
-									const int & fderr)
+                                    const int & fdout,
+                                    const int & fderr)
 {
     if (handle_cd(fdin, fdout, fderr)) return true;
     else if (handle_setenv(fdin, fdout, fderr)) return true;
@@ -127,8 +126,8 @@ void SimpleCommand::handle_modified_commands()
 }
 
 bool SimpleCommand::handle_cd(const int & fdin,
-							  const int & fdout,
-							  const int & fderr)
+                              const int & fdout,
+                              const int & fderr)
 {
     if (arguments[0] == std::string("cd")) {
         int saved_fdin;
@@ -141,9 +140,8 @@ bool SimpleCommand::handle_cd(const int & fdin,
 
         if (arguments.size() == 4) {
             char * to_replace = strdup(arguments[1]);
-            char * replace_to = strdup(arguments[2]);		
+            char * replace_to = strdup(arguments[2]);
             char * replace_in = strndup(curr_dir.c_str(), curr_dir.size());
-		
             char * sub = strstr(replace_in, to_replace);
 
             /* Desired replacement wasn't found, so error and exit */
@@ -179,14 +177,12 @@ bool SimpleCommand::handle_cd(const int & fdin,
             char * residual = sub + replace_len;
             /* copy the residual chars over */
             for (; *residual; *(d++) = *(residual++));
-		
             std::cout<<replacement<<std::endl;
-		
             free(to_replace); free(replace_to); free(replace_in);
 
             std::string new_dir(replacement); free(replacement);
             if (!changedir(new_dir)) {
-                perror("cd");		 
+                perror("cd");
                 resume_io(saved_fdin, saved_fdout, saved_fderr);
                 return true;
             }
@@ -196,12 +192,12 @@ bool SimpleCommand::handle_cd(const int & fdin,
                 perror("cd");
                 resume_io(saved_fdin, saved_fdout, saved_fderr);
                 return true;
-            }		
+            }
             setenv("PWD", getenv("HOME"), 1);
         } else {
             if (arguments[1] == std::string("pwd") ||
                 arguments[1] == std::string("/bin/pwd")) {
-            } else if (*arguments[1] != '/') { 
+            } else if (*arguments[1] != '/') {
                 new_dir = std::string(getenv("PWD"));
                 for (;new_dir.back() == '/'; new_dir.pop_back());
                 new_dir += "/" + std::string(arguments[1]);
@@ -253,7 +249,7 @@ void SimpleCommand::handle_grep()
 
 void SimpleCommand::handle_printenv()
 {
-    if (arguments[0] == std::string("printenv")) {	
+    if (arguments[0] == std::string("printenv")) {
         char ** _env = environ;
         for (; *_env; ++_env) std::cout<<*_env<<std::endl;
         _exit (0);
@@ -261,8 +257,8 @@ void SimpleCommand::handle_printenv()
 }
 
 bool SimpleCommand::handle_setenv(const int & fdin,
-								  const int & fdout,
-								  const int & fderr)
+                                  const int & fdout,
+                                  const int & fderr)
 {
     /* arguments.size() == 4 because of the extra NULL */
     if (arguments[0] == std::string("setenv") && arguments.size() != 4) {
@@ -287,8 +283,8 @@ bool SimpleCommand::handle_setenv(const int & fdin,
 }
 
 bool SimpleCommand::handle_unsetenv(const int & fdin,
-									const int & fdout,
-									const int & fderr)
+                                    const int & fdout,
+                                    const int & fderr)
 {
     if (arguments[0] == std::string("unsetenv") && arguments.size() != 3) {
         std::cerr<<"unsetenv: invalid arguments"<<std::endl;
@@ -302,15 +298,15 @@ bool SimpleCommand::handle_unsetenv(const int & fdin,
         setup_process_io(fdin, fdout, fderr);
         char * temp = (char*) calloc(strlen(arguments[1]) + 1, sizeof(char));
         strcpy(temp, arguments[1]);
-        if (unsetenv(temp) == -1) perror("unsetenv");		
+        if (unsetenv(temp) == -1) perror("unsetenv");
         resume_io(saved_fdin, saved_fdout, saved_fderr);
         free(temp); return true;
     } return false;
 }
 
 bool SimpleCommand::handle_cl(const int & fdin,
-							  const int & fdout,
-							  const int & fderr)
+                              const int & fdout,
+                              const int & fderr)
 {
     if (arguments[0] == std::string("cl")) {
         if (arguments.size() > 2) {
@@ -340,7 +336,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
             } delete[] temp;
             resume_io(saved_fdin, saved_fdout, saved_fderr);
             return true;
-        } else std::cerr<< "Usage: cl, no args given" << std::endl;	
+        } else std::cerr<< "Usage: cl, no args given" << std::endl;
     } return false;
 }
 
@@ -374,7 +370,7 @@ void SimpleCommand::handle_jobs()
         if (arguments.size() > 2) {
             /* check argument count */
             std::cerr<<"jobs: invalid arguments"<<std::endl;
-            std::cerr<<"usage: jobs"<<std::endl;			
+            std::cerr<<"usage: jobs"<<std::endl;
         } else {
             /* get the length of the number, for formatting. */
             std::string line = std::to_string(p_jobs->size());

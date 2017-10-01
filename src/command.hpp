@@ -54,7 +54,7 @@ public:
     void subShell(char * arg);
 
     int status = -1;
-	
+
     const bool & inIsSet()  { return inSet; }
     const bool & outIsSet() { return outSet; }
     const bool & errIsSet() { return errSet; }
@@ -84,17 +84,17 @@ public:
     }
 
     void print_jobs();
-	
+
     pid_t m_shell_pgid = 0;
     pid_t m_pgid = 0;
     pid_t m_pid = 0;
-   
+
     std::map<std::string, std::vector<std::string> > m_aliases;
     std::map<pid_t, size_t> m_job_map;
     std::vector<job> m_jobs;
 
     std::vector<std::string> wc_collector;// Wild card collection tool
-   
+
     bool printPrompt = true;
 
     /**
@@ -124,12 +124,12 @@ private:
     bool completed = false;
 
     int numOfSimpleCommands = 0;
-	
+
     bool inSet  = false; int m_stdin  = 0;
     bool outSet = false; int m_stdout = 1;
     bool errSet = false; int m_stderr = 2;
 
-    std::vector<std::string> m_dir_stack;   
+    std::vector<std::string> m_dir_stack;
     std::vector<std::shared_ptr<SimpleCommand> > simpleCommands;
 };
 
