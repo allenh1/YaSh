@@ -16,7 +16,7 @@ CLEAN_FILES = *~
 
 # targets
 bin_PROGRAMS = yash
-UTILS = shell-utils.hpp shell-utils.cpp
+UTILS = shell-utils.hpp shell-utils.cpp scope-exit.hpp
 PARSER = wildcard.hpp wildcard.cpp shell_bison.yy shell_flex.ll $(UTILS)
 SIMPLE_COMMAND = simple_command.cpp simple_command.hpp
 COMMAND = command.cpp command.hpp job.hpp
