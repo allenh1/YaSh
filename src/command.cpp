@@ -307,8 +307,7 @@ void Command::execute()
         if (x != numOfSimpleCommands - 1) fdout = fdpipe[1];
         else fdout = m_stdout;
 
-        if (simpleCommands.at(x).get()->handle_builtins(
-                fdin, fdout, fderr) {
+        if (simpleCommands.at(x)->handle_builtins(fdin, fdout, fderr)) {
             goto cleanup;
         } else if ((pid = fork()) < 0) {
             /* fork failed */
