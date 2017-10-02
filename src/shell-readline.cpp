@@ -713,6 +713,10 @@ bool read_line::handle_up_arrow(std::string & _line)
     bool search_mode = false;
     search_mode = rev_search && !strcmp(rev_search, "UP_ARROW");
 
+    /**
+     * TODO(allenh1): it's not great that this copies the history
+     * every time -- can we not do that in non-reverse-search mode?
+     */
     std::vector<std::string> hist;
     if (search_mode) {
         auto it = std::copy_if(
@@ -721,7 +725,7 @@ bool read_line::handle_up_arrow(std::string & _line)
                 return (s.size() >= _line.size()) &&
                 s.substr(0, _line.size()) == _line;
             });
-        history_index = 0; /* reset */
+        history_index = hist.size(); /* reset */
     } else hist = m_history;
     if (!hist.size()) return false;
 
