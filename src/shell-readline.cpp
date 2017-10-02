@@ -708,30 +708,38 @@ bool read_line::handle_up_arrow(std::string & _line)
     /* we will print the line prior from history. */
     if (!m_history.size()) return false;
 
+    /* check for the reverse search mode variable */
+    const char * rev_search = getenv("REV_SEARCH_MODE");
+    bool search_mode = false;
+    search_mode = rev_search && !strcmp(rev_search, "UP_ARROW");
+
+    std::vector<std::string> hist;
+    if (search_mode) {
+        auto it = std::copy_if(
+            m_history.begin(), m_history.end(), std::back_inserter(hist),
+            [_line](const auto & s) {
+                return (s.size() >= _line.size()) &&
+                s.substr(0, _line.size()) == _line;
+            });
+        history_index = 0; /* reset */
+    } else hist = m_history;
+    if (!hist.size()) return false;
+
     /* clear input so far */
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
     memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
-    if (write(1, ch, _line.size()) != (int) _line.size()) {
-        perror("write");
-        return false;
-    } else if (write(1, sp, _line.size()) != (int) _line.size()) {
-        perror("write");
-        return false;
-    } else if (write(1, ch, _line.size()) != (int) _line.size()) {
-        perror("write");
-        return false;
-    }
 
-    if ((size_t) history_index == m_history.size()) --history_index;
+    if (!write_with_error(1, ch, _line.size())) return false;
+    else if (!write_with_error(1, sp, _line.size())) return false;
+    else if (!write_with_error(1, ch, _line.size())) return false;
+
+    if ((size_t) history_index == hist.size()) --history_index;
     /* only decrement if we are going beyond the first command (duh) */
-    _line = m_history[history_index];
+    _line = hist[history_index];
     history_index = (!history_index) ? history_index : history_index - 1;
     /* print the line */
     if (_line.size()) _line.pop_back();
-    if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
-        perror("write");
-        return false;
-    }
+    if (!write_with_error(1, _line.c_str(), _line.size())) return false;
 }
 
 /**
