@@ -720,7 +720,8 @@ bool read_line::handle_up_arrow(std::string & _line)
     std::vector<std::string> hist;
     if (search_mode) {
         auto it = std::copy_if(
-            m_history.begin(), m_history.end(), std::back_inserter(hist),
+            m_history.begin(), m_history.end(),
+            std::back_inserter(hist),
             [_line](const auto & s) {
                 return (s.size() >= _line.size()) &&
                 s.substr(0, _line.size()) == _line;

@@ -521,8 +521,8 @@ void Command::popDir() {
 }
 
 void Command::send_to_foreground(ssize_t job_num,
-								 bool & fg,
-								 termios & _oldtermios)
+                                 bool & fg,
+                                 termios & _oldtermios)
 {
     pid_t current = m_shell_pgid;
     if (m_jobs.size()) {
