@@ -708,12 +708,9 @@ bool read_line::handle_up_arrow(std::string & _line)
     /* check for the reverse search mode variable */
     const char * rev_search = getenv("REV_SEARCH_MODE");
     bool search_mode = false;
-    search_mode = rev_search && !strcmp(rev_search, "UP_ARROW");
+    search_mode =
+        rev_search && !strcmp(rev_search, "UP_ARROW") && _line.size();
 
-    /**
-     * TODO(allenh1): it's not great that this copies the history
-     * every time -- can we not do that in non-reverse-search mode?
-     */
     std::vector<std::string> * hist;
     ssize_t * index = &history_index;
     if (search_mode) {
@@ -729,8 +726,8 @@ bool read_line::handle_up_arrow(std::string & _line)
                     return (s.size() >= _line.size()) &&
                     s.substr(0, _line.size()) == _line;
                 });
+            search_index = hist->size();
         } else hist = &m_rev_search;
-        search_index = hist->size();
         index = &search_index;
     } else hist = &m_history;
 
@@ -745,28 +742,28 @@ bool read_line::handle_up_arrow(std::string & _line)
     else if (!write_with_error(1, sp, _line.size())) return false;
     else if (!write_with_error(1, ch, _line.size())) return false;
 
+    /* stay in bounds */
     if ((size_t) *index == hist->size()) --(*index);
 
     /* only decrement if we are going beyond the first command (duh) */
+    if (*index) *index = *index - 1;
     _line = hist->at(*index);
-    if (*index) (*index)--;
 
     /* print the line */
     if (_line.size()) _line.pop_back();
     if (!write_with_error(1, _line.c_str(), _line.size())) return false;
-    if (search_mode) {
-        size_t len_diff = 0;
-        for (; m_buff.size();) m_buff.pop();
+    if (!search_mode) search_str = "";
+    size_t len_diff = 0;
+    for (; m_buff.size();) m_buff.pop();
 
-        /* fill the buffer */
-        for (; _line != search_str; ++len_diff) {
-            m_buff.push(_line.back());
-            _line.pop_back();
-        }
-        /* iterate back to search prefix */
-        char ch2[len_diff]; memset(ch2, '\b', len_diff);
-        if (!write_with_error(1, ch2, len_diff)) return false;
+    /* fill the buffer */
+    for (; _line != search_str; ++len_diff) {
+        m_buff.push(_line.back());
+        _line.pop_back();
     }
+    /* iterate back to search prefix */
+    char ch2[len_diff]; memset(ch2, '\b', len_diff);
+    if (!write_with_error(1, ch2, len_diff)) return false;
     return false;
 }
 
@@ -779,7 +776,33 @@ bool read_line::handle_up_arrow(std::string & _line)
  */
 bool read_line::handle_down_arrow(std::string & _line)
 {
-    if (!m_history.size()) return false;
+    /* check for the reverse search mode variable */
+    const char * rev_search = getenv("REV_SEARCH_MODE");
+    bool search_mode = false;
+    search_mode =
+        rev_search && !strcmp(rev_search, "UP_ARROW") && _line.size();
+
+    std::vector<std::string> * hist = &m_history;
+    ssize_t * index = &history_index;
+    if (search_mode) {
+        if (_line != search_str) {
+            m_rev_search.clear();
+            m_rev_search.shrink_to_fit();
+            hist = &m_rev_search;
+            search_str = _line;
+            auto it = std::copy_if(
+                m_history.begin(), m_history.end(),
+                std::back_inserter(*hist),
+                [_line](const auto & s) {
+                    return (s.size() >= _line.size()) &&
+                    s.substr(0, _line.size()) == _line;
+                });
+            search_index = hist->size();
+        } else hist = &m_rev_search;
+        index = &search_index;
+    }
+
+    if (*index == hist->size()) return false;
 
     /* clear input so far */
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
@@ -789,16 +812,29 @@ bool read_line::handle_down_arrow(std::string & _line)
     else if (!write_with_error(1, sp, _line.size())) return false;
     else if (!write_with_error(1, ch, _line.size())) return false;
 
-    history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
-        : history_index + 1;
-    if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
-    else _line = m_history[history_index];
-    if (_line.size() && (size_t) history_index != m_history.size()) _line.pop_back();
-    // Print the line
-    if (write(1, _line.c_str(), _line.size()) != (int) _line.size()) {
-        perror("write");
-        return false;
+    /* don't increment past the last command */
+    if (((*index)) != hist->size() - 1) {
+        (*index)++;
+        _line = hist->at(*index);
+        _line.pop_back();
     }
+
+    /* print the line */
+    if (!write_with_error(1, _line.c_str(), _line.size())) return false;
+    if (!search_mode) search_str = "";
+    size_t len_diff = 0;
+    /* clear the buffer */
+    for (; m_buff.size();) m_buff.pop();
+
+    /* fill the buffer */
+    for (; _line != search_str; ++len_diff) {
+        m_buff.push(_line.back());
+        _line.pop_back();
+    }
+    /* iterate back to search prefix */
+    char ch2[len_diff]; memset(ch2, '\b', len_diff);
+    if (!write_with_error(1, ch2, len_diff)) return false;
+    return false;
 }
 
 /**
