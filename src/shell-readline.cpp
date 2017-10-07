@@ -705,9 +705,6 @@ bool read_line::handle_bang(std::string & _line)
  */
 bool read_line::handle_up_arrow(std::string & _line)
 {
-    /* we will print the line prior from history. */
-    if (!m_history.size()) return false;
-
     /* check for the reverse search mode variable */
     const char * rev_search = getenv("REV_SEARCH_MODE");
     bool search_mode = false;
@@ -732,11 +729,12 @@ bool read_line::handle_up_arrow(std::string & _line)
                     return (s.size() >= _line.size()) &&
                     s.substr(0, _line.size()) == _line;
                 });
-            history_index = hist->size(); /* reset */
         } else hist = &m_rev_search;
         search_index = hist->size();
         index = &search_index;
     } else hist = &m_history;
+
+    /* check if we can go up */
     if (!hist->size()) return false;
 
     /* clear input so far */
@@ -748,17 +746,28 @@ bool read_line::handle_up_arrow(std::string & _line)
     else if (!write_with_error(1, ch, _line.size())) return false;
 
     if ((size_t) *index == hist->size()) --(*index);
+
     /* only decrement if we are going beyond the first command (duh) */
     _line = hist->at(*index);
-    *index = (*index) ? *index : *index - 1;
+    if (*index) (*index)--;
+
     /* print the line */
     if (_line.size()) _line.pop_back();
     if (!write_with_error(1, _line.c_str(), _line.size())) return false;
     if (search_mode) {
-        /* back-track to the search prefix */
-        size_t len_diff = _line.size() - search_str.size();
-        if (!write_with_error(1, ch, len_diff)) return false;
+        size_t len_diff = 0;
+        for (; m_buff.size();) m_buff.pop();
+
+        /* fill the buffer */
+        for (; _line != search_str; ++len_diff) {
+            m_buff.push(_line.back());
+            _line.pop_back();
+        }
+        /* iterate back to search prefix */
+        char ch2[len_diff]; memset(ch2, '\b', len_diff);
+        if (!write_with_error(1, ch2, len_diff)) return false;
     }
+    return false;
 }
 
 /**
@@ -771,17 +780,15 @@ bool read_line::handle_up_arrow(std::string & _line)
 bool read_line::handle_down_arrow(std::string & _line)
 {
     if (!m_history.size()) return false;
-    if ((size_t) history_index == m_history.size()) return false;
-    // Clear input so far
-    for (size_t x = 0; x < _line.size(); ++x) {
-        if (!write_with_error(1, "\b", 1)) return false;
-    }
-    for (size_t x = 0; x < _line.size(); ++x) {
-        if (!write_with_error(1, " ", 1)) return false;
-    }
-    for (size_t x = 0; x < _line.size(); ++x) {
-        if (!write_with_error(1, "\b", 1)) return false;
-    }
+
+    /* clear input so far */
+    char ch[_line.size() + 1]; char sp[_line.size() + 1];
+    memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
+
+    if (!write_with_error(1, ch, _line.size())) return false;
+    else if (!write_with_error(1, sp, _line.size())) return false;
+    else if (!write_with_error(1, ch, _line.size())) return false;
+
     history_index = ((size_t) history_index == m_history.size()) ? m_history.size()
         : history_index + 1;
     if ((size_t) history_index == m_history.size()) _line = m_current_line_copy;
