@@ -63,19 +63,19 @@ public:
 	bool handle_bang(std::string & _line);
 	bool handle_delete(std::string & _line);
 	bool handle_tab(std::string & _line);
-   
+
 	bool handle_ctrl_a(std::string & _line);
 	bool handle_ctrl_d(std::string & _line);
 	bool handle_ctrl_e(std::string & _line);
 	bool handle_ctrl_k(std::string & _line);
-	bool handle_ctrl_del(std::string & _line);	
+	bool handle_ctrl_del(std::string & _line);
 	bool handle_ctrl_arrow(std::string & _line);
 
 	bool handle_up_arrow(std::string & _line);
 	bool handle_down_arrow(std::string & _line);
 	bool handle_left_arrow(std::string & _line);
 	bool handle_right_arrow(std::string & _line);
-  
+
 	void operator() () {
 		// Raw mode
 		char input;
@@ -98,7 +98,7 @@ public:
 					 * in the middle of a line.
 					 */
 					_line += input;
-	  
+
 					/* Write current character */
 					if (!write_with_error(1, input)) continue;
 
@@ -135,14 +135,14 @@ public:
 			}
 			else if ((input == 8 || input == 127) && !handle_backspace(_line)) continue;
 			else if (input == 9 && !handle_tab(_line)) continue;
-			else if (input == 27) {	
+			else if (input == 27) {
 				char ch1, ch2, ch3;
 				// Read the next two chars
 				if (!read_with_error(0, ch1)) continue;
 				else if (!read_with_error(0, ch2)) continue;
 				else if (ch1 == 91 && ch2 == 51 && !read_with_error(0, ch3)) continue;
 				/* handle ctrl + arrow key */
-				if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;			
+				if ((ch1 == 91 && ch2 == 49) && !handle_ctrl_arrow(_line)) continue;
 				else if (ch1 == 91 && ch2 == 51 && ch3 == 126
 						 && !handle_delete(_line)) continue;
 				else if (ch1 == 91 && ch2 == 51 && ch3 == 59
@@ -153,7 +153,7 @@ public:
 				if (ch1 == 91 && ch2 == 68 && !handle_left_arrow(_line)) continue;
 			}
 		}
-		
+
 		if (_line.size()) {
             std::string _file = tilde_expand("~/.cache/yash_history");
             int history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
@@ -173,7 +173,7 @@ public:
 		std::cerr<<"get returning: "<<ret<<std::endl;
 		return ret;
 	}
-  
+
 	char * get() {
 		if (m_get_mode == 2) {
 			char * ret = (char*) calloc(m_stashed.size() + 1, sizeof(char));
@@ -183,7 +183,7 @@ public:
 			std::cerr<<"get returning: "<<ret<<std::endl;
 			return ret;
 		}
-      
+
 		std::string returning;
 		returning = m_history[m_history.size() - 1];
 		/* returning.pop_back(); */
@@ -193,22 +193,20 @@ public:
 		return ret;
 	}
 
-   
 	void tty_raw_mode() {
 		pid_t pid = Command::currentCommand.m_shell_pgid;
 		/* become a strong independent black woman */
 		tcsetpgrp(0, pid);
 		/* save defaults for later */
-		tcgetattr(0,&oldtermios);		
+		tcgetattr(0,&oldtermios);
 		termios tty_attr = oldtermios;
 		/* set raw mode */
 		tty_attr.c_lflag &= (~(ICANON|ECHO));
 		tty_attr.c_cc[VTIME] = 0;
 		tty_attr.c_cc[VMIN] = 1;
-			
 		tcsetattr(0,TCSANOW,&tty_attr);
 	}
-	
+
 	void unset_tty_raw_mode() {
 		tcsetattr(0, TCSAFLUSH, &oldtermios);
 	}
