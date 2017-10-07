@@ -735,6 +735,10 @@ bool read_line::handle_up_arrow(std::string & _line)
     if (!hist->size()) return false;
 
     /* clear input so far */
+    std::string ending = "";
+    for (; m_buff.size(); m_buff.pop()) ending += m_buff.top();
+    if (!write_with_error(1, ending.c_str(), ending.size())) return false;
+    _line += ending;
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
     memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
 
@@ -751,7 +755,7 @@ bool read_line::handle_up_arrow(std::string & _line)
 
     /* print the line */
     if (_line.size()) _line.pop_back();
-    if (!write_with_error(1, _line.c_str(), _line.size())) return false;
+    if (!write_with_error(1, _line.c_str(), _line.size()) || !rev_search) return false;
     if (!search_mode) search_str = "";
     size_t len_diff = 0;
     for (; m_buff.size();) m_buff.pop();
@@ -804,7 +808,12 @@ bool read_line::handle_down_arrow(std::string & _line)
 
     if (*index == hist->size()) return false;
 
+
     /* clear input so far */
+    std::string ending = "";
+    for (; m_buff.size(); m_buff.pop()) ending += m_buff.top();
+    if (!write_with_error(1, ending.c_str(), ending.size())) return false;
+    _line += ending;
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
     memset(ch, '\b',_line.size()); memset(sp, ' ', _line.size());
 
@@ -820,7 +829,7 @@ bool read_line::handle_down_arrow(std::string & _line)
     }
 
     /* print the line */
-    if (!write_with_error(1, _line.c_str(), _line.size())) return false;
+    if (!write_with_error(1, _line.c_str(), _line.size()) || !rev_search) return false;
     if (!search_mode) search_str = "";
     size_t len_diff = 0;
     /* clear the buffer */
