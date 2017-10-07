@@ -253,6 +253,9 @@ private:
     std::ifstream * m_ifstream;
     int m_get_mode;
     std::vector<std::string> m_history;
+    std::vector<std::string> m_rev_search;
+    ssize_t search_index = 0;
+    std::string search_str;
     bool m_show_line = false;
 };
 #endif

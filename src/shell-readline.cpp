@@ -717,18 +717,27 @@ bool read_line::handle_up_arrow(std::string & _line)
      * TODO(allenh1): it's not great that this copies the history
      * every time -- can we not do that in non-reverse-search mode?
      */
-    std::vector<std::string> hist;
+    std::vector<std::string> * hist;
+    ssize_t * index = &history_index;
     if (search_mode) {
-        auto it = std::copy_if(
-            m_history.begin(), m_history.end(),
-            std::back_inserter(hist),
-            [_line](const auto & s) {
-                return (s.size() >= _line.size()) &&
-                s.substr(0, _line.size()) == _line;
-            });
-        history_index = hist.size(); /* reset */
-    } else hist = m_history;
-    if (!hist.size()) return false;
+        if (_line != search_str) {
+            m_rev_search.clear();
+            m_rev_search.shrink_to_fit();
+            hist = &m_rev_search;
+            search_str = _line;
+            auto it = std::copy_if(
+                m_history.begin(), m_history.end(),
+                std::back_inserter(*hist),
+                [_line](const auto & s) {
+                    return (s.size() >= _line.size()) &&
+                    s.substr(0, _line.size()) == _line;
+                });
+            history_index = hist->size(); /* reset */
+        } else hist = &m_rev_search;
+        search_index = hist->size();
+        index = &search_index;
+    } else hist = &m_history;
+    if (!hist->size()) return false;
 
     /* clear input so far */
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
@@ -738,13 +747,18 @@ bool read_line::handle_up_arrow(std::string & _line)
     else if (!write_with_error(1, sp, _line.size())) return false;
     else if (!write_with_error(1, ch, _line.size())) return false;
 
-    if ((size_t) history_index == hist.size()) --history_index;
+    if ((size_t) *index == hist->size()) --(*index);
     /* only decrement if we are going beyond the first command (duh) */
-    _line = hist[history_index];
-    history_index = (!history_index) ? history_index : history_index - 1;
+    _line = hist->at(*index);
+    *index = (*index) ? *index : *index - 1;
     /* print the line */
     if (_line.size()) _line.pop_back();
     if (!write_with_error(1, _line.c_str(), _line.size())) return false;
+    if (search_mode) {
+        /* back-track to the search prefix */
+        size_t len_diff = _line.size() - search_str.size();
+        if (!write_with_error(1, ch, len_diff)) return false;
+    }
 }
 
 /**
