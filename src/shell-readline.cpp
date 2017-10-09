@@ -194,6 +194,7 @@ bool read_line::handle_ctrl_a(std::string & _line)
                 if (!write_with_error(1, "\b", 1)) return true;
         } else if (!write_with_error(1, "\b", 1)) return false;
     }
+    return false;
 }
 #pragma GCC pop_options
 
@@ -220,7 +221,7 @@ bool read_line::handle_ctrl_e(std::string & _line)
     }
 
     if (!write_with_error(1, ctrle, len)) return false;
-    return true;
+    return false;
 }
 
 /**
@@ -263,7 +264,8 @@ bool read_line::handle_ctrl_d(std::string & _line)
         m_buff.pop();
         /* Move cursor to current position. */
         for (size_t x = 0; x < m_buff.size(); ++x) if (!write(1, "\b", 1)) return false;;
-    } return false;
+    }
+    return false;
 }
 
 /**
@@ -422,8 +424,7 @@ bool read_line::handle_tab(std::string & _line)
     } free(_complete_me);
 
     if (!write_with_error(1, _line.c_str(), _line.size()) != (int)_line.size()) return false;
-
-    return true;
+    return false;
 }
 
 /**
@@ -458,7 +459,8 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
                  _line.pop_back(), m_buff.top()) != ' ') &&
                (write(1, "\b", 1) == 1)) ||
                  ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0););
-    } return true;
+    }
+    return false;
 }
 
 /**
@@ -548,8 +550,7 @@ bool read_line::handle_backspace(std::string & _line)
         _line.pop_back();
     } if (((size_t) history_index == m_history.size()) &&
           m_current_line_copy.size()) m_current_line_copy.pop_back();
-
-    return true;
+    return false;
 }
 
 bool read_line::handle_ctrl_del(std::string & _line)
@@ -694,6 +695,7 @@ bool read_line::handle_bang(std::string & _line)
         _line += "!"; _line += ch1;
         return false;
     }
+    return false;
 }
 
 /**
@@ -864,6 +866,7 @@ bool read_line::handle_right_arrow(std::string & _line)
         return false;
     }
     _line += wrt; m_buff.pop();
+    return false;
 }
 
 /**
@@ -917,6 +920,7 @@ bool read_line::handle_left_arrow(std::string & _line)
         return false;
     }
     _line.pop_back();
+    return false;
 }
 
 void read_line::load_history()
