@@ -752,8 +752,8 @@ bool read_line::handle_up_arrow(std::string & _line)
     if ((size_t) *index == hist->size()) --(*index);
 
     /* only decrement if we are going beyond the first command (duh) */
-    if (*index) *index = *index - 1;
     _line = hist->at(*index);
+    if (*index) *index = *index - 1;
 
     /* print the line */
     if (_line.size()) _line.pop_back();
