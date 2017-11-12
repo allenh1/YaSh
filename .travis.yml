@@ -7,7 +7,7 @@ compiler:
 script:
   - ./autogen.sh
   - ./configure
-  - make -j5
+  - make -j$(nproc)
   - ln -sf $(pwd)/src/yash $(pwd)/shell
   - cd test
   - ./testall
