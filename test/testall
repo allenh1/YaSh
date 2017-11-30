@@ -49,7 +49,7 @@ echo "--- cd --- ($grade6max pts)"
 ./test106 && grade6=`expr $grade6 "+" 1`
 
 grade7=0
-grade7max=14
+grade7max=12
 echo "--- Wildcarding --- ($grade7max pts)"
 ./test107 && grade7=`expr $grade7 "+" 2`
 ./test108 && grade7=`expr $grade7 "+" 1`
