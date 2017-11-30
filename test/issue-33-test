@@ -15,11 +15,17 @@ echo "echo ../../test/*" >> bash-in
 
 rm -rf a
 
-diff yash-out bash-out
+_diff=$(diff yash-out bash-out)
 if [ $? -ne 0 ]
 then
     echo "Issue 33 regression test failed"
-    exit -1
+    echo "====== Got ======="
+    cat yash-out
+    echo "====== Expected ====="
+    cat bash-out
+    echo "====== Difference ====="
+    echo ${_diff}
+    exit 1
 fi
 echo issue-33-test OK
 exit 0
