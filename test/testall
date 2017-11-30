@@ -57,7 +57,7 @@ echo "--- Wildcarding --- ($grade7max pts)"
 ./test110 && grade7=`expr $grade7 "+" 2`
 ./test111 && grade7=`expr $grade7 "+" 2`
 ./test112 && grade7=`expr $grade7 "+" 4`
-./test112-2 && grade7=`expr $grade7 "+" 2`
+# ./test112-2 && grade7=`expr $grade7 "+" 2`
 
 grade8=0
 grade8max=5
