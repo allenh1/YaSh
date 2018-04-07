@@ -16,7 +16,7 @@
 std::vector<int> m_background;
 
 SimpleCommand::SimpleCommand()
-{ SimpleCommand::p_jobs = & Command::currentCommand.m_jobs; }
+{ SimpleCommand::p_jobs = Command::currentCommand.m_p_jobs; }
 
 void SimpleCommand::insertArgument(char * argument)
 {
@@ -186,7 +186,9 @@ void Command::subShell(char * arg)
 }
 
 Command::Command()
-{ /** Constructor **/ }
+{
+    m_p_jobs = std::make_shared<std::vector<job>>();
+}
 
 void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 { simpleCommands.push_back(simpleCommand), ++numOfSimpleCommands; }
@@ -204,7 +206,7 @@ void Command::clear()
         numOfSimpleCommands = 0, m_pgid = 0,
         outFile.release(), inFile.release(),
         errFile.release(), simpleCommands.shrink_to_fit(),
-        m_jobs.shrink_to_fit(), m_expand = true;
+        m_p_jobs->shrink_to_fit(), m_expand = true;
     outSet = inSet = errSet = m_time = false;
 }
 
@@ -358,12 +360,12 @@ void Command::execute()
             waitpid(pid, &status, WUNTRACED);
             tcsetpgrp(STDIN_FILENO, m_shell_pgid);
         } else waitpid(pid, &status, WUNTRACED);
-    } else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+    } else m_p_jobs->push_back(current), m_job_map[m_pgid] = m_p_jobs->size() - 1;
 
     if (WIFSTOPPED(status)) {
         current.status = job_status::STOPPED;
-        m_jobs.push_back(current);
-        std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
+        m_p_jobs->push_back(current);
+        std::cout<<"["<<(m_job_map[pid] = m_p_jobs->size() - 1)
                  <<"]+\tstopped\t"<<pid<<std::endl;
     }
 
@@ -372,7 +374,7 @@ void Command::execute()
         const auto & x = m_job_map.find(_pid);
         if (x != m_job_map.end()) {
             /* x->second is the value */
-            std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+            std::cout<<"["<<(m_job_map[_pid] = m_p_jobs->size() - 1)
                      <<"]-\texited"<<std::endl;
         }
     }
@@ -525,13 +527,13 @@ void Command::send_to_foreground(ssize_t job_num,
                                  termios & _oldtermios)
 {
     pid_t current = m_shell_pgid;
-    if (m_jobs.size()) {
+    if (m_p_jobs->size()) {
         /* did they pass an argument? */
-        job_num = (job_num < 0) ? m_jobs.size() - 1 : job_num;
-        job _job = m_jobs[job_num];
-        m_jobs.erase( /* remove the job */
-            m_jobs.begin() + job_num,
-            m_jobs.begin() + job_num + 1);
+        job_num = (job_num < 0) ? m_p_jobs->size() - 1 : job_num;
+        job _job = m_p_jobs->at(job_num);
+        m_p_jobs->erase( /* remove the job */
+            m_p_jobs->begin() + job_num,
+            m_p_jobs->begin() + job_num + 1);
         tcsetpgrp(0, _job.pgid);
         tcsetattr(0, TCSADRAIN, &_oldtermios);
         if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
@@ -552,13 +554,13 @@ void Command::send_to_foreground(ssize_t job_num,
                 waitpid(_job.pgid, &status, WUNTRACED);
                 tcsetpgrp(STDIN_FILENO, m_shell_pgid);
             } else waitpid(_job.pgid, &status, WUNTRACED);
-        } else m_jobs.push_back(_job), m_job_map[m_pgid] = m_jobs.size() - 1;
+        } else m_p_jobs->push_back(_job), m_job_map[m_pgid] = m_p_jobs->size() - 1;
 
         /* check if the job is stopped */
         if (WIFSTOPPED(status)) {
             _job.status = job_status::STOPPED;
-            m_jobs.push_back(_job);
-            std::cout<<"["<<(m_job_map[_job.pgid] = m_jobs.size() - 1)
+            m_p_jobs->push_back(_job);
+            std::cout<<"["<<(m_job_map[_job.pgid] = m_p_jobs->size() - 1)
                      <<"]+\tstopped\t"<<_job.pgid<<std::endl;
         }
     } else {

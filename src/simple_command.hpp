@@ -92,8 +92,9 @@ struct SimpleCommand {
     bool stopped = false;
     int status = -1;
 
-    static std::vector<std::string> * history;
-    static std::vector<job> * p_jobs;
+    static std::shared_ptr<std::vector<std::string>> history;
+    static std::shared_ptr<std::vector<job>> p_jobs;
+
     pid_t pid;
 };
 #endif

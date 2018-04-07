@@ -91,7 +91,7 @@ public:
 
     std::map<std::string, std::vector<std::string> > m_aliases;
     std::map<pid_t, size_t> m_job_map;
-    std::vector<job> m_jobs;
+    std::shared_ptr<std::vector<job>> m_p_jobs;
 
     std::vector<std::string> wc_collector;// Wild card collection tool
 

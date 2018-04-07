@@ -38,7 +38,7 @@ read_line::read_line()
     /* load current history */
     load_history();
 
-    SimpleCommand::history = &m_history;
+    SimpleCommand::history = std::shared_ptr<std::vector<std::string>>(&m_history);
 }
 
 /**

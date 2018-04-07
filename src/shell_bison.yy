@@ -101,7 +101,7 @@ command_word argument_list {
 	} else if(fg) {
 	    Command::currentCommand.send_to_foreground(-1, fg, reader.oldtermios);
 	} else if(bg) {
-		job _back = Command::currentCommand.m_jobs.back();
+		job _back = Command::currentCommand.m_p_jobs->back();
 		/* don't restore io, just resume. */
 		if (kill(_back.pgid, SIGCONT) < 0) perror("kill"); bg=false;
 	} else
@@ -137,7 +137,7 @@ WORD {
 		pid_t current = tcgetpgrp(0);
 		try {
 			int as_num = std::stoi(std::string($1));
-			if (as_num >= Command::currentCommand.m_jobs.size()) {
+			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				std::cerr<<"fg: no such job"<<std::endl;
 			} else {
 			  	Command::currentCommand.send_to_foreground(
@@ -150,12 +150,12 @@ WORD {
 	} else if(bg) {
 		try {
 			int as_num = std::stoi(std::string($1));
-			if (as_num >= Command::currentCommand.m_jobs.size()) {
-				job _back = Command::currentCommand.m_jobs[as_num];
+			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
+				job _back = Command::currentCommand.m_p_jobs->at(as_num);
 				/* erase */
-				Command::currentCommand.m_jobs.erase(
-					Command::currentCommand.m_jobs.begin() + as_num,
-					Command::currentCommand.m_jobs.begin() + as_num + 1);
+				Command::currentCommand.m_p_jobs->erase(
+					Command::currentCommand.m_p_jobs->begin() + as_num,
+					Command::currentCommand.m_p_jobs->begin() + as_num + 1);
 
                 /* don't restore io, just resume */
 				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
