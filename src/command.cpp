@@ -67,7 +67,7 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
             return -1;
         }
 
-        waitpid(pid, NULL, 0);
+        waitpid(pid, nullptr, 0);
         close(fdpipe[0]);
     } return 0;
 }
@@ -88,7 +88,7 @@ void Command::set_in_file(char * _fd) {
     if (m_stdin < 0) {
         perror("open");
         inSet = false;
-        inFile = NULL;
+        inFile = nullptr;
         m_stdin = 0;
     }
 }
@@ -104,7 +104,7 @@ void Command::set_out_file(char * _fd) {
     if (m_stdout < 0) {
         perror("open");
         outSet = false;
-        outFile = NULL;
+        outFile = nullptr;
         m_stdout = 1;
     }
 }
@@ -120,7 +120,7 @@ void Command::set_err_file(char * _fd) {
     if (m_stderr < 0) {
         perror("open");
         errSet = false;
-        errFile = NULL;
+        errFile = nullptr;
         m_stderr = 2;
     }
 }
@@ -153,13 +153,13 @@ void Command::subShell(char * arg)
         dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
         dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
 
-        execlp("yash", "yash", NULL);
+        execlp("yash", "yash", nullptr);
         perror("subshell exec");
         _exit(1);
     } else if (pid != 0) {
         /* Parent Process */
         char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
-        char * c = NULL;
+        char * c = nullptr;
         close(out_pipe[1]); /* close the write end of the out pipe */
         close(cmd_pipe[0]); /* close the read end of the cmd pipe */
 
@@ -168,7 +168,7 @@ void Command::subShell(char * arg)
 
         /* Close pipe so subprocess isn't waiting */
         dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
-        waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
+        waitpid(pid, nullptr, WNOHANG); /* Don't hang if child is already dead */
 
         /* read from the out pipe and store in a buffer */
         for (c = buff; read(out_pipe[0], c++, 1););
@@ -290,11 +290,11 @@ void Command::execute()
         /* manage commands */
         std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
         char ** d_args;
-        curr.push_back((char *) NULL);
+        curr.push_back((char *) nullptr);
         d_args = curr.data();
 
-        /* add NULL to the end of the simple command (for exec) */
-        simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
+        /* add nullptr to the end of the simple command (for exec) */
+        simpleCommands.at(x).get()->arguments.push_back((char*) nullptr);
 
         if (x != numOfSimpleCommands - 1) {
             /* thank you Gustavo for the outer if statement. */
@@ -421,8 +421,8 @@ void Command::prompt()
         char buffer[100]; std::string _host;
         if (!gethostname(buffer, 100)) _host = std::string(buffer);
         else _host = std::string("localhost");
-        char * _wd = NULL, * _hme = NULL;
-        char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
+        char * _wd = nullptr, * _hme = nullptr;
+        char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) nullptr };
         eval_to_buffer(_pwd, cdirbuff, 2048);
         std::string _cdir = std::string(cdirbuff);
         char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
@@ -474,10 +474,10 @@ void Command::setAlias(const char * _from, const char * _to)
 
 void Command::pushDir(const char * new_dir) {
     char * _pwd = getenv("PWD");
-    if (_pwd == NULL) {
+    if (_pwd == nullptr) {
         perror("pwd");
         return;
-    } else if (new_dir == NULL || *new_dir == '\0') {
+    } else if (new_dir == nullptr || *new_dir == '\0') {
         std::cerr<<"Invalid new directory!"<<std::endl;
         return;
     }
@@ -576,7 +576,7 @@ std::string get_command_text(Command & cmd)
     for (auto & x : cmd.simpleCommands) {
         ret += (first_cmd) ? (first_cmd = false, "") : " |";
         for (auto & y : x.get()->arguments) {
-            if (y == NULL) continue; /* skip over the first one */
+            if (y == nullptr) continue; /* skip over the first one */
             ret += ((first_arg) ? (first_arg = false, "")
                     : std::string(" ")) + y;
         }

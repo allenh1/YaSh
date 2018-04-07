@@ -39,7 +39,7 @@ int main()
     yyin = fopen(rcfile.get(), "r");
 
     /* From Brian P. Hays */
-    if (yyin != NULL) {
+    if (yyin != nullptr) {
         Command::currentCommand.printPrompt = false;
         yyparse();
         fclose(yyin);

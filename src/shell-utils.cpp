@@ -96,7 +96,7 @@ std::string tilde_expand(std::string input)
 		std::string user = substr.substr(1, substr.size());
 		if (user.size() > 0) {
 			passwd * _passwd = getpwnam(user.c_str());
-			if (_passwd == NULL) {
+			if (_passwd == nullptr) {
 				/* user wasn't found. */
 				std::cerr<<"User \""<<user.c_str()<<"\" not found!"<<std::endl;
 				return input;
@@ -158,7 +158,7 @@ std::string env_expand(std::string s)
 			for (char * tmp = temp2; *str && *str != '}'; *(tmp++) = *(str++));
 			if (*str == '}') {
 				++str; char * out = getenv(temp2);
-				if (out == NULL) continue;;
+				if (out == nullptr) continue;;
 				for (char * t = out; *t; temp[index++] = *(t++));
 			} free(temp2);
 		}// if not a variable, don't expand.

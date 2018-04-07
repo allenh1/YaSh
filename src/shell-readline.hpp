@@ -218,7 +218,7 @@ public:
 
         yyin = fopen(file, "r"); free(file);
 
-        if (yyin != NULL) {
+        if (yyin != nullptr) {
             Command::currentCommand.printPrompt = false;
             yyrestart(yyin); yyparse();
             fclose(yyin);

@@ -18,16 +18,16 @@
 #include "shell-readline.hpp"
 /******************* Input From read-shell ************************/
 #include <unistd.h>
-	static char * lastLine = NULL;
+	static char * lastLine = nullptr;
 	read_line reader;
 
 int mygetc (FILE * f) {
-	static char * p = NULL;
+	static char * p = nullptr;
 	static int get_file = 0;
 	char ch;
 	if (!Command::currentCommand.is_interactive()) return getc(f);
-	if (p == NULL || *p == 0) {
-		if (lastLine != NULL) free(lastLine);
+	if (p == nullptr || *p == 0) {
+		if (lastLine != nullptr) free(lastLine);
 		if (get_file) {
 			p = reader.getStashed();
 			get_file = 0;
@@ -57,7 +57,7 @@ void myunputc(int c) {
 }
 
 /* Utils copied from esh for handling quoted strings in fancy flex mode stuff */
-char* strbuf = NULL;
+char* strbuf = nullptr;
 int stringIndex = 0;
 int strbufSize = 0;
 #define DEFAULT_STRBUF_SIZE 256
@@ -144,7 +144,7 @@ void strbufWrite(char c) {
 	  // Set up for self call
 	  char* args[2];
 	  args[0] = strdup("/proc/self/exe"); //Call self
-	  args[1] = NULL;
+	  args[1] = nullptr;
 
 	  // Call self
 	  execvp(args[0], args);
@@ -180,7 +180,7 @@ void strbufWrite(char c) {
 		break;
 	  }
 	/* Wait for all processes */
-  } waitpid(ret,NULL,0);
+  } waitpid(ret,nullptr,0);
 
   free(string);
 }
