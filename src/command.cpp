@@ -77,13 +77,12 @@ int Command::get_output_flags()
     return O_CREAT | O_WRONLY | ((append) ? O_APPEND : O_TRUNC);
 }
 
-void Command::set_in_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    inFile = std::unique_ptr<char>(fd);
+void Command::set_in_file(const std::shared_ptr<char> _fd) {
+    std::string expanded = tilde_expand(_fd.get());
+    inFile = std::shared_ptr<char>(strndup(expanded.c_str(), expanded.size()));
     inSet = true;
 
-    m_stdin = open(fd, O_RDONLY, 0600);
+    m_stdin = open(inFile.get(), O_RDONLY, 0600);
 
     if (m_stdin < 0) {
         perror("open");
@@ -93,10 +92,10 @@ void Command::set_in_file(char * _fd) {
     }
 }
 
-void Command::set_out_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
+void Command::set_out_file(const std::shared_ptr<char> _fd) {
+    std::string expanded = tilde_expand(_fd.get());
     char * fd = strndup(expanded.c_str(), expanded.size());
-    outFile = std::unique_ptr<char>(fd);
+    outFile = std::shared_ptr<char>(fd);
     outSet = true;
 
     m_stdout = open(fd, get_output_flags(), 0600);
@@ -109,10 +108,10 @@ void Command::set_out_file(char * _fd) {
     }
 }
 
-void Command::set_err_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
+void Command::set_err_file(const std::shared_ptr<char> _fd) {
+    std::string expanded = tilde_expand(_fd.get());
     char * fd = strndup(expanded.c_str(), expanded.size());
-    errFile = std::unique_ptr<char>(fd);
+    errFile = std::shared_ptr<char>(fd);
     errSet = true;
 
     m_stderr = open(fd, get_output_flags(), 0600);
@@ -204,8 +203,8 @@ void Command::clear()
     simpleCommands.clear(),
         background = append = false,
         numOfSimpleCommands = 0, m_pgid = 0,
-        outFile.release(), inFile.release(),
-        errFile.release(), simpleCommands.shrink_to_fit(),
+        outFile = nullptr, inFile = nullptr,
+        errFile = nullptr, simpleCommands.shrink_to_fit(),
         m_p_jobs->shrink_to_fit(), m_expand = true;
     outSet = inSet = errSet = m_time = false;
 }
@@ -457,9 +456,9 @@ std::vector<std::string> splitta(std::string s, char delim) {
     return elems;
 }
 
-void Command::setAlias(const char * _from, const char * _to)
+void Command::setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to)
 {
-    std::string from(_from); std::string to(_to);
+    std::string from(_from.get()); std::string to(_to.get());
     std::vector<std::string> split = splitta(to, ' ');
 
     /**
@@ -472,7 +471,7 @@ void Command::setAlias(const char * _from, const char * _to)
     m_aliases[from] = split;
 }
 
-void Command::pushDir(const char * new_dir) {
+void Command::pushDir(const std::shared_ptr<char> new_dir) {
     char * _pwd = getenv("PWD");
     if (_pwd == nullptr) {
         perror("pwd");
@@ -482,7 +481,7 @@ void Command::pushDir(const char * new_dir) {
         return;
     }
     std::string curr_dir = std::string(getenv("PWD"));
-    std::string news(new_dir);
+    std::string news(new_dir.get());
     news = tilde_expand(news);
 
     if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;

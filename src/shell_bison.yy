@@ -75,15 +75,15 @@ full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
 | SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
-	char * alias, * word, * equals;
-	if (!(equals = strchr($2, '='))) {
+	std::shared_ptr<char> alias, word, equals;
+	if (!(equals = std::shared_ptr<char>(strchr($2, '=')))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
 	} else {
-		alias = strndup($2, strlen($2) - 1);
+		alias = std::shared_ptr<char>(strndup($2, strlen($2) - 1));
 		/* word = WORD + length before '=' + 1 (for '='). */
-		word  = strdup($3);
+		word = std::shared_ptr<char>(strdup($3));
 		Command::currentCommand.setAlias(alias, word);
-		free(alias); free(word); delete[] $2; delete[] $3;
+                delete[] $2; delete[] $3;
 	}
 }
 | TIME NEWLINE { Command::currentCommand.prompt(); }
@@ -165,7 +165,7 @@ WORD {
 					 <<std::endl;
 		} bg=false;
 	} else if(pushd) {
-		Command::currentCommand.pushDir(strdup($1)); delete[] $1; pushd=false;
+		Command::currentCommand.pushDir(std::shared_ptr<char>($1)); pushd=false;
 	} else {
 		for (auto && arg : Command::currentCommand.wc_collector) {
 			char * temp = strndup(arg.c_str(), arg.size());
@@ -183,21 +183,21 @@ io_modifier:
 GREAT WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
-	Command::currentCommand.set_out_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
 }
 | TOOGREAT WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
 	Command::currentCommand.setAppend(true);
-	Command::currentCommand.set_out_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
 }
 | GREATAND WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
-	Command::currentCommand.set_out_file($2);
-	Command::currentCommand.set_err_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
+	Command::currentCommand.set_err_file(std::shared_ptr<char>($2));
 }
 | TOOGREATAND WORD {
 	if (Command::currentCommand.outIsSet())
@@ -205,13 +205,13 @@ GREAT WORD {
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
 	Command::currentCommand.setAppend(true);
-	Command::currentCommand.set_out_file($2);
-	Command::currentCommand.set_err_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
+	Command::currentCommand.set_err_file(std::shared_ptr<char>($2));
 }
 | LESS WORD {
 	if (Command::currentCommand.inIsSet())
 		yyerror("Ambiguous input redirect.\n");
-	Command::currentCommand.set_in_file($2);
+	Command::currentCommand.set_in_file(std::shared_ptr<char>($2));
 }
 ;
 

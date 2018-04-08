@@ -36,20 +36,20 @@ public:
     void execute();
     void clear();
 
-    void pushDir(const char * new_dir);
+    void pushDir(const std::shared_ptr<char> new_dir);
     void popDir();
 
     void insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand);
 
-    void set_in_file(char * _fd);
-    void set_out_file(char * _fd);
-    void set_err_file(char * _fd);
+    void set_in_file(const std::shared_ptr<char> _fd);
+    void set_out_file(const std::shared_ptr<char> _fd);
+    void set_err_file(const std::shared_ptr<char> _fd);
 
     void send_to_foreground(ssize_t process_num,
                             bool & fg,
                             termios & _oldtermios);
 
-    void setAlias(const char * _from, const char * _to);
+    void setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to);
 
     void subShell(char * arg);
 
@@ -111,9 +111,9 @@ private:
 
     int get_output_flags();
 
-    std::unique_ptr<char> outFile;
-    std::unique_ptr<char> inFile;
-    std::unique_ptr<char> errFile;
+    std::shared_ptr<char> outFile = nullptr;
+    std::shared_ptr<char> inFile = nullptr;
+    std::shared_ptr<char> errFile = nullptr;
 
     bool append = false;
     bool background = false;
