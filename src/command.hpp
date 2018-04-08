@@ -109,9 +109,9 @@ private:
 
     int get_output_flags();
 
-    std::shared_ptr<char> outFile = nullptr;
-    std::shared_ptr<char> inFile = nullptr;
-    std::shared_ptr<char> errFile = nullptr;
+    std::unique_ptr<std::string> outFile = nullptr;
+    std::unique_ptr<std::string> inFile = nullptr;
+    std::unique_ptr<std::string> errFile = nullptr;
 
     bool append = false;
     bool background = false;

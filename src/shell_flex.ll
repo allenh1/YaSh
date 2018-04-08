@@ -97,7 +97,7 @@ void strbufWrite(char c) {
 "|" return PIPE;
 "&" return AMPERSAND;
 
-^"exit" {std::cout<<"Bye!"<<std::endl; exit(0); }
+^"exit" { std::cout<<"Bye!"<<std::endl; exit(0); }
 
 ^"time" { return TIME; }
 ^"source" { return SRC; }

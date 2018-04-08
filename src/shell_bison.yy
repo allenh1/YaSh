@@ -166,6 +166,7 @@ WORD {
 		} bg=false;
 	} else if(pushd) {
 		Command::currentCommand.pushDir(std::shared_ptr<char>($1)); pushd=false;
+                $1 = nullptr;
 	} else {
 		for (auto && arg : Command::currentCommand.wc_collector) {
 			char * temp = strndup(arg.c_str(), arg.size());
@@ -176,7 +177,6 @@ WORD {
 		Command::currentCommand.wc_collector.shrink_to_fit();
 	} delete[] $1;
 }
-/* | BACKTIK { Command::currentCommand.subShell($1); delete[] $1; } */
 ;
 
 io_modifier:

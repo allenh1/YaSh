@@ -77,12 +77,13 @@ int Command::get_output_flags()
     return O_CREAT | O_WRONLY | ((append) ? O_APPEND : O_TRUNC);
 }
 
-void Command::set_in_file(const std::shared_ptr<char> _fd) {
+void Command::set_in_file(const std::shared_ptr<char> _fd)
+{
     std::string expanded = tilde_expand(_fd.get());
-    inFile = std::shared_ptr<char>(strndup(expanded.c_str(), expanded.size()));
+    inFile = std::make_unique<std::string>(expanded);
     inSet = true;
 
-    m_stdin = open(inFile.get(), O_RDONLY, 0600);
+    m_stdin = open(inFile->c_str(), O_RDONLY, 0600);
 
     if (m_stdin < 0) {
         perror("open");
@@ -92,13 +93,13 @@ void Command::set_in_file(const std::shared_ptr<char> _fd) {
     }
 }
 
-void Command::set_out_file(const std::shared_ptr<char> _fd) {
+void Command::set_out_file(const std::shared_ptr<char> _fd)
+{
     std::string expanded = tilde_expand(_fd.get());
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    outFile = std::shared_ptr<char>(fd);
+    outFile = std::make_unique<std::string>((expanded));
     outSet = true;
 
-    m_stdout = open(fd, get_output_flags(), 0600);
+    m_stdout = open(outFile->c_str(), get_output_flags(), 0600);
 
     if (m_stdout < 0) {
         perror("open");
@@ -110,11 +111,10 @@ void Command::set_out_file(const std::shared_ptr<char> _fd) {
 
 void Command::set_err_file(const std::shared_ptr<char> _fd) {
     std::string expanded = tilde_expand(_fd.get());
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    errFile = std::shared_ptr<char>(fd);
+    errFile = std::make_unique<std::string>(expanded);
     errSet = true;
 
-    m_stderr = open(fd, get_output_flags(), 0600);
+    m_stderr = open(errFile->c_str(), get_output_flags(), 0600);
 
     if (m_stderr < 0) {
         perror("open");
@@ -167,9 +167,11 @@ void Command::print()
     std::cout<<std::endl<<std::endl;
     std::cout<<"  Output       Input        Error        Background"<<std::endl;
     std::cout<<"  ------------ ------------ ------------ ------------"<<std::endl;
-    printf("  %-12s %-12s %-12s %-12s\n", outFile.get()?outFile.get():"default",
-           inFile.get()?inFile.get():"default", errFile.get()?errFile.get():"default",
-           background?"YES":"NO");
+    printf("  %-12s %-12s %-12s %-12s\n",
+           nullptr == outFile ? outFile->c_str() : "default",
+           nullptr == inFile ? inFile->c_str() : "default",
+           nullptr == errFile ? errFile->c_str() : "default",
+           background ? "YES" : "NO");
     std::cout<<std::endl<<std::endl;
 }
 
