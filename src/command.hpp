@@ -51,8 +51,6 @@ public:
 
     void setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to);
 
-    void subShell(char * arg);
-
     int status = -1;
 
     const bool & inIsSet()  { return inSet; }

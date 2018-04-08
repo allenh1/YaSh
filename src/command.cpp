@@ -124,66 +124,6 @@ void Command::set_err_file(const std::shared_ptr<char> _fd) {
     }
 }
 
-#define SUBSH_MAX_LEN 4096
-void Command::subShell(char * arg)
-{
-    std::cerr<<"Running subshell cmd: \""<<arg<<"\""<<std::endl;
-    int cmd_pipe[2]; int out_pipe[2]; pid_t pid;
-    int tmpin = dup(0); int tmpout = dup(1); int tmperr = dup(2);
-
-    if (pipe(cmd_pipe) == -1) {
-        perror("cmd_pipe");
-        return;
-    } else if (pipe(out_pipe) == -1) {
-        perror("out_pipe");
-        return;
-    }
-
-    dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
-    dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
-    if ((pid = fork()) == -1) {
-        perror("subshell fork");
-        return;
-    } else if (pid == 0) {
-        /* Child Process */
-        close(out_pipe[0]); /* close the read end of the out pipe */
-        close(cmd_pipe[1]); /* close the write end of the cmd pipe */
-
-        dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
-        dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
-
-        execlp("yash", "yash", nullptr);
-        perror("subshell exec");
-        _exit(1);
-    } else if (pid != 0) {
-        /* Parent Process */
-        char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
-        char * c = nullptr;
-        close(out_pipe[1]); /* close the write end of the out pipe */
-        close(cmd_pipe[0]); /* close the read end of the cmd pipe */
-
-        /* write the command to the write end of the cmd pipe */
-        for (c = arg; *c && write(cmd_pipe[1], c++, 1););
-
-        /* Close pipe so subprocess isn't waiting */
-        dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
-        waitpid(pid, nullptr, WNOHANG); /* Don't hang if child is already dead */
-
-        /* read from the out pipe and store in a buffer */
-        for (c = buff; read(out_pipe[0], c++, 1););
-
-        std::cerr<<"Read from buffer"<<std::endl;
-        size_t buff_len = c - buff; /* this is the number of characters read */
-
-        /* Push the buffer onto stdin */
-        for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
-        free(buff); /* release the buffer */
-    }
-
-    /* restore default IO */
-    dup2(tmpin, 0); dup2(tmpout, 1); dup2(tmperr, 2);
-}
-
 Command::Command()
 {
     m_p_jobs = std::make_shared<std::vector<job>>();

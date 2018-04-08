@@ -176,7 +176,7 @@ WORD {
 		Command::currentCommand.wc_collector.shrink_to_fit();
 	} delete[] $1;
 }
-| BACKTIK { Command::currentCommand.subShell($1); delete[] $1; }
+/* | BACKTIK { Command::currentCommand.subShell($1); delete[] $1; } */
 ;
 
 io_modifier:
