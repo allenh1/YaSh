@@ -79,9 +79,9 @@ full_command { Command::currentCommand.execute(); }
 	if (!(equals = std::shared_ptr<char>(strchr($2, '=')))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
 	} else {
-		alias = std::shared_ptr<char>(strndup($2, strlen($2) - 1));
+		alias = std::shared_ptr<char>(strndup($2, strlen($2) - 1), free);
 		/* word = WORD + length before '=' + 1 (for '='). */
-		word = std::shared_ptr<char>(strdup($3));
+		word = std::shared_ptr<char>(strdup($3), free);
 		Command::currentCommand.setAlias(alias, word);
                 delete[] $2; delete[] $3;
 	}
@@ -113,12 +113,12 @@ command_word:
 WORD {
 	Command::currentSimpleCommand =
 		std::unique_ptr<SimpleCommand>(new SimpleCommand());
-	char * _ptr = strdup($1); delete[] $1;
-	if(!strcmp(_ptr, "fg")) fg=true;
-	else if(!strcmp(_ptr, "bg")) bg=true;
-	else if(!strcmp(_ptr, "pushd")) pushd=true;
+        auto _ptr = std::shared_ptr<char>(strdup($1), free);
+	delete[] $1;
+	if(!strcmp(_ptr.get(), "fg")) fg=true;
+	else if(!strcmp(_ptr.get(), "bg")) bg=true;
+	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
-	free(_ptr);
 }
 ;
 
@@ -130,8 +130,8 @@ argument_list argument
 argument:
 WORD {
 	std::string temp = tilde_expand(std::string($1));
-	char * expand_upon_me = strndup(temp.c_str(), temp.size());
-	wildcard_expand(expand_upon_me); free(expand_upon_me);
+	auto expand_upon_me = std::shared_ptr<char>(strndup(temp.c_str(), temp.size()), free);
+	wildcard_expand(expand_upon_me);
 
 	if(fg) {
 		pid_t current = tcgetpgrp(0);
@@ -169,9 +169,9 @@ WORD {
                 $1 = nullptr;
 	} else {
 		for (auto && arg : Command::currentCommand.wc_collector) {
-			char * temp = strndup(arg.c_str(), arg.size());
+			std::shared_ptr<char> temp = std::shared_ptr<char>(
+                        strndup(arg.c_str(), arg.size()), free);
 			Command::currentSimpleCommand->insertArgument(temp);
-			free(temp);
 		}
 		Command::currentCommand.wc_collector.clear();
 		Command::currentCommand.wc_collector.shrink_to_fit();

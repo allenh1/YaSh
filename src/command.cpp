@@ -18,9 +18,9 @@ std::vector<int> m_background;
 SimpleCommand::SimpleCommand()
 { SimpleCommand::p_jobs = Command::currentCommand.m_p_jobs; }
 
-void SimpleCommand::insertArgument(char * argument)
+void SimpleCommand::insertArgument(const std::shared_ptr<char> argument)
 {
-    std::string as_string(argument);
+    std::string as_string(argument.get());
 
     auto exists = Command::currentCommand.m_aliases.find(as_string);
 
@@ -209,9 +209,8 @@ void Command::execute()
     if (lolz && !strcmp(lolz, "YES")) {
         /// Because why not?
         std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
-        char * _ptr = strdup("lolcat");
+        std::shared_ptr<char> _ptr = std::shared_ptr<char>(strdup("lolcat"), free);
         lul->insertArgument(_ptr);
-        free(_ptr);
         if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
             strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
             strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
@@ -427,8 +426,8 @@ void Command::pushDir(const std::shared_ptr<char> new_dir) {
     news = tilde_expand(news);
 
     if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
-
-    wildcard_expand((char*)news.c_str());
+    auto to_expand = std::shared_ptr<char>(strndup(news.c_str(), news.size()), free);
+    wildcard_expand(to_expand);
 
     if(!wc_collector.size() && changedir(news)) {
         m_dir_stack.insert(m_dir_stack.begin(), curr_dir);

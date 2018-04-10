@@ -295,7 +295,7 @@ bool read_line::handle_tab(std::string & _line)
         _temp = tilde_expand(_split.back()) + "*";
     } else _temp = "*";
 
-    char * _complete_me = strndup(_temp.c_str(), _temp.size());
+    auto _complete_me = std::shared_ptr<char>(strndup(_temp.c_str(), _temp.size()), free);
 
     /* Part 2: Invoke wildcard expand */
     wildcard_expand(_complete_me);
@@ -334,7 +334,7 @@ bool read_line::handle_tab(std::string & _line)
         char * _path = getenv("PATH");
         if (!_path) {
             /* if path isn't set, continue */
-            free(_complete_me); return false;
+            return false;
         } std::string path(_path);
         /* part 1: split the path variable into individual dirs */
         std::vector<std::string> _path_dirs = vector_split(path, ':');
@@ -354,12 +354,12 @@ bool read_line::handle_tab(std::string & _line)
             /* add trailing '/' if not already there */
             if (x.back() != '/') x += '/';
             /* append _complete_me to current path */
-            x += _complete_me;
+            x += _complete_me.get();
             /* duplicate the string */
-            char * _x_cpy = strndup(x.c_str(), x.size());
+            auto _x_cpy = std::shared_ptr<char>(strndup(x.c_str(), x.size()), free);
 
             /* invoke wildcard_expand */
-            wildcard_expand(_x_cpy); free(_x_cpy);
+            wildcard_expand(_x_cpy);
         } std::vector<std::string> wc_expanded =
               Command::currentCommand.wc_collector;
 
@@ -388,23 +388,23 @@ bool read_line::handle_tab(std::string & _line)
             Command::currentCommand.wc_collector.shrink_to_fit();
         } else { /* part 5: handle multiple matches */
             /* @todo appropriately handle multiple matches */
-            free(_complete_me); return false;
+            return false;
         }
 
         /* free resources and print */
         write_with_error(1, _line.c_str(), _line.size());
-        free(_complete_me); return false;
+        return false;
     } else {
         std::cout<<std::endl;
         std::vector<std::string> _wcd = Command::currentCommand.wc_collector;
         std::vector<std::string> cpyd = Command::currentCommand.wc_collector;
         std::string longest_common((longest_substring(cpyd)));
         if (_wcd.size()) {
-            printEvenly(_wcd); char * _echo = strdup("echo");
+            printEvenly(_wcd); auto _echo = std::shared_ptr<char>(strdup("echo"), free);
             Command::currentSimpleCommand->insertArgument(_echo);
             Command::currentCommand.wc_collector.clear();
             Command::currentCommand.wc_collector.shrink_to_fit();
-            Command::currentCommand.execute(); free(_echo);
+            Command::currentCommand.execute();
 
             /**
              * Now we add the largest substring of
@@ -415,13 +415,13 @@ bool read_line::handle_tab(std::string & _line)
              */
 
             if (longest_common.size()) {
-                char * to_add = strndup(longest_common.c_str() + strlen(_complete_me) - 1,
-                                        longest_common.size() - strlen(_complete_me) + 1);
+                char * to_add = strndup(longest_common.c_str() + strlen(_complete_me.get()) - 1,
+                                        longest_common.size() - strlen(_complete_me.get()) + 1);
                 _line += to_add; free(to_add);
                 m_current_line_copy = _line;
             }
-        } else { free(_complete_me); return false; }
-    } free(_complete_me);
+        } else return false;
+    }
 
     if (!write_with_error(1, _line.c_str(), _line.size()) != (int)_line.size()) return false;
     return false;

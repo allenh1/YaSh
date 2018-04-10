@@ -23,5 +23,5 @@
 
 #define MAXLEN 1024
 
-extern "C" void wildcard_expand(char * arg);
+void wildcard_expand(std::shared_ptr<char> arg);
 #endif
