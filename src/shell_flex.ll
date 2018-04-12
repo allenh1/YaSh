@@ -18,31 +18,30 @@
 #include "shell-readline.hpp"
 /******************* Input From read-shell ************************/
 #include <unistd.h>
-	static char * lastLine = nullptr;
-	read_line reader;
+    std::shared_ptr<std::string> lastLine = nullptr;
+    read_line reader;
 
 int mygetc (FILE * f) {
-	static char * p = nullptr;
-	static int get_file = 0;
-	char ch;
-	if (!Command::currentCommand.is_interactive()) return getc(f);
-	if (p == nullptr || *p == 0) {
-		if (lastLine != nullptr) free(lastLine);
-		if (get_file) {
-			p = reader.getStashed();
-			get_file = 0;
-			lastLine = p;
-		} else {
-			reader.tty_raw_mode();
-			reader();
-			reader.unset_tty_raw_mode();
-			p = reader.get();
-			lastLine = p;
-		}
-	}
-	ch = *p;
-	++p;
-	return ch;
+    static std::shared_ptr<std::string> p = nullptr;
+    static int get_file = 0;
+    char ch;
+    if (!Command::currentCommand.is_interactive()) return getc(f);
+    if (p == nullptr || !p->size()) {
+        if (get_file) {
+            p = reader.getStashed();
+            get_file = 0;
+            lastLine = p;
+        } else {
+            reader.tty_raw_mode();
+            reader();
+            reader.unset_tty_raw_mode();
+            p = reader.get();
+            lastLine = p;
+        }
+        }
+        ch = p->at(0);
+        p->erase(p->begin(), p->begin() + 1);
+    return ch;
 }
 
 #undef getc
@@ -62,11 +61,11 @@ int stringIndex = 0;
 int strbufSize = 0;
 #define DEFAULT_STRBUF_SIZE 256
 void strbufWrite(char c) {
-	//printf("strbufWrite(%c)\n",c);
-	if( stringIndex >= strbufSize ) {
-		strbuf = (char*)realloc(strbuf,sizeof(char)*(strbufSize*=2));
-	}
-	strbuf[stringIndex++] = c;
+    //printf("strbufWrite(%c)\n",c);
+    if( stringIndex >= strbufSize ) {
+        strbuf = (char*)realloc(strbuf,sizeof(char)*(strbufSize*=2));
+    }
+    strbuf[stringIndex++] = c;
 }
 /* end fancy string utils */
 
@@ -80,7 +79,7 @@ void strbufWrite(char c) {
 
 \n { return NEWLINE; }
 
-[ ] 	{ /* Discard spaces */ }
+[ ]     { /* Discard spaces */ }
 
 \t { /* tabs */ return TAB; }
 
@@ -132,99 +131,99 @@ void strbufWrite(char c) {
   pid_t ret = fork(); //Deekeeds
   switch(ret) {
   case(-1): {
-	perror("fork-subshell");
-	exit(1);
+    perror("fork-subshell");
+    exit(1);
   } case (0): {
 
-	  //Housekeeping
-	  dup2(pipeOne[0], 0);
-	  dup2(pipeTwo[1], 1);
-	  close(pipeOne[0]);
-	  close(pipeTwo[1]);
-	  // Set up for self call
-	  char* args[2];
-	  args[0] = strdup("/proc/self/exe"); //Call self
-	  args[1] = nullptr;
+      //Housekeeping
+      dup2(pipeOne[0], 0);
+      dup2(pipeTwo[1], 1);
+      close(pipeOne[0]);
+      close(pipeTwo[1]);
+      // Set up for self call
+      char* args[2];
+      args[0] = strdup("/proc/self/exe"); //Call self
+      args[1] = nullptr;
 
-	  // Call self
-	  execvp(args[0], args);
+      // Call self
+      execvp(args[0], args);
 
-	  // You shouldn't be around these parts boy
-	  perror("execvp-subshell");
-	  exit(1);
+      // You shouldn't be around these parts boy
+      perror("execvp-subshell");
+      exit(1);
 
-	} default: {
+    } default: {
 
-		/* Write to pipe. */
-		size_t length = strlen(string), i = 0;
-		for(;i < length && write(1, string + i,1); i++);
-		//Housekeeping
-		dup2(tempOut, 1);
-		close(tempOut);
-		close(pipeTwo[1]);
-		// Read from pipe.
-		char* temp = buffer;
-		char c = 0;
-		while(read(0,&c,1)) {
+        /* Write to pipe. */
+        size_t length = strlen(string), i = 0;
+        for(;i < length && write(1, string + i,1); i++);
+        //Housekeeping
+        dup2(tempOut, 1);
+        close(tempOut);
+        close(pipeTwo[1]);
+        // Read from pipe.
+        char* temp = buffer;
+        char c = 0;
+        while(read(0,&c,1)) {
 
-		  if(c=='\n') *temp = ' ';
-		  else *temp = c;
-		  temp++;
+          if(c=='\n') *temp = ' ';
+          else *temp = c;
+          temp++;
 
-		} temp--;
-		/* Clear uneeded things */
-		while(temp>=buffer){unput(*temp); temp--;}
-		// Final housecleaning
-		dup2(tempIn, 0);
-		close(tempIn);
-		break;
-	  }
-	/* Wait for all processes */
+        } temp--;
+        /* Clear uneeded things */
+        while(temp>=buffer){unput(*temp); temp--;}
+        // Final housecleaning
+        dup2(tempIn, 0);
+        close(tempIn);
+        break;
+      }
+    /* Wait for all processes */
   } waitpid(ret,nullptr,0);
 
   free(string);
 }
 
-\"	{
-	BEGIN QUOTED_STRING;
-	stringIndex = 0;
-	Command::currentCommand.set_expand(false);
-	strbuf = new char[(strbufSize = DEFAULT_STRBUF_SIZE)];
+\"    {
+    BEGIN QUOTED_STRING;
+    stringIndex = 0;
+    Command::currentCommand.set_expand(false);
+    strbuf = new char[(strbufSize = DEFAULT_STRBUF_SIZE)];
 }
 
 <QUOTED_STRING>\\n {
-	strbufWrite('\n');
+    strbufWrite('\n');
 }
 <QUOTED_STRING>\\t {
-	strbufWrite('\t');
+    strbufWrite('\t');
 }
 <QUOTED_STRING>\\\" {
-	strbufWrite('\"');
+    strbufWrite('\"');
 }
 <QUOTED_STRING>\" {
-	strbufWrite('\0');
-	yylval.string_val = strbuf;
-	BEGIN 0;
-	return WORD;
+    strbufWrite('\0');
+    yylval.string_val = strbuf;
+    BEGIN 0;
+    return WORD;
 }
 <QUOTED_STRING>\n {
-	std::cout<<"> "<<std::flush;
-	strbufWrite('\n');
+    std::cout<<"> "<<std::flush;
+    strbufWrite('\n');
 }
 <QUOTED_STRING>. {
-	strbufWrite(*yytext);
+    strbufWrite(*yytext);
 }
 
 (([^ \"\t\n\|\>\<\&\[\]])|(\\.))+ {
-	yylval.string_val = new char[strlen(yytext) + 1];
-	strcpy(yylval.string_val, yytext);
-	size_t strs_len = strlen(yylval.string_val);
-	for( int i = 0; i < strs_len; i++ ) {
-		if( yylval.string_val[i] == '\\' ) {
-			for( int j = i; j < strs_len; j++ ) {
-				yylval.string_val[j] = yylval.string_val[j+1];
-			}
-		}
-	}
-	return WORD;
+    yylval.string_val = new char[strlen(yytext) + 1];
+    strcpy(yylval.string_val, yytext);
+    size_t strs_len = strlen(yylval.string_val);
+    for( int i = 0; i < strs_len; i++ ) {
+        if( yylval.string_val[i] == '\\' ) {
+            for( int j = i; j < strs_len; j++ ) {
+                yylval.string_val[j] = yylval.string_val[j+1];
+            }
+        }
+    }
+    return WORD;
 }

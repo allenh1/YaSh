@@ -34,11 +34,9 @@ read_line::read_line()
      * TODO(allenh1): Do we need error checks? Probably not...
      * but we might look into it.
      */
-
+    SimpleCommand::history = std::shared_ptr<std::vector<std::string>>(&m_history);
     /* load current history */
     load_history();
-
-    SimpleCommand::history = std::shared_ptr<std::vector<std::string>>(&m_history);
 }
 
 /**

@@ -165,31 +165,21 @@ public:
         m_history.push_back(_line);
     }
 
-    char * getStashed() {
-        char * ret = (char*) calloc(m_stashed.size() + 1, sizeof(char));
-        strncpy(ret, m_stashed.c_str(), m_stashed.size());
-        ret[m_stashed.size()] = '\0';
+    std::shared_ptr<std::string> getStashed() {
+        auto ret = std::make_shared<std::string>(m_stashed);
         m_get_mode = 1;
-        std::cerr<<"get returning: "<<ret<<std::endl;
         return ret;
     }
 
-    char * get() {
+    std::shared_ptr<std::string> get() {
         if (m_get_mode == 2) {
-            char * ret = (char*) calloc(m_stashed.size() + 1, sizeof(char));
-            strncpy(ret, m_stashed.c_str(), m_stashed.size());
-            ret[m_stashed.size()] = '\0';
+            auto ret = std::make_shared<std::string>(m_stashed);
             m_get_mode = 1;
-            std::cerr<<"get returning: "<<ret<<std::endl;
             return ret;
         }
 
         std::string returning;
-        returning = m_history[m_history.size() - 1];
-        /* returning.pop_back(); */
-        char * ret = (char*) calloc(returning.size() + 1, sizeof(char));
-        strncpy(ret, returning.c_str(), returning.size());
-        ret[returning.size()] = '\0';
+        auto ret = std::make_shared<std::string>(m_history[m_history.size() - 1]);
         return ret;
     }
 

@@ -34,7 +34,7 @@ int main()
 
     std::string expanded_home = tilde_expand("~/.yashrc");
 
-    auto rcfile = std::unique_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()));
+    auto rcfile = std::shared_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()), free);
 
     yyin = fopen(rcfile.get(), "r");
 
