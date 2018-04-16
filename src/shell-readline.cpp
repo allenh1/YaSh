@@ -517,8 +517,8 @@ bool read_line::handle_backspace(std::string & _line)
         else if (!write_with_error(1, "\b", 1)) return false;
 
         /* get terminal width */
-        register size_t term_width = get_term_width();
-        register size_t line_size = _line.size() + m_buff.size() + 2;
+        size_t term_width = get_term_width();
+        size_t line_size = _line.size() + m_buff.size() + 2;
         for (size_t x = 0; x < m_buff.size(); ++x, --line_size) {
             /* if the cursor is at the end of a line, print line up */
             if (line_size && (line_size % term_width == 0)) {

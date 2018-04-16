@@ -154,8 +154,8 @@ bool SimpleCommand::handle_cd(const int & fdin,
                 return true;
             }
 
-            register size_t replace_len     = strlen(to_replace);
-            register size_t replacement_len = strlen(replace_to);
+            size_t replace_len     = strlen(to_replace);
+            size_t replacement_len = strlen(replace_to);
 
             if (!(replace_len && replacement_len)) {
                 std::cerr<<"Error: replacement cannot be empty!"<<std::endl;

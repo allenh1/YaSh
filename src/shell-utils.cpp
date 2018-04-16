@@ -24,7 +24,7 @@ std::string longest_substring(const std::vector<std::string> & _vct) {
 	if (!_vct.size()) return std::string(""); /* return an empty string */
 
 	for (size_t len = 0; len < _vct[0].size(); ++len) {
-		register char c = _vct[0][len];
+		char c = _vct[0][len];
 
 		for (size_t x = 1; x < _vct.size(); ++x) {
 			if (len >= _vct[x].size() || _vct[x][len] != c) {
@@ -237,11 +237,11 @@ timeval operator - (timeval & t1, timeval & t2)
 {
 	/* Perform the carry for the later subtraction by updating y. */
 	if (t1.tv_usec < t2.tv_usec) {
-		register int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
+		int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
 		t2.tv_usec -= 1000000 * nsec;
 		t2.tv_sec += nsec;
 	} if (t1.tv_usec - t2.tv_usec > 1000000) {
-		register int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
+		int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
 		t2.tv_usec += 1000000 * nsec;
 		t2.tv_sec -= nsec;
 	}
