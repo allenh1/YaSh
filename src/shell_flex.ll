@@ -61,7 +61,6 @@ int stringIndex = 0;
 int strbufSize = 0;
 #define DEFAULT_STRBUF_SIZE 256
 void strbufWrite(char c) {
-    //printf("strbufWrite(%c)\n",c);
     if( stringIndex >= strbufSize ) {
         strbuf = (char*)realloc(strbuf,sizeof(char)*(strbufSize*=2));
     }

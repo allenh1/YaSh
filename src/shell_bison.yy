@@ -75,7 +75,7 @@ full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
 | SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
-	std::shared_ptr<char> alias, word, equals;
+	std::shared_ptr<char> alias = nullptr, word = nullptr, equals = nullptr;
 	if (!(equals = std::shared_ptr<char>(strchr($2, '=')))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
 	} else {
@@ -83,7 +83,6 @@ full_command { Command::currentCommand.execute(); }
 		/* word = WORD + length before '=' + 1 (for '='). */
 		word = std::shared_ptr<char>(strdup($3), free);
 		Command::currentCommand.setAlias(alias, word);
-                delete[] $2; delete[] $3;
 	}
 }
 | TIME NEWLINE { Command::currentCommand.prompt(); }
