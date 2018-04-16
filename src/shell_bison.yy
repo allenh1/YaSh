@@ -103,8 +103,9 @@ command_word argument_list {
 		job _back = Command::currentCommand.m_p_jobs->back();
 		/* don't restore io, just resume. */
 		if (kill(_back.pgid, SIGCONT) < 0) perror("kill"); bg=false;
-	} else
+	} else {
 		Command::currentCommand.insertSimpleCommand(Command::currentSimpleCommand);
+        }
 }
 ;
 
