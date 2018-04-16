@@ -7,7 +7,7 @@
 %token GREATAND TAB SRC ANDAND ALIAS GETS POPD TIME
 
 %union	{
-	char   *string_val;
+    char   *string_val;
 }
 
 %{
