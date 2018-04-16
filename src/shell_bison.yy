@@ -73,10 +73,10 @@ commands command
 command:
 full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
-| SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
+| SRC WORD { reader.setFile(std::string($2)); }
 | ALIAS WORD WORD {
 	std::shared_ptr<char> alias = nullptr, word = nullptr, equals = nullptr;
-	if (!(equals = std::shared_ptr<char>(strchr($2, '=')))) {
+	if (!(equals = std::shared_ptr<char>(strdup(strchr($2, '=')), free))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
 	} else {
 		alias = std::shared_ptr<char>(strndup($2, strlen($2) - 1), free);
@@ -113,7 +113,6 @@ WORD {
 	Command::currentSimpleCommand =
 		std::unique_ptr<SimpleCommand>(new SimpleCommand());
         auto _ptr = std::shared_ptr<char>(strdup($1), free);
-	delete[] $1;
 	if(!strcmp(_ptr.get(), "fg")) fg=true;
 	else if(!strcmp(_ptr.get(), "bg")) bg=true;
 	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
