@@ -73,7 +73,7 @@ commands command
 command:
 full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
-| SRC WORD { reader.setFile(std::string($2)); }
+| SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
 	std::shared_ptr<char> alias = nullptr, word = nullptr, equals = nullptr;
 	if (!(equals = std::shared_ptr<char>(strdup(strchr($2, '=')), free))) {
@@ -83,7 +83,7 @@ full_command { Command::currentCommand.execute(); }
 		/* word = WORD + length before '=' + 1 (for '='). */
 		word = std::shared_ptr<char>(strdup($3), free);
 		Command::currentCommand.setAlias(alias, word);
-	}
+	} delete[] $2; delete[] $3;
 }
 | TIME NEWLINE { Command::currentCommand.prompt(); }
 | NEWLINE { Command::currentCommand.prompt(); }
@@ -112,7 +112,7 @@ command_word:
 WORD {
 	Command::currentSimpleCommand =
 		std::unique_ptr<SimpleCommand>(new SimpleCommand());
-        auto _ptr = std::shared_ptr<char>(strdup($1), free);
+        auto _ptr = std::shared_ptr<char>($1, [](auto s){ delete[] s; });
 	if(!strcmp(_ptr.get(), "fg")) fg=true;
 	else if(!strcmp(_ptr.get(), "bg")) bg=true;
 	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
