@@ -34,7 +34,8 @@ read_line::read_line()
      * TODO(allenh1): Do we need error checks? Probably not...
      * but we might look into it.
      */
-    SimpleCommand::history = std::shared_ptr<std::vector<std::string>>(&m_history);
+    m_history = std::make_shared<std::vector<std::string>>();
+    SimpleCommand::history = m_history;
     /* load current history */
     load_history();
 }
@@ -150,7 +151,7 @@ bool read_line::handle_enter(std::string & _line, char & input)
             if (!write_with_error(1, ch)) return false;
         }
     } if (!write_with_error(1, input)) return false;
-    history_index = m_history.size();
+    history_index = m_history->size();
     return true;
 }
 
@@ -546,7 +547,7 @@ bool read_line::handle_backspace(std::string & _line)
         else if (!write_with_error(1, " ", 1)) return false;
         else if (!write_with_error(1, "\b", 1)) return false;
         _line.pop_back();
-    } if (((size_t) history_index == m_history.size()) &&
+    } if (((size_t) history_index == m_history->size()) &&
           m_current_line_copy.size()) m_current_line_copy.pop_back();
     return false;
 }
@@ -627,7 +628,7 @@ bool read_line::handle_delete(std::string & _line)
             if (!write_with_error(1, "\b", 1)) return false;
         }
     } else return false;
-    if ((size_t) history_index == m_history.size()) m_current_line_copy.pop_back();
+    if ((size_t) history_index == m_history->size()) m_current_line_copy.pop_back();
     return false;
 }
 
@@ -643,7 +644,7 @@ bool read_line::handle_bang(std::string & _line)
     if (!write_with_error(0, "!", 1)) return false;
 
     /* Check for "!!" and "!-<n>" */
-    if (!m_history.size()) {
+    if (!m_history->size()) {
         _line += "!";
         return false;
     }
@@ -657,7 +658,7 @@ bool read_line::handle_bang(std::string & _line)
         // "!!" = run prior command
         if (!write_with_error(1, "!", 1)) return false;
 
-        _line += m_history[m_history.size() - 1];
+        _line += m_history->at(m_history->size() - 1);
         _line.pop_back();
         m_show_line = true;
         return false;
@@ -671,8 +672,8 @@ bool read_line::handle_bang(std::string & _line)
         int n = atoi(buff); bool run_cmd = false;
         if (*b=='\n') run_cmd = true;
         if (n > 0) {
-            int _idx = m_history.size() - n;
-            _line += m_history[(_idx >= 0) ? _idx : 0];
+            int _idx = m_history->size() - n;
+            _line += m_history->at((_idx >= 0) ? _idx : 0);
             _line.pop_back();
             m_show_line = true;
             if (run_cmd) {
@@ -684,7 +685,7 @@ bool read_line::handle_bang(std::string & _line)
                         if (!write_with_error(1, ch)) return false;
                     }
                 }
-                history_index = m_history.size();
+                history_index = m_history->size();
                 return true;
             }
         }
@@ -720,7 +721,7 @@ bool read_line::handle_up_arrow(std::string & _line)
             hist = &m_rev_search;
             search_str = _line;
             auto it = std::copy_if(
-                m_history.begin(), m_history.end(),
+                m_history->begin(), m_history->end(),
                 std::back_inserter(*hist),
                 [_line](const auto & s) {
                     return (s.size() >= _line.size()) &&
@@ -729,7 +730,7 @@ bool read_line::handle_up_arrow(std::string & _line)
             search_index = hist->size();
         } else hist = &m_rev_search;
         index = &search_index;
-    } else hist = &m_history;
+    } else hist = m_history.get();
 
     /* check if we can go up */
     if (!hist->size()) return false;
@@ -786,7 +787,7 @@ bool read_line::handle_down_arrow(std::string & _line)
     search_mode =
         rev_search && !strcmp(rev_search, "UP_ARROW") && _line.size();
 
-    std::vector<std::string> * hist = &m_history;
+    std::vector<std::string> * hist = m_history.get();
     ssize_t * index = &history_index;
     if (search_mode) {
         if (_line != search_str) {
@@ -795,7 +796,7 @@ bool read_line::handle_down_arrow(std::string & _line)
             hist = &m_rev_search;
             search_str = _line;
             auto it = std::copy_if(
-                m_history.begin(), m_history.end(),
+                m_history->begin(), m_history->end(),
                 std::back_inserter(*hist),
                 [_line](const auto & s) {
                     return (s.size() >= _line.size()) &&
@@ -926,5 +927,5 @@ void read_line::load_history()
     /* load history from ~/.cache/yash-history */
     std::ifstream history_file(tilde_expand("~/.cache/yash_history"));
     std::string _line; int x = 0;
-    for (; std::getline(history_file, _line); history_index++, m_history.push_back(_line + "\n"));
+    for (; std::getline(history_file, _line); history_index++, m_history->push_back(_line + "\n"));
 }

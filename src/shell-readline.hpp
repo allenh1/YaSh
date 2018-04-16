@@ -115,7 +115,7 @@ public:
                     }
                 } else {
                     _line += input;
-                    if ((size_t)history_index == m_history.size())
+                    if ((size_t)history_index == m_history->size())
                         m_current_line_copy += input;
                     /* Write to screen */
                     if (!write_with_error(1, input)) continue;
@@ -162,7 +162,7 @@ public:
             close(history_fd);
         } _line += (char) 10 + '\0';
         m_current_line_copy.clear();
-        m_history.push_back(_line);
+        m_history->push_back(_line);
     }
 
     std::shared_ptr<std::string> getStashed() {
@@ -179,7 +179,7 @@ public:
         }
 
         std::string returning;
-        auto ret = std::make_shared<std::string>(m_history[m_history.size() - 1]);
+        auto ret = std::make_shared<std::string>(m_history->at(m_history->size() - 1));
         return ret;
     }
 
@@ -222,7 +222,7 @@ public:
 
     void save_history();
     void load_history();
-    const std::vector<std::string> & get_history() { return m_history; }
+    const std::shared_ptr<std::vector<std::string>> get_history() { return m_history; }
     termios oldtermios;
 private:
     std::vector<std::string> string_split(std::string s, char delim) {
@@ -242,7 +242,7 @@ private:
     std::string m_filename;
     std::ifstream * m_ifstream;
     int m_get_mode;
-    std::vector<std::string> m_history;
+    std::shared_ptr<std::vector<std::string>> m_history;
     std::vector<std::string> m_rev_search;
     ssize_t search_index = 0;
     std::string search_str;
