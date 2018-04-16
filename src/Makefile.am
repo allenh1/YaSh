@@ -2,11 +2,11 @@
 BUILT_SOURCES = shell_bison.hh
 
 if DEBUG
-AM_CFLAGS = -g -O0 -lpthread -std=c++14
-AM_CXXFLAGS = -g -O0 -lpthread -std=c++14
+AM_CFLAGS = -g -O0 -lpthread -std=c++17
+AM_CXXFLAGS = -g -O0 -lpthread -std=c++17
 else
 AM_CFLAGS =  -O2 -fPIC -lpthread
-AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++14
+AM_CXXFLAGS = -O2 -fPIC -lpthread -std=c++17
 endif
 
 AM_YFLAGS = -d
