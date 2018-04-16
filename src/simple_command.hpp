@@ -59,7 +59,7 @@ struct SimpleCommand {
     SimpleCommand();
     ~SimpleCommand() { release(); }
     std::vector<char* > arguments;
-    void insertArgument(char * argument);
+    void insertArgument(const std::shared_ptr<char> argument);
     ssize_t numOfArguments = 0;
     void release() {
         for (size_t x = 0; x < arguments.size(); ++x) delete[] arguments[x];
@@ -92,8 +92,9 @@ struct SimpleCommand {
     bool stopped = false;
     int status = -1;
 
-    static std::vector<std::string> * history;
-    static std::vector<job> * p_jobs;
+    static std::shared_ptr<std::vector<std::string>> history;
+    static std::shared_ptr<std::vector<job>> p_jobs;
+
     pid_t pid;
 };
 #endif

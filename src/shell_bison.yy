@@ -7,7 +7,7 @@
 %token GREATAND TAB SRC ANDAND ALIAS GETS POPD TIME
 
 %union	{
-	char   *string_val;
+    char   *string_val;
 }
 
 %{
@@ -75,16 +75,15 @@ full_command { Command::currentCommand.execute(); }
 | POPD { Command::currentCommand.popDir(); }
 | SRC WORD { reader.setFile(std::string($2)); delete[] $2; }
 | ALIAS WORD WORD {
-	char * alias, * word, * equals;
-	if (!(equals = strchr($2, '='))) {
+	std::shared_ptr<char> alias = nullptr, word = nullptr, equals = nullptr;
+	if (!(equals = std::shared_ptr<char>(strdup(strchr($2, '=')), free))) {
 		std::cerr<<"Invalid syntax: alias needs to be set!"<<std::endl;
 	} else {
-		alias = strndup($2, strlen($2) - 1);
+		alias = std::shared_ptr<char>(strndup($2, strlen($2) - 1), free);
 		/* word = WORD + length before '=' + 1 (for '='). */
-		word  = strdup($3);
+		word = std::shared_ptr<char>(strdup($3), free);
 		Command::currentCommand.setAlias(alias, word);
-		free(alias); free(word); delete[] $2; delete[] $3;
-	}
+	} delete[] $2; delete[] $3;
 }
 | TIME NEWLINE { Command::currentCommand.prompt(); }
 | NEWLINE { Command::currentCommand.prompt(); }
@@ -101,11 +100,12 @@ command_word argument_list {
 	} else if(fg) {
 	    Command::currentCommand.send_to_foreground(-1, fg, reader.oldtermios);
 	} else if(bg) {
-		job _back = Command::currentCommand.m_jobs.back();
+		job _back = Command::currentCommand.m_p_jobs->back();
 		/* don't restore io, just resume. */
 		if (kill(_back.pgid, SIGCONT) < 0) perror("kill"); bg=false;
-	} else
+	} else {
 		Command::currentCommand.insertSimpleCommand(Command::currentSimpleCommand);
+        }
 }
 ;
 
@@ -113,12 +113,11 @@ command_word:
 WORD {
 	Command::currentSimpleCommand =
 		std::unique_ptr<SimpleCommand>(new SimpleCommand());
-	char * _ptr = strdup($1); delete[] $1;
-	if(!strcmp(_ptr, "fg")) fg=true;
-	else if(!strcmp(_ptr, "bg")) bg=true;
-	else if(!strcmp(_ptr, "pushd")) pushd=true;
+        auto _ptr = std::shared_ptr<char>($1, [](auto s){ delete[] s; });
+	if(!strcmp(_ptr.get(), "fg")) fg=true;
+	else if(!strcmp(_ptr.get(), "bg")) bg=true;
+	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
-	free(_ptr);
 }
 ;
 
@@ -130,14 +129,14 @@ argument_list argument
 argument:
 WORD {
 	std::string temp = tilde_expand(std::string($1));
-	char * expand_upon_me = strndup(temp.c_str(), temp.size());
-	wildcard_expand(expand_upon_me); free(expand_upon_me);
+	auto expand_upon_me = std::shared_ptr<char>(strndup(temp.c_str(), temp.size()), free);
+	wildcard_expand(expand_upon_me);
 
 	if(fg) {
 		pid_t current = tcgetpgrp(0);
 		try {
 			int as_num = std::stoi(std::string($1));
-			if (as_num >= Command::currentCommand.m_jobs.size()) {
+			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				std::cerr<<"fg: no such job"<<std::endl;
 			} else {
 			  	Command::currentCommand.send_to_foreground(
@@ -150,12 +149,12 @@ WORD {
 	} else if(bg) {
 		try {
 			int as_num = std::stoi(std::string($1));
-			if (as_num >= Command::currentCommand.m_jobs.size()) {
-				job _back = Command::currentCommand.m_jobs[as_num];
+			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
+				job _back = Command::currentCommand.m_p_jobs->at(as_num);
 				/* erase */
-				Command::currentCommand.m_jobs.erase(
-					Command::currentCommand.m_jobs.begin() + as_num,
-					Command::currentCommand.m_jobs.begin() + as_num + 1);
+				Command::currentCommand.m_p_jobs->erase(
+					Command::currentCommand.m_p_jobs->begin() + as_num,
+					Command::currentCommand.m_p_jobs->begin() + as_num + 1);
 
                 /* don't restore io, just resume */
 				if (kill(_back.pgid, SIGCONT) < 0) perror("kill");
@@ -165,39 +164,39 @@ WORD {
 					 <<std::endl;
 		} bg=false;
 	} else if(pushd) {
-		Command::currentCommand.pushDir(strdup($1)); delete[] $1; pushd=false;
+		Command::currentCommand.pushDir(std::shared_ptr<char>($1)); pushd=false;
+                $1 = nullptr;
 	} else {
 		for (auto && arg : Command::currentCommand.wc_collector) {
-			char * temp = strndup(arg.c_str(), arg.size());
+			std::shared_ptr<char> temp = std::shared_ptr<char>(
+                        strndup(arg.c_str(), arg.size()), free);
 			Command::currentSimpleCommand->insertArgument(temp);
-			free(temp);
 		}
 		Command::currentCommand.wc_collector.clear();
 		Command::currentCommand.wc_collector.shrink_to_fit();
 	} delete[] $1;
 }
-| BACKTIK { Command::currentCommand.subShell($1); delete[] $1; }
 ;
 
 io_modifier:
 GREAT WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
-	Command::currentCommand.set_out_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
 }
 | TOOGREAT WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
 	Command::currentCommand.setAppend(true);
-	Command::currentCommand.set_out_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
 }
 | GREATAND WORD {
 	if (Command::currentCommand.outIsSet())
 		yyerror("Ambiguous output redirect.\n");
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
-	Command::currentCommand.set_out_file($2);
-	Command::currentCommand.set_err_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
+	Command::currentCommand.set_err_file(std::shared_ptr<char>($2));
 }
 | TOOGREATAND WORD {
 	if (Command::currentCommand.outIsSet())
@@ -205,13 +204,13 @@ GREAT WORD {
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
 	Command::currentCommand.setAppend(true);
-	Command::currentCommand.set_out_file($2);
-	Command::currentCommand.set_err_file($2);
+	Command::currentCommand.set_out_file(std::shared_ptr<char>($2));
+	Command::currentCommand.set_err_file(std::shared_ptr<char>($2));
 }
 | LESS WORD {
 	if (Command::currentCommand.inIsSet())
 		yyerror("Ambiguous input redirect.\n");
-	Command::currentCommand.set_in_file($2);
+	Command::currentCommand.set_in_file(std::shared_ptr<char>($2));
 }
 ;
 

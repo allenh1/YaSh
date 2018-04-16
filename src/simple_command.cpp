@@ -145,7 +145,7 @@ bool SimpleCommand::handle_cd(const int & fdin,
             char * sub = strstr(replace_in, to_replace);
 
             /* Desired replacement wasn't found, so error and exit */
-            if (sub == NULL) {
+            if (sub == nullptr) {
                 perror("cd");
 
                 free(to_replace);
@@ -154,8 +154,8 @@ bool SimpleCommand::handle_cd(const int & fdin,
                 return true;
             }
 
-            register size_t replace_len     = strlen(to_replace);
-            register size_t replacement_len = strlen(replace_to);
+            size_t replace_len     = strlen(to_replace);
+            size_t replacement_len = strlen(replace_to);
 
             if (!(replace_len && replacement_len)) {
                 std::cerr<<"Error: replacement cannot be empty!"<<std::endl;
@@ -223,7 +223,7 @@ void SimpleCommand::handle_ls()
         } // ... still better than managing myself!
         temp[0] = strdup("ls");
         temp[1] = strdup("--color=auto");
-        temp[arguments.size()] = NULL;
+        temp[arguments.size()] = nullptr;
 
         execvp (temp[0], temp);
         perror("execvp");
@@ -239,7 +239,7 @@ void SimpleCommand::handle_grep()
             temp[y] = strdup(arguments[y]);
         }
         temp[arguments.size() - 1] = strdup("--color");
-        temp[arguments.size()] = NULL;
+        temp[arguments.size()] = nullptr;
 
         execvp (temp[0], temp);
         perror("execvp");
@@ -260,7 +260,7 @@ bool SimpleCommand::handle_setenv(const int & fdin,
                                   const int & fdout,
                                   const int & fderr)
 {
-    /* arguments.size() == 4 because of the extra NULL */
+    /* arguments.size() == 4 because of the extra nullptr */
     if (arguments[0] == std::string("setenv") && arguments.size() != 4) {
         std::cerr<<"setenv: invalid arguments"<<std::endl;
         std::cerr<<"usage: setenv [variable] [value]"<<std::endl;
@@ -332,7 +332,7 @@ bool SimpleCommand::handle_cl(const int & fdin,
             waitpid(pid,0,0);
             for(int y = 0; y < 3; y++){
                 free(temp[y]);
-                temp[y] = NULL;
+                temp[y] = nullptr;
             } delete[] temp;
             resume_io(saved_fdin, saved_fdout, saved_fderr);
             return true;

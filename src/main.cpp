@@ -24,8 +24,8 @@ extern int yyparse();
 extern void yyrestart (FILE * in);
 extern void yyerror(const char * s);
 extern read_line reader;
-std::vector<std::string> * SimpleCommand::history = NULL;
-std::vector<job> * SimpleCommand::p_jobs = NULL;
+std::shared_ptr<std::vector<std::string>> SimpleCommand::history = nullptr;
+std::shared_ptr<std::vector<job>> SimpleCommand::p_jobs = nullptr;
 
 int main()
 {
@@ -34,12 +34,12 @@ int main()
 
     std::string expanded_home = tilde_expand("~/.yashrc");
 
-    char * rcfile = strndup(expanded_home.c_str(), expanded_home.size());
+    auto rcfile = std::shared_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()), free);
 
-    yyin = fopen(rcfile, "r"); free(rcfile);
+    yyin = fopen(rcfile.get(), "r");
 
     /* From Brian P. Hays */
-    if (yyin != NULL) {
+    if (yyin != nullptr) {
         Command::currentCommand.printPrompt = false;
         yyparse();
         fclose(yyin);
@@ -77,4 +77,3 @@ int main()
 
     return 0;
 }
-

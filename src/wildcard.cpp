@@ -14,9 +14,9 @@
 
 #include "wildcard.hpp"
 
-void wildcard_expand(char * arg) {
+void wildcard_expand(const std::shared_ptr<char> arg) {
     // return if arg does not contain * or ?
-    if((!strchr(arg, '*') && !strchr(arg, '?'))
+    if((!strchr(arg.get(), '*') && !strchr(arg.get(), '?'))
        || !Command::currentCommand.get_expand()) {
         Command::currentSimpleCommand->insertArgument(arg);
         return;
@@ -24,7 +24,7 @@ void wildcard_expand(char * arg) {
 
     bool hidden = false;
 
-    char * a = arg;
+    char * a = arg.get();
   
     for (int i=0;*(a+1);a++, i++) {
         if ((*a == '/' && *(a+1) == '.' && *(a+1) == '*')
@@ -35,8 +35,8 @@ void wildcard_expand(char * arg) {
  
     glob_t results;
     if(hidden) {
-        glob((const char*)arg, GLOB_PERIOD, (int)NULL, &results);
-    } else { glob((const char*)arg, GLOB_ERR,(int)NULL, &results); }
+        glob(arg.get(), GLOB_PERIOD, nullptr, &results);
+    } else { glob(arg.get(), GLOB_ERR, nullptr, &results); }
 
     Command::currentCommand.wc_collector.clear();
     Command::currentCommand.wc_collector.shrink_to_fit();

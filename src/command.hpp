@@ -36,22 +36,20 @@ public:
     void execute();
     void clear();
 
-    void pushDir(const char * new_dir);
+    void pushDir(const std::shared_ptr<char> new_dir);
     void popDir();
 
     void insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand);
 
-    void set_in_file(char * _fd);
-    void set_out_file(char * _fd);
-    void set_err_file(char * _fd);
+    void set_in_file(const std::shared_ptr<char> _fd);
+    void set_out_file(const std::shared_ptr<char> _fd);
+    void set_err_file(const std::shared_ptr<char> _fd);
 
     void send_to_foreground(ssize_t process_num,
                             bool & fg,
                             termios & _oldtermios);
 
-    void setAlias(const char * _from, const char * _to);
-
-    void subShell(char * arg);
+    void setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to);
 
     int status = -1;
 
@@ -91,7 +89,7 @@ public:
 
     std::map<std::string, std::vector<std::string> > m_aliases;
     std::map<pid_t, size_t> m_job_map;
-    std::vector<job> m_jobs;
+    std::shared_ptr<std::vector<job>> m_p_jobs;
 
     std::vector<std::string> wc_collector;// Wild card collection tool
 
@@ -111,9 +109,9 @@ private:
 
     int get_output_flags();
 
-    std::unique_ptr<char> outFile;
-    std::unique_ptr<char> inFile;
-    std::unique_ptr<char> errFile;
+    std::unique_ptr<std::string> outFile = nullptr;
+    std::unique_ptr<std::string> inFile = nullptr;
+    std::unique_ptr<std::string> errFile = nullptr;
 
     bool append = false;
     bool background = false;

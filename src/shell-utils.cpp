@@ -24,7 +24,7 @@ std::string longest_substring(const std::vector<std::string> & _vct) {
 	if (!_vct.size()) return std::string(""); /* return an empty string */
 
 	for (size_t len = 0; len < _vct[0].size(); ++len) {
-		register char c = _vct[0][len];
+		char c = _vct[0][len];
 
 		for (size_t x = 1; x < _vct.size(); ++x) {
 			if (len >= _vct[x].size() || _vct[x][len] != c) {
@@ -96,7 +96,7 @@ std::string tilde_expand(std::string input)
 		std::string user = substr.substr(1, substr.size());
 		if (user.size() > 0) {
 			passwd * _passwd = getpwnam(user.c_str());
-			if (_passwd == NULL) {
+			if (_passwd == nullptr) {
 				/* user wasn't found. */
 				std::cerr<<"User \""<<user.c_str()<<"\" not found!"<<std::endl;
 				return input;
@@ -158,7 +158,7 @@ std::string env_expand(std::string s)
 			for (char * tmp = temp2; *str && *str != '}'; *(tmp++) = *(str++));
 			if (*str == '}') {
 				++str; char * out = getenv(temp2);
-				if (out == NULL) continue;;
+				if (out == nullptr) continue;;
 				for (char * t = out; *t; temp[index++] = *(t++));
 			} free(temp2);
 		}// if not a variable, don't expand.
@@ -237,11 +237,11 @@ timeval operator - (timeval & t1, timeval & t2)
 {
 	/* Perform the carry for the later subtraction by updating y. */
 	if (t1.tv_usec < t2.tv_usec) {
-		register int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
+		int nsec = (t2.tv_usec - t1.tv_usec) / 1000000 + 1;
 		t2.tv_usec -= 1000000 * nsec;
 		t2.tv_sec += nsec;
 	} if (t1.tv_usec - t2.tv_usec > 1000000) {
-		register int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
+		int nsec = (t1.tv_usec - t2.tv_usec) / 1000000;
 		t2.tv_usec += 1000000 * nsec;
 		t2.tv_sec -= nsec;
 	}

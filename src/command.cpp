@@ -16,11 +16,11 @@
 std::vector<int> m_background;
 
 SimpleCommand::SimpleCommand()
-{ SimpleCommand::p_jobs = & Command::currentCommand.m_jobs; }
+{ SimpleCommand::p_jobs = Command::currentCommand.m_p_jobs; }
 
-void SimpleCommand::insertArgument(char * argument)
+void SimpleCommand::insertArgument(const std::shared_ptr<char> argument)
 {
-    std::string as_string(argument);
+    std::string as_string(argument.get());
 
     auto exists = Command::currentCommand.m_aliases.find(as_string);
 
@@ -67,7 +67,7 @@ inline int eval_to_buffer(char * const* cmd, char * outBuff, size_t buffSize)
             return -1;
         }
 
-        waitpid(pid, NULL, 0);
+        waitpid(pid, nullptr, 0);
         close(fdpipe[0]);
     } return 0;
 }
@@ -77,116 +77,57 @@ int Command::get_output_flags()
     return O_CREAT | O_WRONLY | ((append) ? O_APPEND : O_TRUNC);
 }
 
-void Command::set_in_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    inFile = std::unique_ptr<char>(fd);
+void Command::set_in_file(const std::shared_ptr<char> _fd)
+{
+    std::string expanded = tilde_expand(_fd.get());
+    inFile = std::make_unique<std::string>(expanded);
     inSet = true;
 
-    m_stdin = open(fd, O_RDONLY, 0600);
+    m_stdin = open(inFile->c_str(), O_RDONLY, 0600);
 
     if (m_stdin < 0) {
         perror("open");
         inSet = false;
-        inFile = NULL;
+        inFile = nullptr;
         m_stdin = 0;
     }
 }
 
-void Command::set_out_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    outFile = std::unique_ptr<char>(fd);
+void Command::set_out_file(const std::shared_ptr<char> _fd)
+{
+    std::string expanded = tilde_expand(_fd.get());
+    outFile = std::make_unique<std::string>((expanded));
     outSet = true;
 
-    m_stdout = open(fd, get_output_flags(), 0600);
+    m_stdout = open(outFile->c_str(), get_output_flags(), 0600);
 
     if (m_stdout < 0) {
         perror("open");
         outSet = false;
-        outFile = NULL;
+        outFile = nullptr;
         m_stdout = 1;
     }
 }
 
-void Command::set_err_file(char * _fd) {
-    std::string expanded = tilde_expand(_fd);
-    char * fd = strndup(expanded.c_str(), expanded.size());
-    errFile = std::unique_ptr<char>(fd);
+void Command::set_err_file(const std::shared_ptr<char> _fd) {
+    std::string expanded = tilde_expand(_fd.get());
+    errFile = std::make_unique<std::string>(expanded);
     errSet = true;
 
-    m_stderr = open(fd, get_output_flags(), 0600);
+    m_stderr = open(errFile->c_str(), get_output_flags(), 0600);
 
     if (m_stderr < 0) {
         perror("open");
         errSet = false;
-        errFile = NULL;
+        errFile = nullptr;
         m_stderr = 2;
     }
 }
 
-#define SUBSH_MAX_LEN 4096
-void Command::subShell(char * arg)
-{
-    std::cerr<<"Running subshell cmd: \""<<arg<<"\""<<std::endl;
-    int cmd_pipe[2]; int out_pipe[2]; pid_t pid;
-    int tmpin = dup(0); int tmpout = dup(1); int tmperr = dup(2);
-
-    if (pipe(cmd_pipe) == -1) {
-        perror("cmd_pipe");
-        return;
-    } else if (pipe(out_pipe) == -1) {
-        perror("out_pipe");
-        return;
-    }
-
-    dup2(cmd_pipe[1], 1); close(cmd_pipe[1]); /* cmd to stdout */
-    dup2(out_pipe[0], 0); close(out_pipe[0]); /* out to stdin  */
-    if ((pid = fork()) == -1) {
-        perror("subshell fork");
-        return;
-    } else if (pid == 0) {
-        /* Child Process */
-        close(out_pipe[0]); /* close the read end of the out pipe */
-        close(cmd_pipe[1]); /* close the write end of the cmd pipe */
-
-        dup2(out_pipe[1], 1); close(out_pipe[1]); /* out_pipe[1] -> stdout */
-        dup2(cmd_pipe[0], 0); close(cmd_pipe[0]); /* cmd_pipe[0] -> stdin  */
-
-        execlp("yash", "yash", NULL);
-        perror("subshell exec");
-        _exit(1);
-    } else if (pid != 0) {
-        /* Parent Process */
-        char * buff = (char*) calloc(SUBSH_MAX_LEN, sizeof(char));
-        char * c = NULL;
-        close(out_pipe[1]); /* close the write end of the out pipe */
-        close(cmd_pipe[0]); /* close the read end of the cmd pipe */
-
-        /* write the command to the write end of the cmd pipe */
-        for (c = arg; *c && write(cmd_pipe[1], c++, 1););
-
-        /* Close pipe so subprocess isn't waiting */
-        dup2(tmpout, 1); close(tmpout); close(cmd_pipe[1]);
-        waitpid(pid, NULL, WNOHANG); /* Don't hang if child is already dead */
-
-        /* read from the out pipe and store in a buffer */
-        for (c = buff; read(out_pipe[0], c++, 1););
-
-        std::cerr<<"Read from buffer"<<std::endl;
-        size_t buff_len = c - buff; /* this is the number of characters read */
-
-        /* Push the buffer onto stdin */
-        for (int b = 0; (ungetc(buff[b++], stdin)) && buff_len--;);
-        free(buff); /* release the buffer */
-    }
-
-    /* restore default IO */
-    dup2(tmpin, 0); dup2(tmpout, 1); dup2(tmperr, 2);
-}
-
 Command::Command()
-{ /** Constructor **/ }
+{
+    m_p_jobs = std::make_shared<std::vector<job>>();
+}
 
 void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 { simpleCommands.push_back(simpleCommand), ++numOfSimpleCommands; }
@@ -202,9 +143,9 @@ void Command::clear()
     simpleCommands.clear(),
         background = append = false,
         numOfSimpleCommands = 0, m_pgid = 0,
-        outFile.release(), inFile.release(),
-        errFile.release(), simpleCommands.shrink_to_fit(),
-        m_jobs.shrink_to_fit(), m_expand = true;
+        outFile = nullptr, inFile = nullptr,
+        errFile = nullptr, simpleCommands.shrink_to_fit(),
+        m_p_jobs->shrink_to_fit(), m_expand = true;
     outSet = inSet = errSet = m_time = false;
 }
 
@@ -226,9 +167,11 @@ void Command::print()
     std::cout<<std::endl<<std::endl;
     std::cout<<"  Output       Input        Error        Background"<<std::endl;
     std::cout<<"  ------------ ------------ ------------ ------------"<<std::endl;
-    printf("  %-12s %-12s %-12s %-12s\n", outFile.get()?outFile.get():"default",
-           inFile.get()?inFile.get():"default", errFile.get()?errFile.get():"default",
-           background?"YES":"NO");
+    printf("  %-12s %-12s %-12s %-12s\n",
+           nullptr == outFile ? outFile->c_str() : "default",
+           nullptr == inFile ? inFile->c_str() : "default",
+           nullptr == errFile ? errFile->c_str() : "default",
+           background ? "YES" : "NO");
     std::cout<<std::endl<<std::endl;
 }
 
@@ -266,9 +209,8 @@ void Command::execute()
     if (lolz && !strcmp(lolz, "YES")) {
         /// Because why not?
         std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
-        char * _ptr = strdup("lolcat");
+        std::shared_ptr<char> _ptr = std::shared_ptr<char>(strdup("lolcat"), free);
         lul->insertArgument(_ptr);
-        free(_ptr);
         if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
             strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
             strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
@@ -288,11 +230,11 @@ void Command::execute()
         /* manage commands */
         std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
         char ** d_args;
-        curr.push_back((char *) NULL);
+        curr.push_back((char *) nullptr);
         d_args = curr.data();
 
-        /* add NULL to the end of the simple command (for exec) */
-        simpleCommands.at(x).get()->arguments.push_back((char*) NULL);
+        /* add nullptr to the end of the simple command (for exec) */
+        simpleCommands.at(x).get()->arguments.push_back((char*) nullptr);
 
         if (x != numOfSimpleCommands - 1) {
             /* thank you Gustavo for the outer if statement. */
@@ -358,12 +300,12 @@ void Command::execute()
             waitpid(pid, &status, WUNTRACED);
             tcsetpgrp(STDIN_FILENO, m_shell_pgid);
         } else waitpid(pid, &status, WUNTRACED);
-    } else m_jobs.push_back(current), m_job_map[m_pgid] = m_jobs.size() - 1;
+    } else m_p_jobs->push_back(current), m_job_map[m_pgid] = m_p_jobs->size() - 1;
 
     if (WIFSTOPPED(status)) {
         current.status = job_status::STOPPED;
-        m_jobs.push_back(current);
-        std::cout<<"["<<(m_job_map[pid] = m_jobs.size() - 1)
+        m_p_jobs->push_back(current);
+        std::cout<<"["<<(m_job_map[pid] = m_p_jobs->size() - 1)
                  <<"]+\tstopped\t"<<pid<<std::endl;
     }
 
@@ -372,7 +314,7 @@ void Command::execute()
         const auto & x = m_job_map.find(_pid);
         if (x != m_job_map.end()) {
             /* x->second is the value */
-            std::cout<<"["<<(m_job_map[_pid] = m_jobs.size() - 1)
+            std::cout<<"["<<(m_job_map[_pid] = m_p_jobs->size() - 1)
                      <<"]-\texited"<<std::endl;
         }
     }
@@ -419,8 +361,8 @@ void Command::prompt()
         char buffer[100]; std::string _host;
         if (!gethostname(buffer, 100)) _host = std::string(buffer);
         else _host = std::string("localhost");
-        char * _wd = NULL, * _hme = NULL;
-        char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) NULL };
+        char * _wd = nullptr, * _hme = nullptr;
+        char cdirbuff[2048]; char * const _pwd[2] = { (char*) "pwd", (char*) nullptr };
         eval_to_buffer(_pwd, cdirbuff, 2048);
         std::string _cdir = std::string(cdirbuff);
         char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
@@ -455,9 +397,9 @@ std::vector<std::string> splitta(std::string s, char delim) {
     return elems;
 }
 
-void Command::setAlias(const char * _from, const char * _to)
+void Command::setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to)
 {
-    std::string from(_from); std::string to(_to);
+    std::string from(_from.get()); std::string to(_to.get());
     std::vector<std::string> split = splitta(to, ' ');
 
     /**
@@ -470,22 +412,22 @@ void Command::setAlias(const char * _from, const char * _to)
     m_aliases[from] = split;
 }
 
-void Command::pushDir(const char * new_dir) {
+void Command::pushDir(const std::shared_ptr<char> new_dir) {
     char * _pwd = getenv("PWD");
-    if (_pwd == NULL) {
+    if (_pwd == nullptr) {
         perror("pwd");
         return;
-    } else if (new_dir == NULL || *new_dir == '\0') {
+    } else if (new_dir == nullptr || *new_dir == '\0') {
         std::cerr<<"Invalid new directory!"<<std::endl;
         return;
     }
     std::string curr_dir = std::string(getenv("PWD"));
-    std::string news(new_dir);
+    std::string news(new_dir.get());
     news = tilde_expand(news);
 
     if(news.find_first_of("*") != std::string::npos) news = curr_dir + "/" + news;
-
-    wildcard_expand((char*)news.c_str());
+    auto to_expand = std::shared_ptr<char>(strndup(news.c_str(), news.size()), free);
+    wildcard_expand(to_expand);
 
     if(!wc_collector.size() && changedir(news)) {
         m_dir_stack.insert(m_dir_stack.begin(), curr_dir);
@@ -525,13 +467,13 @@ void Command::send_to_foreground(ssize_t job_num,
                                  termios & _oldtermios)
 {
     pid_t current = m_shell_pgid;
-    if (m_jobs.size()) {
+    if (m_p_jobs->size()) {
         /* did they pass an argument? */
-        job_num = (job_num < 0) ? m_jobs.size() - 1 : job_num;
-        job _job = m_jobs[job_num];
-        m_jobs.erase( /* remove the job */
-            m_jobs.begin() + job_num,
-            m_jobs.begin() + job_num + 1);
+        job_num = (job_num < 0) ? m_p_jobs->size() - 1 : job_num;
+        job _job = m_p_jobs->at(job_num);
+        m_p_jobs->erase( /* remove the job */
+            m_p_jobs->begin() + job_num,
+            m_p_jobs->begin() + job_num + 1);
         tcsetpgrp(0, _job.pgid);
         tcsetattr(0, TCSADRAIN, &_oldtermios);
         if (kill(_job.pgid, SIGCONT) < 0) perror("kill");
@@ -552,13 +494,13 @@ void Command::send_to_foreground(ssize_t job_num,
                 waitpid(_job.pgid, &status, WUNTRACED);
                 tcsetpgrp(STDIN_FILENO, m_shell_pgid);
             } else waitpid(_job.pgid, &status, WUNTRACED);
-        } else m_jobs.push_back(_job), m_job_map[m_pgid] = m_jobs.size() - 1;
+        } else m_p_jobs->push_back(_job), m_job_map[m_pgid] = m_p_jobs->size() - 1;
 
         /* check if the job is stopped */
         if (WIFSTOPPED(status)) {
             _job.status = job_status::STOPPED;
-            m_jobs.push_back(_job);
-            std::cout<<"["<<(m_job_map[_job.pgid] = m_jobs.size() - 1)
+            m_p_jobs->push_back(_job);
+            std::cout<<"["<<(m_job_map[_job.pgid] = m_p_jobs->size() - 1)
                      <<"]+\tstopped\t"<<_job.pgid<<std::endl;
         }
     } else {
@@ -574,7 +516,7 @@ std::string get_command_text(Command & cmd)
     for (auto & x : cmd.simpleCommands) {
         ret += (first_cmd) ? (first_cmd = false, "") : " |";
         for (auto & y : x.get()->arguments) {
-            if (y == NULL) continue; /* skip over the first one */
+            if (y == nullptr) continue; /* skip over the first one */
             ret += ((first_arg) ? (first_arg = false, "")
                     : std::string(" ")) + y;
         }
