@@ -477,18 +477,19 @@ bool read_line::handle_ctrl_k(std::string & _line)
     if (!m_buff.size()) return false;
     size_t count = m_buff.size() + 1;
     /* Clear the stack. On its own thread. */
-    std::thread stack_killer([this](){
-            for(;m_buff.size();m_buff.pop());
+    std::thread stack_killer([this] () {
+            for(; m_buff.size(); m_buff.pop());
         }); stack_killer.detach();
 
-    char * spaces = (char*) malloc(count + 1);
-    char * bspaces = (char*) malloc(count + 1);
+    const auto deleter = [] (auto s) { delete[] s; };
+    auto spaces = std::shared_ptr<char>(new char[count + 1], deleter);
+    auto bspaces = std::shared_ptr<char>(new char[count + 1], deleter);
 
-    memset(spaces, ' ', count); spaces[count] = '\0';
-    memset(bspaces, '\b', count); bspaces[count] = '\0';
+    memset(spaces.get(), ' ', count); *(spaces.get() + count) = '\0';
+    memset(bspaces.get(), '\b', count); *(bspaces.get() + count) = '\0';
 
-    if (!write_with_error(1, spaces, count)) return false;
-    else if (!write_with_error(1, bspaces, count)) return false;
+    if (!write_with_error(1, spaces.get(), count)) return false;
+    else if (!write_with_error(1, bspaces.get(), count)) return false;
     return false;
 }
 
