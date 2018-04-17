@@ -1,18 +1,24 @@
-#!/bin/sh
-
-rm -f csh-out shell-out
+#!/bin/bash
+export LC_ALL="C"
+rm -f csh-out yash-out
 echo "Test108: echo /usr/lib/*"
-echo "echo /usr/lib/*" > shell-in
-echo "echo /usr/lib/*" > csh-in
+echo "echo /usr/lib/*" > yash-in
+echo "echo /usr/lib/*" > bash-in
 
-/bin/sh < csh-in > csh-out 2>&1
-../src/yash < shell-in > shell-out 2>&1
+/bin/bash < bash-in > bash-out 2>&1
+../src/yash < yash-in > yash-out 2>&1
 
-diff shell-out csh-out
-if [ $? -ne 0 ]
-then
+_diff=$(diff yash-out bash-out)
+if [[ $? -ne 0 ]]; then
     echo "Test108 failed"
+    echo "====== Got ======="
+    cat yash-out
+    echo "====== Expected ====="
+    cat bash-out
+    echo "====== Difference ====="
+    echo ${_diff}
     exit -1
 fi
+
 echo Test108 OK
 exit 0

@@ -1,17 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 
-rm -f csh-out shell-out
+rm -f csh-out yash-out
 echo "Test112: echo /etc/r*/*s* "
-echo "echo /etc/r*/*s*" > shell-in
+echo "echo /etc/r*/*s*" > yash-in
 
-/bin/sh < shell-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+/bin/bash < yash-in > bash-out 2>&1
+../src/yash < yash-in > yash-out 2>&1
 
-diff shell-out csh-out
-if [ $? -ne 0 ]
-then
+yash_out=$(sort yash-out)
+bash_out=$(sort bash-out)
+
+echo $yash_out > yash-out
+echo $bash_out > bash-out
+
+_diff=$(diff yash-out bash-out)
+
+if [[ $? -ne 0 ]]; then
     echo "Test112 failed"
-    exit -1
+    echo "========= Got =========="
+    echo $yash_out
+    echo "======= Expected ======="
+    echo $bash_out
+    echo "======== Diff =========="
+    echo ${_diff}
+    exit 1
 fi
 echo Test112 OK
 exit 0

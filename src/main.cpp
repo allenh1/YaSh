@@ -29,9 +29,7 @@ std::shared_ptr<std::vector<job>> SimpleCommand::p_jobs = nullptr;
 
 int main()
 {
-    bool is_interactive = false;  
-    Command::currentCommand.set_interactive((is_interactive = isatty(0)));
-
+    bool is_interactive = false;
     std::string expanded_home = tilde_expand("~/.yashrc");
 
     auto rcfile = std::shared_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()), free);
@@ -47,8 +45,8 @@ int main()
         yyin = stdin;
         yyrestart(yyin);
         Command::currentCommand.printPrompt = true;
-    } 
-
+    }
+    Command::currentCommand.set_interactive((is_interactive = isatty(0)));
     if (is_interactive) {
         /* loop until we are in the foreground */
         for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
