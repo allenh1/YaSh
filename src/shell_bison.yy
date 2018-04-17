@@ -197,9 +197,9 @@ GREAT WORD {
 		yyerror("Ambiguous output redirect.\n");
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
-	Command::currentCommand.set_out_file(
-            std::shared_ptr<char>($2, [] (auto s) { delete[] s; }));
 	Command::currentCommand.set_err_file(std::shared_ptr<char>(strdup($2), free));
+        Command::currentCommand.set_out_file(
+            std::shared_ptr<char>($2, [] (auto s) { delete[] s; }));
 }
 | TOOGREATAND WORD {
 	if (Command::currentCommand.outIsSet())
@@ -207,9 +207,9 @@ GREAT WORD {
 	else if (Command::currentCommand.errIsSet())
 		yyerror("Ambiguous error redirect.\n");
 	Command::currentCommand.setAppend(true);
-	Command::currentCommand.set_out_file(
-            std::shared_ptr<char>($2, [] (auto s) { delete[] s; }));
 	Command::currentCommand.set_err_file(std::shared_ptr<char>(strdup($2), free));
+        Command::currentCommand.set_out_file(
+            std::shared_ptr<char>($2, [] (auto s) { delete[] s; }));
 }
 | LESS WORD {
 	if (Command::currentCommand.inIsSet())
