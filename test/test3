@@ -1,15 +1,14 @@
 #!/bin/sh
 rm -f err1 err2
-rm -f csh-out shell-out
 
 echo "Test3: Error redirection"
-echo "ls /none >& err1" > shell-in
+echo "ls /none >& err1" > yash-in
 echo "ls /none &> err2" > bash-in
 
 /bin/bash < bash-in
 ../src/yash < yash-in
 
-diff err1 err2
+diff ./err1 ./err2
 
 if [ $? -ne 0 ]
 then
