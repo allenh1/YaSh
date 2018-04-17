@@ -8,8 +8,8 @@ before_install:
   - sudo apt-get update -qq
 install:
   # C++17
-  - sudo apt-get install -qq g++-6
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
+  - sudo apt-get install -qq g++-7
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 90
   - sudo wget -O uncrustify.deb http://mirrors.kernel.org/ubuntu/pool/universe/u/uncrustify/uncrustify_0.65+git20170831+dfsg1-1_amd64.deb
   - sudo wget -O libc.deb http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.26-0ubuntu2.1_amd64.deb
   - sudo wget -O libstdc++.deb http://security.ubuntu.com/ubuntu/pool/main/g/gcc-7/libstdc++6_7.2.0-8ubuntu3.2_amd64.deb
