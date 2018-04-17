@@ -1,23 +1,27 @@
-#!/bin/sh
+#!/bin/bash
 
-rm -f csh-out shell-out
 echo "Test111: cd; echo *"
 echo "cd" > shell-in
 echo "echo *" >> shell-in
 echo "echo .*" >> shell-in
 
-echo "cd" >  csh-in
-echo "echo *" >> csh-in
-echo "echo .*" >> csh-in
+/bin/bash < shell-in > bash-out 2>&1
+../src/yash < shell-in > yash-out 2>&1
 
-/bin/sh < csh-in > csh-out 2>&1
-../src/yash < shell-in > shell-out 2>&1
+yash_out=$(cat yash-out | sort --field-separator=' ')
+bash_out=$(cat bash-out | sort --field-separator=' ')
 
-diff shell-out csh-out
+echo $yash_out > yash-out
+echo $bash_out > bash-out
+
+diff yash-out bash-out
+
 if [ $? -ne 0 ]
 then
     echo "Test111 failed"
-    exit -1
+    rm -f *-out *-in
+    exit 1
 fi
 echo Test111 OK
+rm -f *-out *-in
 exit 0
