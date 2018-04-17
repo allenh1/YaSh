@@ -26,7 +26,7 @@ struct ScopeExit
 {
   explicit ScopeExit(Callable callable)
   : callable_(callable) {}
-  ~ScopeExit() {callable_(); }
+  ~ScopeExit() {callable_();}
 
 private:
   Callable callable_;

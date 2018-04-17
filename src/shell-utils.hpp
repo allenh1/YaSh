@@ -31,7 +31,7 @@ bool is_directory(std::string s);
  * Adapted from:
  *  https://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html
  */
-timeval operator - (timeval & t1, timeval & t2);
+timeval operator-(timeval & t1, timeval & t2);
 
 /**
  * Stolen from: bash
@@ -51,7 +51,8 @@ timeval & addtimeval(timeval & d, timeval & t1, timeval & t2);
  */
 void timeval_to_secs(timeval & tvp, time_t & sp, int & sfp);
 
-struct Lensort {
-	bool operator () (char*& ch1, char*& ch2) { return strlen(ch1) < strlen(ch2); }
+struct Lensort
+{
+  bool operator()(char * & ch1, char * & ch2) {return strlen(ch1) < strlen(ch2);}
 };
 #endif

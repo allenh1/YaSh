@@ -18,10 +18,10 @@
 extern FILE * yyin;
 extern FILE * yyout;
 
-extern int yylex();  
+extern int yylex();
 extern int yyparse();
 
-extern void yyrestart (FILE * in);
+extern void yyrestart(FILE * in);
 extern void yyerror(const char * s);
 extern read_line reader;
 std::shared_ptr<std::vector<std::string>> SimpleCommand::history = nullptr;
@@ -29,49 +29,49 @@ std::shared_ptr<std::vector<job>> SimpleCommand::p_jobs = nullptr;
 
 int main()
 {
-    bool is_interactive = false;
-    std::string expanded_home = tilde_expand("~/.yashrc");
+  bool is_interactive = false;
+  std::string expanded_home = tilde_expand("~/.yashrc");
 
-    auto rcfile = std::shared_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()), free);
+  auto rcfile = std::shared_ptr<char>(strndup(expanded_home.c_str(), expanded_home.size()), free);
 
-    yyin = fopen(rcfile.get(), "r");
+  yyin = fopen(rcfile.get(), "r");
 
-    /* From Brian P. Hays */
-    if (yyin != nullptr) {
-        Command::currentCommand.printPrompt = false;
-        yyparse();
-        fclose(yyin);
-
-        yyin = stdin;
-        yyrestart(yyin);
-        Command::currentCommand.printPrompt = true;
-    }
-    Command::currentCommand.set_interactive((is_interactive = isatty(0)));
-    if (is_interactive) {
-        /* loop until we are in the foreground */
-        for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp());) {
-            if (kill(0, SIGTTIN) < 0) perror("kill");
-        }
-		
-        /* go to our process group */
-        pid_t shell_pgid = getpid();
-        if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) perror("setpgid");
-
-        Command::currentCommand.m_shell_pgid = shell_pgid;
-        /* Ignore interactive and job-control signals */
-        signal(SIGINT,  SIG_IGN);
-        signal(SIGQUIT, SIG_IGN);
-        signal(SIGTSTP, SIG_IGN);
-        signal(SIGTTIN, SIG_IGN);
-        signal(SIGTTOU, SIG_IGN);
-        signal(SIGCHLD, SIG_IGN);
-
-        tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_shell_pgid);
-        tcgetattr(STDIN_FILENO, &reader.oldtermios);
-    }
-  
-    Command::currentCommand.prompt();  
+  /* From Brian P. Hays */
+  if (yyin != nullptr) {
+    Command::currentCommand.printPrompt = false;
     yyparse();
+    fclose(yyin);
 
-    return 0;
+    yyin = stdin;
+    yyrestart(yyin);
+    Command::currentCommand.printPrompt = true;
+  }
+  Command::currentCommand.set_interactive((is_interactive = isatty(0)));
+  if (is_interactive) {
+    /* loop until we are in the foreground */
+    for (; tcgetpgrp(STDIN_FILENO) != (Command::currentCommand.m_pgid = getpgrp()); ) {
+      if (kill(0, SIGTTIN) < 0) {perror("kill");}
+    }
+
+    /* go to our process group */
+    pid_t shell_pgid = getpid();
+    if ((shell_pgid != getpgrp()) && setpgid(0, shell_pgid) < 0) {perror("setpgid");}
+
+    Command::currentCommand.m_shell_pgid = shell_pgid;
+    /* Ignore interactive and job-control signals */
+    signal(SIGINT, SIG_IGN);
+    signal(SIGQUIT, SIG_IGN);
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+
+    tcsetpgrp(STDIN_FILENO, Command::currentCommand.m_shell_pgid);
+    tcgetattr(STDIN_FILENO, &reader.oldtermios);
+  }
+
+  Command::currentCommand.prompt();
+  yyparse();
+
+  return 0;
 }

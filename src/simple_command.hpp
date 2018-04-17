@@ -55,46 +55,50 @@
 #include "job.hpp"
 
 /* Command Data Structure */
-struct SimpleCommand {
-    SimpleCommand();
-    ~SimpleCommand() { release(); }
-    std::vector<char* > arguments;
-    void insertArgument(const std::shared_ptr<char> argument);
-    ssize_t numOfArguments = 0;
-    void release() {
-        for (size_t x = 0; x < arguments.size(); ++x) delete[] arguments[x];
-        arguments.clear();
-        arguments.shrink_to_fit();
-        numOfArguments = 0;
-    };
+struct SimpleCommand
+{
+  SimpleCommand();
+  ~SimpleCommand() {release();}
+  std::vector<char *> arguments;
+  void insertArgument(const std::shared_ptr<char> argument);
+  ssize_t numOfArguments = 0;
+  void release()
+  {
+    for (size_t x = 0; x < arguments.size(); ++x) {delete[] arguments[x];}
+    arguments.clear();
+    arguments.shrink_to_fit();
+    numOfArguments = 0;
+  }
 
-    void launch(const int & fdin, const int & fdout, const int & fderr,
-                const int & pgid, const bool & background, const bool & interactive);
-    void setup_process_io(const int & fdin, const int & fdout, const int & fderr);
-    void save_io(const int & fdin, const int & fdout, const int & fderr,
-                 int & saved_fdin, int & saved_fdout, int & saved_fderr);
-    void resume_io(const int & fdin, const int & fdout, const int & fderr);
-    bool handle_builtins(const int &, const int &, const int&);
-    void handle_modified_commands();
+  void launch(
+    const int & fdin, const int & fdout, const int & fderr,
+    const int & pgid, const bool & background, const bool & interactive);
+  void setup_process_io(const int & fdin, const int & fdout, const int & fderr);
+  void save_io(
+    const int & fdin, const int & fdout, const int & fderr,
+    int & saved_fdin, int & saved_fdout, int & saved_fderr);
+  void resume_io(const int & fdin, const int & fdout, const int & fderr);
+  bool handle_builtins(const int &, const int &, const int &);
+  void handle_modified_commands();
 
-    bool handle_cd(const int &,const int &,const int &);
-    bool handle_cl(const int &, const int &, const int &);
-    bool handle_setenv(const int &, const int &, const int &);
-    bool handle_unsetenv(const int &, const int &, const int &);
+  bool handle_cd(const int &, const int &, const int &);
+  bool handle_cl(const int &, const int &, const int &);
+  bool handle_setenv(const int &, const int &, const int &);
+  bool handle_unsetenv(const int &, const int &, const int &);
 
-    void handle_ls();
-    void handle_grep();
-    void handle_jobs();
-    void handle_history();
-    void handle_printenv();
+  void handle_ls();
+  void handle_grep();
+  void handle_jobs();
+  void handle_history();
+  void handle_printenv();
 
-    bool completed = false;
-    bool stopped = false;
-    int status = -1;
+  bool completed = false;
+  bool stopped = false;
+  int status = -1;
 
-    static std::shared_ptr<std::vector<std::string>> history;
-    static std::shared_ptr<std::vector<job>> p_jobs;
+  static std::shared_ptr<std::vector<std::string>> history;
+  static std::shared_ptr<std::vector<job>> p_jobs;
 
-    pid_t pid;
+  pid_t pid;
 };
 #endif
