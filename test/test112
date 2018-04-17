@@ -18,9 +18,9 @@ _diff=$(diff yash-out bash-out)
 if [[ $? -ne 0 ]]; then
     echo "Test112 failed"
     echo "========= Got =========="
-    echo yash_out
+    echo $yash_out
     echo "======= Expected ======="
-    echo bash_out
+    echo $bash_out
     echo "======== Diff =========="
     echo ${_diff}
     exit 1
