@@ -8,11 +8,11 @@ before_install:
   - sudo apt-get update -qq
 install:
   # C++17
-  - sudo apt-get install -qq g++-7
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 90
+  - sudo apt-get install -qq g++-6
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
 script:
   - ./autogen.sh
-  - ./configure
+  - ./configure --enable-debug=yes
   - make -j$(nproc)
   - ln -sf $(pwd)/src/yash $(pwd)/shell
   - cd test
