@@ -12,33 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __SHELL_READLINE_HPP__
-#define __SHELL_READLINE_HPP__
+#ifndef SHELL_READLINE_HPP_
+#define SHELL_READLINE_HPP_
 /* Linux Includes */
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include <functional>
+/* C Includes */
 #include <termios.h>
-#include <algorithm>
-#include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <alloca.h>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
 #include <stdio.h>
 #include <regex.h>
 #include <fcntl.h>
+
+#include <functional>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <utility>
+#include <memory>
+#include <string>
+#include <fstream>
+#include <sstream>
 #include <thread>
 #include <vector>
 #include <cctype>
 #include <stack>
-/** Include wildcards for tab completion **/
+
 #include "wildcard.hpp"
 #include "command.hpp"
 
@@ -158,7 +163,7 @@ public:
       } else if (!write_with_error(history_fd, "\n", 1)) {return;}
       close(history_fd);
     }
-    _line += (char) 10 + '\0';
+    _line += static_cast<char>(10) + '\0';
     m_current_line_copy.clear();
     m_history->push_back(_line);
   }
@@ -254,4 +259,4 @@ private:
   std::string search_str;
   bool m_show_line = false;
 };
-#endif
+#endif  // SHELL_READLINE_HPP_

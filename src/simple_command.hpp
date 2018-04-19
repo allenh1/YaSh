@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __SIMPLE_COMMAND_HPP__
-#define __SIMPLE_COMMAND_HPP__
+#ifndef SIMPLE_COMMAND_HPP_
+#define SIMPLE_COMMAND_HPP_
 #pragma once
 /* UNIX Includes */
 #include <sys/resource.h>
@@ -43,10 +43,11 @@
 #include <fstream>
 #include <cstring>
 #include <sstream>
-#include <thread>
-#include <vector>
 #include <memory>
 #include <stack>
+#include <string>
+#include <thread>
+#include <vector>
 #include <map>
 
 /* File Includes */
@@ -101,4 +102,4 @@ struct SimpleCommand
 
   pid_t pid;
 };
-#endif
+#endif  // SIMPLE_COMMAND_HPP_

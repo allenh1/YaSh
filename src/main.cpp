@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <string>
+#include <memory>
+#include <vector>
+
 #include "shell-readline.hpp"
 #include "shell_bison.hh"
 #include "command.hpp"

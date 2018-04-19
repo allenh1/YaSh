@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef __JOB_HPP__
-#define __JOB_HPP__
+#ifndef JOB_HPP_
+#define JOB_HPP_
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#include <string>
 
 enum job_status
 {
@@ -43,4 +45,4 @@ struct job
 
   job_status status;
 };
-#endif
+#endif  // JOB_HPP_

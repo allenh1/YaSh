@@ -11,6 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <utility>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "shell-utils.hpp"
 
 /**
@@ -24,7 +29,6 @@ std::string longest_substring(const std::vector<std::string> & _vct)
 {
   if (!_vct.size()) {
     return std::string("");                       /* return an empty string */
-
   }
   for (size_t len = 0; len < _vct[0].size(); ++len) {
     char c = _vct[0][len];
@@ -105,23 +109,38 @@ void printEvenly(std::vector<std::string> & _vct)
 std::string tilde_expand(std::string input)
 {
   std::string substr = input.substr(0, input.find_first_of('/'));
-  if (*substr.c_str() == '~') {
+  if (substr[0] == '~') {
     std::string user = substr.substr(1, substr.size());
     if (user.size() > 0) {
-      passwd * _passwd = getpwnam(user.c_str());
-      if (_passwd == nullptr) {
+      passwd * _passwd = new passwd();
+      auto at_exit = make_scope_exit(
+        [_passwd] () {
+            delete _passwd;
+          });
+      const size_t len = 1024;
+      auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+      int ret = getpwnam_r(user.c_str(), _passwd, buff.get(), len, &_passwd);
+      if (ret || nullptr == _passwd) {
         /* user wasn't found. */
-        std::cerr << "User \"" << user.c_str() << "\" not found!" << std::endl;
         return input;
       }
       std::string _home = _passwd->pw_dir;
       input.replace(0, substr.size(), _home);
       return input;
     } else {
-      // Case current user (that is, the usual case).
-      passwd * _passwd = getpwuid(getuid());
-      std::string user_home = _passwd->pw_dir;
-      input.replace(0, substr.size(), user_home);
+      /* Case current user (that is, the usual case). */
+      passwd * _passwd = new passwd();
+      auto at_exit = make_scope_exit(
+        [_passwd] () {
+            delete _passwd;
+          });
+      const size_t len = 1024;
+      auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+      int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
+      if (ret || nullptr == _passwd) {
+        return input;
+      }
+      input.replace(0, substr.size(), _passwd->pw_dir);
       return input;
     }
   }
@@ -159,7 +178,7 @@ std::string replace(std::string str, const char * sb, const char * rep)
 std::string env_expand(std::string s)
 {
   const char * str = s.c_str();
-  char * temp = (char *) calloc(1024, sizeof(char));
+  char * temp = reinterpret_cast<char *>(calloc(1024, sizeof(char)));
   int index;
   for (index = 0; str - s.c_str() < s.size(); ++str) {
     // aight. Let's just do it.
@@ -167,12 +186,14 @@ std::string env_expand(std::string s)
       // begin expansion
       if (*(++str) != '{') {continue;}
       // @todo maybe work without braces.
-      char * temp2 = (char *) calloc(s.size(), sizeof(char)); ++str;
+      char * temp2 = reinterpret_cast<char *>(calloc(s.size(), sizeof(char))); ++str;
       for (char * tmp = temp2; *str && *str != '}'; *(tmp++) = *(str++)) {
       }
       if (*str == '}') {
         ++str; char * out = getenv(temp2);
-        if (out == nullptr) {continue;}
+        if (nullptr == out) {
+          continue;
+        }
         for (char * t = out; *t; temp[index++] = *(t++)) {
         }
       }
@@ -180,7 +201,7 @@ std::string env_expand(std::string s)
     }            // if not a variable, don't expand.
     temp[index++] = *str;
   }
-  std::string ret = std::string((char *)temp);
+  std::string ret = std::string(temp);
   free(temp);
   return ret;
 }
@@ -223,7 +244,17 @@ bool changedir(std::string & s)
   } else if (!*s.c_str()) {
     for (; s.back() == '/'; s.pop_back()) {
     }
-    passwd * _passwd = getpwuid(getuid());
+    passwd * _passwd = new passwd();
+    auto at_exit = make_scope_exit(
+      [_passwd] () {
+          delete _passwd;
+        });
+    const size_t len = 1024;
+    auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+    int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
+    if (ret || nullptr == _passwd) {
+      return true;
+    }
     std::string user_home = _passwd->pw_dir;
     free(cpy);
     return chdir(user_home.c_str()) == 0;

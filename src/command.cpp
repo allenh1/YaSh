@@ -11,6 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <utility>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "command.hpp"
 
 std::vector<int> m_background;
@@ -231,11 +236,11 @@ void Command::execute()
     /* manage commands */
     std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
     char ** d_args;
-    curr.push_back((char *) nullptr);
+    curr.push_back(nullptr);
     d_args = curr.data();
 
     /* add nullptr to the end of the simple command (for exec) */
-    simpleCommands.at(x).get()->arguments.push_back((char *) nullptr);
+    simpleCommands.at(x).get()->arguments.push_back(nullptr);
 
     if (x != numOfSimpleCommands - 1) {
       /* thank you Gustavo for the outer if statement. */
@@ -363,8 +368,15 @@ void Command::prompt()
       _host = std::string("localhost");
     }
     char * _wd = nullptr, * _hme = nullptr;
-    char cdirbuff[2048]; char * const _pwd[2] = {(char *) "pwd", (char *) nullptr};
-    eval_to_buffer(_pwd, cdirbuff, 2048);
+    auto _pwd = std::shared_ptr<char>(
+        new char[4], [] (auto s) { delete[] s; });
+    snprintf(_pwd.get(), sizeof(_pwd.get()), "pwd");
+    char cdirbuff[2048];
+    char * const pwd[2] = {
+        _pwd.get(),
+        nullptr
+    };
+    eval_to_buffer(pwd, cdirbuff, 2048);
     std::string _cdir = std::string(cdirbuff);
     char * _curr_dur = strndup(_cdir.c_str(), _cdir.size() - 1);
     if (setenv("PWD", _curr_dur, 1)) {perror("setenv");}
@@ -447,7 +459,7 @@ void Command::pushDir(const std::shared_ptr<char> new_dir)
     } else {goto clear_and_exit;}
   } else {goto clear_and_exit;}
 
-  for (auto && a: m_dir_stack) {
+  for (auto && a : m_dir_stack) {
     std::cout << a << " ";
   }
   if (!m_dir_stack.empty()) {std::cout << std::endl;}
@@ -466,7 +478,7 @@ void Command::popDir()
   if (changedir(dir)) {
     m_dir_stack.erase(m_dir_stack.begin(), m_dir_stack.begin() + 1);
   }
-  for (auto && a: m_dir_stack) {
+  for (auto && a : m_dir_stack) {
     std::cout << a << " ";
   }
   std::cout << std::endl;

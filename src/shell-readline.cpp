@@ -11,6 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <algorithm>
+#include <string>
+#include <memory>
+#include <vector>
+#include <stack>
 
 #include "shell-readline.hpp"
 
@@ -119,7 +124,9 @@ bool read_line::read_with_error(int _fd, char & c)
   if (!read(0, &d, 1)) {
     perror("read");
     return false;
-  } else {return (c = d), true;}
+  } else {
+    return (c = d), true;
+  }
 }
 
 /**
@@ -151,10 +158,14 @@ bool read_line::handle_enter(std::string & _line, char & input)
     for (; m_buff.size(); ) {
       ch = m_buff.top(); m_buff.pop();
       _line += ch;
-      if (!write_with_error(1, ch)) {return false;}
+      if (!write_with_error(1, ch)) {
+        return false;
+      }
     }
   }
-  if (!write_with_error(1, input)) {return false;}
+  if (!write_with_error(1, input)) {
+    return false;
+  }
   history_index = m_history->size();
   return true;
 }
@@ -215,16 +226,16 @@ bool read_line::handle_ctrl_a(std::string & _line)
  */
 bool read_line::handle_ctrl_e(std::string & _line)
 {
-  char ctrle[m_buff.size() + 1];
-  size_t len = m_buff.size();
-  memset(ctrle, 0, m_buff.size() + 1);
+  auto ctrle = std::shared_ptr<char>(
+    new char[m_buff.size() + 1], [] (auto s) { delete[] s; });
+  memset(ctrle.get(), 0, m_buff.size() + 1);
 
-  for (char * d = ctrle; m_buff.size(); ) {
+  for (char * d = ctrle.get(); m_buff.size(); ) {
     *(d) = m_buff.top(); m_buff.pop();
     _line += *(d++);
   }
 
-  if (!write_with_error(1, ctrle, len)) {return false;}
+  write_with_error(1, ctrle.get(), m_buff.size());
   return false;
 }
 
@@ -234,11 +245,11 @@ bool read_line::handle_ctrl_e(std::string & _line)
  * This is how the shell responds to the
  * delete character. It should remove the
  * highlighted cursor, should one exist.
-*
-* @param _line Current line of text.
-*
-* @return True to break, false otherwise.
-*/
+ *
+ * @param _line Current line of text.
+ *
+ * @return True to break, false otherwise.
+ */
 bool read_line::handle_ctrl_d(std::string & _line)
 {
   if (!m_buff.size()) {return false;}
@@ -246,8 +257,13 @@ bool read_line::handle_ctrl_d(std::string & _line)
     m_buff.pop();
     std::stack<char> temp = m_buff;
     for (char d = 0; temp.size(); ) {
-      if (write(1, &(d = (temp.top())), 1)) {temp.pop();}}
-    if (!write(1, " ", 1)) {std::cerr << "WAT.\n";}
+      if (write(1, &(d = (temp.top())), 1)) {
+        temp.pop();
+      }
+    }
+    if (!write(1, " ", 1)) {
+      std::cerr << "WAT.\n";
+    }
     for (int x = m_buff.size() + 1; x -= write(1, "\b", 1); ) {
     }
     return false;
@@ -264,17 +280,15 @@ bool read_line::handle_ctrl_d(std::string & _line)
       }
     }
     char b = ' ';
-    if (!write_with_error(1, " ", 1)) {return false;} else if (!write_with_error(1, "\b", 1)) {
+    if (!(write_with_error(1, " ", 1) && write_with_error(1, "\b", 1))) {
       return false;
     }
-
     m_buff.pop();
     /* Move cursor to current position. */
-    for (size_t x = 0; x < m_buff.size(); ++x) {
-      if (!write(1, "\b", 1)) {
-        return false;
-      }
-    }
+    auto buf = std::shared_ptr<char>(
+      new char[m_buff.size()], [] (auto s) { delete[] s; });
+    memset(buf.get(), '\b', m_buff.size());
+    write(1, "\b", 1);
   }
   return false;
 }
@@ -323,7 +337,7 @@ bool read_line::handle_tab(std::string & _line)
     /*     If so, we will wrap in quotes!      */
     bool quote_wrap = false;
     if (Command::currentCommand.wc_collector[0].find(" ") !=
-      std::string::npos)
+        std::string::npos)
     {
       Command::currentCommand.wc_collector[0].insert(0, "\"");
       quote_wrap = true;
@@ -385,7 +399,7 @@ bool read_line::handle_tab(std::string & _line)
       /*     If so, we will wrap in quotes!      */
       bool quote_wrap = false;
       if (Command::currentCommand.wc_collector[0].find(" ") !=
-        std::string::npos)
+          std::string::npos)
       {
         Command::currentCommand.wc_collector[0].insert(0, "\"");
         quote_wrap = true;
@@ -434,14 +448,15 @@ bool read_line::handle_tab(std::string & _line)
 
       if (longest_common.size()) {
         char * to_add = strndup(longest_common.c_str() + strlen(_complete_me.get()) - 1,
-            longest_common.size() - strlen(_complete_me.get()) + 1);
+                                longest_common.size() - strlen(_complete_me.get()) + 1);
         _line += to_add; free(to_add);
         m_current_line_copy = _line;
       }
-    } else {return false;}
+    } else {
+      return false;
+    }
   }
-
-  if (!write_with_error(1, _line.c_str(), _line.size()) != (int)_line.size()) {return false;}
+  write_with_error(1, _line.c_str(), _line.size());
   return false;
 }
 
@@ -466,19 +481,19 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
     /* ctrl + right arrow */
     if (!(m_buff.size())) {return false;}
     for (; (m_buff.size() &&
-      ((_line += m_buff.top(), m_buff.pop(), _line.back()) != ' ') &&
-      (write(1, &_line.back(), 1) == 1)) ||
-      ((_line.back() == ' ') ? !(write(1, " ", 1)) : 0); )
+            ((_line += m_buff.top(), m_buff.pop(), _line.back()) != ' ') &&
+            (write(1, &_line.back(), 1) == 1)) ||
+           ((_line.back() == ' ') ? !(write(1, " ", 1)) : 0); )
     {
     }
   } else if (ch3[0] == 59 && ch3[1] == 53 && ch3[2] == 68) {
     /* ctrl + left arrow */
     if (!_line.size()) {return false;}
     for (; (_line.size() &&
-      ((m_buff.push(_line.back()),
-      _line.pop_back(), m_buff.top()) != ' ') &&
-      (write(1, "\b", 1) == 1)) ||
-      ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0); )
+            ((m_buff.push(_line.back()),
+              _line.pop_back(), m_buff.top()) != ' ') &&
+            (write(1, "\b", 1) == 1)) ||
+           ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0); )
     {
     }
   }
@@ -490,11 +505,11 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
  *
  * ctrl + k clears the remaining
  * parts of the line.
-*
-* @param _line Current line.
-*
-* @return False upon error.
-*/
+ *
+ * @param _line Current line.
+ *
+ * @return False upon error.
+ */
 bool read_line::handle_ctrl_k(std::string & _line)
 {
   if (!m_buff.size()) {return false;}
@@ -568,7 +583,7 @@ bool read_line::handle_backspace(std::string & _line)
           if (!write_with_error(1, "\033[1A \b")) {
             return false;
           } else if (!write_with_error(1, _line.c_str() + (_line.size() - line_size),
-            _line.size() - line_size)) {return false;}
+                                       _line.size() - line_size)) {return false;}
         }
       } else if (!write_with_error(1, "\b", 1)) {return false;}
     }
@@ -577,8 +592,11 @@ bool read_line::handle_backspace(std::string & _line)
       return false;
     } else if (!write_with_error(1, "\b", 1)) {return false;}
     _line.pop_back();
-  } if (((size_t) history_index == m_history->size()) &&
-    m_current_line_copy.size()) {m_current_line_copy.pop_back();}
+  }
+  if (((size_t) history_index == m_history->size()) &&
+      m_current_line_copy.size()) {
+    m_current_line_copy.pop_back();
+  }
   return false;
 }
 
@@ -587,7 +605,7 @@ bool read_line::handle_ctrl_del(std::string & _line)
   char ch4, ch5;
   /* read the 53 and the 126 char */
   if (!read_with_error(0, ch4) ||
-    !read_with_error(0, ch5)) {return false;}
+      !read_with_error(0, ch5)) {return false;}
   /* if not 126, go away */
   if (ch4 != 53 || ch5 != 126) {return false;}
 
@@ -613,16 +631,16 @@ bool read_line::handle_ctrl_del(std::string & _line)
   }
   if (!m_buff.size()) {return false;}
   /* print out the residual buffer */
-  len = m_buff.size();
-  char bspace2[len];
+  auto bspace2 = std::shared_ptr<char>(
+    new char[m_buff.size()], [](auto s) { delete[] s; });
   std::stack<char> temp = m_buff;
   char c = temp.top(); temp.pop();
   for (; write_with_error(1, c) && temp.size();
-    c = temp.top(), temp.pop())
+       c = temp.top(), temp.pop())
   {
   }
-  memset(bspace2, '\b', len);
-  return !write_with_error(1, bspace2, len);
+  memset(bspace2.get(), '\b', m_buff.size());
+  return !write_with_error(1, bspace2.get(), len);
 }
 
 /**
@@ -701,12 +719,16 @@ bool read_line::handle_bang(std::string & _line)
   } else if (ch1 == '-') {
     if (!write_with_error(1, "-", 1)) {return false;}
 
-    auto && is_digit = [](char b) {return '0' <= b && b <= '9';};
+    auto && is_digit = [](char b) {
+        return '0' <= b && b <= '9';
+      };
     /* "!-<n>" = run what I did n commands ago. */
-    char * buff = (char *) alloca(20); char * b;
-    for (b = buff; read(0, b, 1) && write(1, b, 1) && is_digit(*b); *(++b + 1) = 0) {
+    auto buff = std::shared_ptr<char>(
+      new char[20], [] (auto s) { delete[] s; });
+    char * b;
+    for (b = buff.get(); read(0, b, 1) && write(1, b, 1) && is_digit(*b); *(++b + 1) = 0) {
     }
-    int n = atoi(buff); bool run_cmd = false;
+    int n = atoi(buff.get()); bool run_cmd = false;
     if (*b == '\n') {run_cmd = true;}
     if (n > 0) {
       int _idx = m_history->size() - n;
@@ -761,9 +783,9 @@ bool read_line::handle_up_arrow(std::string & _line)
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
-          return (s.size() >= _line.size()) &&
-          s.substr(0, _line.size()) == _line;
-        });
+            return (s.size() >= _line.size()) &&
+            s.substr(0, _line.size()) == _line;
+          });
       search_index = hist->size();
     } else {hist = &m_rev_search;}
     index = &search_index;
@@ -810,8 +832,10 @@ bool read_line::handle_up_arrow(std::string & _line)
     _line.pop_back();
   }
   /* iterate back to search prefix */
-  char ch2[len_diff]; memset(ch2, '\b', len_diff);
-  if (!write_with_error(1, ch2, len_diff)) {return false;}
+  auto ch2 = std::shared_ptr<char>(
+    new char[len_diff], [] (auto s) { delete[] s; });
+  memset(ch2.get(), '\b', len_diff);
+  write_with_error(1, ch2.get(), len_diff);
   return false;
 }
 
@@ -842,9 +866,9 @@ bool read_line::handle_down_arrow(std::string & _line)
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
-          return (s.size() >= _line.size()) &&
-          s.substr(0, _line.size()) == _line;
-        });
+            return (s.size() >= _line.size()) &&
+            s.substr(0, _line.size()) == _line;
+          });
       search_index = hist->size();
     } else {hist = &m_rev_search;}
     index = &search_index;
@@ -891,8 +915,10 @@ bool read_line::handle_down_arrow(std::string & _line)
     _line.pop_back();
   }
   /* iterate back to search prefix */
-  char ch2[len_diff]; memset(ch2, '\b', len_diff);
-  if (!write_with_error(1, ch2, len_diff)) {return false;}
+  auto ch2 = std::shared_ptr<char>(
+    new char[len_diff], [] (auto s) { delete[] s; });
+  memset(ch2.get(), '\b', len_diff);
+  write_with_error(1, ch2.get(), len_diff);
   return false;
 }
 
@@ -955,12 +981,14 @@ bool read_line::handle_left_arrow(std::string & _line)
     /* This case is for more than one line of backtrack */
     if (!write(1, "\033[1A \b", strlen("\033[1A \b"))) {
       perror("write");
-    } else if (!write(1, _line.c_str() - 2 +
-      (term_width * ((_line.size() - 2) /
-      term_width)), term_width))
-    {
-      perror("write");
-      return false;
+    } else {
+      auto ret =
+        !write(
+          1, _line.c_str() - 2 + (term_width * ((_line.size() - 2) + term_width)), term_width);
+      if (term_width != ret) {
+        perror("write");
+        return false;
+      }
     }
   }
   m_buff.push(_line.back());

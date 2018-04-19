@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+
 #include "simple_command.hpp"
 
 /**
@@ -84,11 +87,13 @@ void SimpleCommand::save_io(
     saved_fdin = dup(STDIN_FILENO);
   } else {
     saved_fdin = -1;     /* No dup needed */
-  } if (fdout != STDOUT_FILENO) {
+  }
+  if (fdout != STDOUT_FILENO) {
     saved_fdout = dup(STDOUT_FILENO);
   } else {
     saved_fdout = -1;     /* No dup needed */
-  } if (fderr != STDERR_FILENO) {
+  }
+  if (fderr != STDERR_FILENO) {
     saved_fderr = dup(STDERR_FILENO);
   } else {
     saved_fderr = -1;     /* No dup needed */
@@ -119,11 +124,15 @@ bool SimpleCommand::handle_builtins(
   const int & fdout,
   const int & fderr)
 {
-  if (handle_cd(fdin, fdout, fderr)) {return true;} else if (handle_setenv(fdin, fdout, fderr)) {
+  if (handle_cd(fdin, fdout, fderr)) {
+    return true;
+  } else if (handle_setenv(fdin, fdout, fderr)) {
     return true;
   } else if (handle_unsetenv(fdin, fdout, fderr)) {
     return true;
-  } else if (handle_cl(fdin, fdout, fderr)) {return true;}
+  } else if (handle_cl(fdin, fdout, fderr)) {
+    return true;
+  }
   return false;
 }
 
@@ -176,10 +185,9 @@ bool SimpleCommand::handle_cd(
         return true;
       }
       /* garauntee we have enough space */
-      char * replacement = (char *) calloc(curr_dir.size() -
-          replace_len +
-          replacement_len + 1,
-          sizeof(char));
+      char * replacement =
+        reinterpret_cast<char *>(
+          calloc(curr_dir.size() - replace_len + replacement_len + 1, sizeof(char)));
       char * d = replacement;
       /* copy up to the beginning of the substring */
       for (char * c = replace_in; c != sub; *(d++) = *(c++)) {
@@ -292,9 +300,8 @@ bool SimpleCommand::handle_setenv(
     int saved_fderr;
     save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
     setup_process_io(fdin, fdout, fderr);
-    char * temp = (char *) calloc(strlen(arguments[1]) + 1, sizeof(char));
-    char * pemt = (char *) calloc(strlen(arguments[2]) + 2, sizeof(char));
-    strcpy(temp, arguments[1]); strcpy(pemt, arguments[2]);
+    char * temp = strdup(arguments[1]);
+    char * pemt = strdup(arguments[2]);
     int result = setenv(temp, pemt, 1);
     if (result) {perror("setenv");}
     free(temp); free(pemt);
@@ -319,11 +326,13 @@ bool SimpleCommand::handle_unsetenv(
     int saved_fderr;
     save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
     setup_process_io(fdin, fdout, fderr);
-    char * temp = (char *) calloc(strlen(arguments[1]) + 1, sizeof(char));
-    strcpy(temp, arguments[1]);
-    if (unsetenv(temp) == -1) {perror("unsetenv");}
+    auto temp = std::shared_ptr<char>(strdup(arguments[1]), free);
+    if (unsetenv(temp.get()) == -1) {
+      perror("unsetenv");
+      return true;
+    }
     resume_io(saved_fdin, saved_fdout, saved_fderr);
-    free(temp); return true;
+    return true;
   }
   return false;
 }
@@ -383,7 +392,7 @@ void SimpleCommand::handle_history()
     } else {
       /* get the length of the number, for formatting. */
       std::string line = std::to_string(history->size());
-      unsigned short width = line.size() + 3; size_t x = 0;
+      size_t width = line.size() + 3, x = 0;
       std::string num;
       for (const auto & _line : *history) {
         num = std::to_string(x++) + ": ";
@@ -403,7 +412,7 @@ void SimpleCommand::handle_jobs()
     } else {
       /* get the length of the number, for formatting. */
       std::string line = std::to_string(p_jobs->size());
-      unsigned short width = line.size() + 3; size_t x = 0;
+      size_t width = line.size() + 3, x = 0;
       std::string num;
       for (const auto & _job : *p_jobs) {
         num = std::string("[") + std::to_string(x++) + "]: ";

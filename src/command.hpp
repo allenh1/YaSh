@@ -11,10 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#ifndef __COMMAND_HPP__
-#define __COMMAND_HPP__
+#ifndef COMMAND_HPP_
+#define COMMAND_HPP_
 #pragma once
+#include <memory>
+#include <string>
+#include <vector>
+#include <map>
+
 /* File Includes */
 #include "simple_command.hpp"
 #include "job.hpp"
@@ -140,4 +144,5 @@ private:
  * Returns a string for the command the user ran
  */
 std::string get_command_text(Command & cmd);
-#endif
+#endif  // COMMAND_HPP_
+
