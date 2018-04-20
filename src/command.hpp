@@ -145,4 +145,3 @@ private:
  */
 std::string get_command_text(Command & cmd);
 #endif  // COMMAND_HPP_
-

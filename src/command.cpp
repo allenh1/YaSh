@@ -369,12 +369,12 @@ void Command::prompt()
     }
     char * _wd = nullptr, * _hme = nullptr;
     auto _pwd = std::shared_ptr<char>(
-        new char[4], [] (auto s) { delete[] s; });
+      new char[4], [](auto s) {delete[] s;});
     snprintf(_pwd.get(), sizeof(_pwd.get()), "pwd");
     char cdirbuff[2048];
     char * const pwd[2] = {
-        _pwd.get(),
-        nullptr
+      _pwd.get(),
+      nullptr
     };
     eval_to_buffer(pwd, cdirbuff, 2048);
     std::string _cdir = std::string(cdirbuff);

@@ -227,7 +227,7 @@ bool read_line::handle_ctrl_a(std::string & _line)
 bool read_line::handle_ctrl_e(std::string & _line)
 {
   auto ctrle = std::shared_ptr<char>(
-    new char[m_buff.size() + 1], [] (auto s) { delete[] s; });
+    new char[m_buff.size() + 1], [](auto s) {delete[] s;});
   memset(ctrle.get(), 0, m_buff.size() + 1);
 
   for (char * d = ctrle.get(); m_buff.size(); ) {
@@ -286,7 +286,7 @@ bool read_line::handle_ctrl_d(std::string & _line)
     m_buff.pop();
     /* Move cursor to current position. */
     auto buf = std::shared_ptr<char>(
-      new char[m_buff.size()], [] (auto s) { delete[] s; });
+      new char[m_buff.size()], [](auto s) {delete[] s;});
     memset(buf.get(), '\b', m_buff.size());
     write(1, "\b", 1);
   }
@@ -337,7 +337,7 @@ bool read_line::handle_tab(std::string & _line)
     /*     If so, we will wrap in quotes!      */
     bool quote_wrap = false;
     if (Command::currentCommand.wc_collector[0].find(" ") !=
-        std::string::npos)
+      std::string::npos)
     {
       Command::currentCommand.wc_collector[0].insert(0, "\"");
       quote_wrap = true;
@@ -399,7 +399,7 @@ bool read_line::handle_tab(std::string & _line)
       /*     If so, we will wrap in quotes!      */
       bool quote_wrap = false;
       if (Command::currentCommand.wc_collector[0].find(" ") !=
-          std::string::npos)
+        std::string::npos)
       {
         Command::currentCommand.wc_collector[0].insert(0, "\"");
         quote_wrap = true;
@@ -448,7 +448,7 @@ bool read_line::handle_tab(std::string & _line)
 
       if (longest_common.size()) {
         char * to_add = strndup(longest_common.c_str() + strlen(_complete_me.get()) - 1,
-                                longest_common.size() - strlen(_complete_me.get()) + 1);
+            longest_common.size() - strlen(_complete_me.get()) + 1);
         _line += to_add; free(to_add);
         m_current_line_copy = _line;
       }
@@ -481,19 +481,19 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
     /* ctrl + right arrow */
     if (!(m_buff.size())) {return false;}
     for (; (m_buff.size() &&
-            ((_line += m_buff.top(), m_buff.pop(), _line.back()) != ' ') &&
-            (write(1, &_line.back(), 1) == 1)) ||
-           ((_line.back() == ' ') ? !(write(1, " ", 1)) : 0); )
+      ((_line += m_buff.top(), m_buff.pop(), _line.back()) != ' ') &&
+      (write(1, &_line.back(), 1) == 1)) ||
+      ((_line.back() == ' ') ? !(write(1, " ", 1)) : 0); )
     {
     }
   } else if (ch3[0] == 59 && ch3[1] == 53 && ch3[2] == 68) {
     /* ctrl + left arrow */
     if (!_line.size()) {return false;}
     for (; (_line.size() &&
-            ((m_buff.push(_line.back()),
-              _line.pop_back(), m_buff.top()) != ' ') &&
-            (write(1, "\b", 1) == 1)) ||
-           ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0); )
+      ((m_buff.push(_line.back()),
+      _line.pop_back(), m_buff.top()) != ' ') &&
+      (write(1, "\b", 1) == 1)) ||
+      ((m_buff.top() == ' ') ? !(write(1, "\b", 1)) : 0); )
     {
     }
   }
@@ -583,7 +583,7 @@ bool read_line::handle_backspace(std::string & _line)
           if (!write_with_error(1, "\033[1A \b")) {
             return false;
           } else if (!write_with_error(1, _line.c_str() + (_line.size() - line_size),
-                                       _line.size() - line_size)) {return false;}
+            _line.size() - line_size)) {return false;}
         }
       } else if (!write_with_error(1, "\b", 1)) {return false;}
     }
@@ -594,7 +594,8 @@ bool read_line::handle_backspace(std::string & _line)
     _line.pop_back();
   }
   if (((size_t) history_index == m_history->size()) &&
-      m_current_line_copy.size()) {
+    m_current_line_copy.size())
+  {
     m_current_line_copy.pop_back();
   }
   return false;
@@ -605,7 +606,7 @@ bool read_line::handle_ctrl_del(std::string & _line)
   char ch4, ch5;
   /* read the 53 and the 126 char */
   if (!read_with_error(0, ch4) ||
-      !read_with_error(0, ch5)) {return false;}
+    !read_with_error(0, ch5)) {return false;}
   /* if not 126, go away */
   if (ch4 != 53 || ch5 != 126) {return false;}
 
@@ -632,11 +633,11 @@ bool read_line::handle_ctrl_del(std::string & _line)
   if (!m_buff.size()) {return false;}
   /* print out the residual buffer */
   auto bspace2 = std::shared_ptr<char>(
-    new char[m_buff.size()], [](auto s) { delete[] s; });
+    new char[m_buff.size()], [](auto s) {delete[] s;});
   std::stack<char> temp = m_buff;
   char c = temp.top(); temp.pop();
   for (; write_with_error(1, c) && temp.size();
-       c = temp.top(), temp.pop())
+    c = temp.top(), temp.pop())
   {
   }
   memset(bspace2.get(), '\b', m_buff.size());
@@ -724,7 +725,7 @@ bool read_line::handle_bang(std::string & _line)
       };
     /* "!-<n>" = run what I did n commands ago. */
     auto buff = std::shared_ptr<char>(
-      new char[20], [] (auto s) { delete[] s; });
+      new char[20], [](auto s) {delete[] s;});
     char * b;
     for (b = buff.get(); read(0, b, 1) && write(1, b, 1) && is_digit(*b); *(++b + 1) = 0) {
     }
@@ -783,9 +784,9 @@ bool read_line::handle_up_arrow(std::string & _line)
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
-            return (s.size() >= _line.size()) &&
-            s.substr(0, _line.size()) == _line;
-          });
+          return (s.size() >= _line.size()) &&
+          s.substr(0, _line.size()) == _line;
+        });
       search_index = hist->size();
     } else {hist = &m_rev_search;}
     index = &search_index;
@@ -833,7 +834,7 @@ bool read_line::handle_up_arrow(std::string & _line)
   }
   /* iterate back to search prefix */
   auto ch2 = std::shared_ptr<char>(
-    new char[len_diff], [] (auto s) { delete[] s; });
+    new char[len_diff], [](auto s) {delete[] s;});
   memset(ch2.get(), '\b', len_diff);
   write_with_error(1, ch2.get(), len_diff);
   return false;
@@ -866,9 +867,9 @@ bool read_line::handle_down_arrow(std::string & _line)
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
-            return (s.size() >= _line.size()) &&
-            s.substr(0, _line.size()) == _line;
-          });
+          return (s.size() >= _line.size()) &&
+          s.substr(0, _line.size()) == _line;
+        });
       search_index = hist->size();
     } else {hist = &m_rev_search;}
     index = &search_index;
@@ -916,7 +917,7 @@ bool read_line::handle_down_arrow(std::string & _line)
   }
   /* iterate back to search prefix */
   auto ch2 = std::shared_ptr<char>(
-    new char[len_diff], [] (auto s) { delete[] s; });
+    new char[len_diff], [](auto s) {delete[] s;});
   memset(ch2.get(), '\b', len_diff);
   write_with_error(1, ch2.get(), len_diff);
   return false;
@@ -984,7 +985,7 @@ bool read_line::handle_left_arrow(std::string & _line)
     } else {
       auto ret =
         !write(
-          1, _line.c_str() - 2 + (term_width * ((_line.size() - 2) + term_width)), term_width);
+        1, _line.c_str() - 2 + (term_width * ((_line.size() - 2) + term_width)), term_width);
       if (term_width != ret) {
         perror("write");
         return false;

@@ -114,11 +114,11 @@ std::string tilde_expand(std::string input)
     if (user.size() > 0) {
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
-        [_passwd] () {
-            delete _passwd;
-          });
+        [_passwd]() {
+          delete _passwd;
+        });
       const size_t len = 1024;
-      auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+      auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwnam_r(user.c_str(), _passwd, buff.get(), len, &_passwd);
       if (ret || nullptr == _passwd) {
         /* user wasn't found. */
@@ -131,11 +131,11 @@ std::string tilde_expand(std::string input)
       /* Case current user (that is, the usual case). */
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
-        [_passwd] () {
-            delete _passwd;
-          });
+        [_passwd]() {
+          delete _passwd;
+        });
       const size_t len = 1024;
-      auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+      auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
       if (ret || nullptr == _passwd) {
         return input;
@@ -246,11 +246,11 @@ bool changedir(std::string & s)
     }
     passwd * _passwd = new passwd();
     auto at_exit = make_scope_exit(
-      [_passwd] () {
-          delete _passwd;
-        });
+      [_passwd]() {
+        delete _passwd;
+      });
     const size_t len = 1024;
-    auto buff = std::shared_ptr<char>(new char[len], [] (auto s) { delete[] s; });
+    auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
     int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
     if (ret || nullptr == _passwd) {
       return true;

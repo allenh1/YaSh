@@ -187,7 +187,7 @@ bool SimpleCommand::handle_cd(
       /* garauntee we have enough space */
       char * replacement =
         reinterpret_cast<char *>(
-          calloc(curr_dir.size() - replace_len + replacement_len + 1, sizeof(char)));
+        calloc(curr_dir.size() - replace_len + replacement_len + 1, sizeof(char)));
       char * d = replacement;
       /* copy up to the beginning of the substring */
       for (char * c = replace_in; c != sub; *(d++) = *(c++)) {
