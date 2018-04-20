@@ -228,14 +228,12 @@ bool read_line::handle_ctrl_e(std::string & _line)
 {
   auto ctrle = std::shared_ptr<char>(
     new char[m_buff.size() + 1], [](auto s) {delete[] s;});
-  memset(ctrle.get(), 0, m_buff.size() + 1);
-
+  size_t len = m_buff.size();
   for (char * d = ctrle.get(); m_buff.size(); ) {
     *(d) = m_buff.top(); m_buff.pop();
     _line += *(d++);
   }
-
-  write_with_error(1, ctrle.get(), m_buff.size());
+  write_with_error(1, ctrle.get(), len);
   return false;
 }
 
@@ -252,7 +250,9 @@ bool read_line::handle_ctrl_e(std::string & _line)
  */
 bool read_line::handle_ctrl_d(std::string & _line)
 {
-  if (!m_buff.size()) {return false;}
+  if (!m_buff.size()) {
+      return false;
+  }
   if (!_line.size()) {
     m_buff.pop();
     std::stack<char> temp = m_buff;
@@ -288,7 +288,11 @@ bool read_line::handle_ctrl_d(std::string & _line)
     auto buf = std::shared_ptr<char>(
       new char[m_buff.size()], [](auto s) {delete[] s;});
     memset(buf.get(), '\b', m_buff.size());
-    write(1, "\b", 1);
+    int ret = write(1, buf.get(), m_buff.size());
+    if (-1 == ret) {
+        perror("write");
+        return false;
+    }
   }
   return false;
 }
