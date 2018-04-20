@@ -12,36 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include "wildcard.hpp"
 
-void wildcard_expand(const std::shared_ptr<char> arg) {
-    // return if arg does not contain * or ?
-    if((!strchr(arg.get(), '*') && !strchr(arg.get(), '?'))
-       || !Command::currentCommand.get_expand()) {
-        Command::currentSimpleCommand->insertArgument(arg);
-        return;
+void wildcard_expand(const std::shared_ptr<char> arg)
+{
+  // return if arg does not contain * or ?
+  if ((!strchr(arg.get(), '*') && !strchr(arg.get(), '?')) ||
+    !Command::currentCommand.get_expand())
+  {
+    Command::currentSimpleCommand->insertArgument(arg);
+    return;
+  }
+
+  bool hidden = false;
+
+  char * a = arg.get();
+
+  for (int i = 0; *(a + 1); a++, i++) {
+    if ((*a == '/' && *(a + 1) == '.' && *(a + 1) == '*') ||
+      (i == 0 && *(a) == '.' && *(a + 1) == '*'))
+    {
+      hidden = true;
     }
+  }
 
-    bool hidden = false;
+  glob_t results;
+  if (hidden) {
+    glob(arg.get(), GLOB_PERIOD, nullptr, &results);
+  } else {glob(arg.get(), GLOB_ERR, nullptr, &results);}
 
-    char * a = arg.get();
-  
-    for (int i=0;*(a+1);a++, i++) {
-        if ((*a == '/' && *(a+1) == '.' && *(a+1) == '*')
-            || (i==0 && *(a)=='.' && *(a+1)=='*')) {
-            hidden = true;
-        }
-    }
- 
-    glob_t results;
-    if(hidden) {
-        glob(arg.get(), GLOB_PERIOD, nullptr, &results);
-    } else { glob(arg.get(), GLOB_ERR, nullptr, &results); }
+  Command::currentCommand.wc_collector.clear();
+  Command::currentCommand.wc_collector.shrink_to_fit();
 
-    Command::currentCommand.wc_collector.clear();
-    Command::currentCommand.wc_collector.shrink_to_fit();
-	
-    for(int i=0; i < results.gl_pathc; i++) {
-        Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
-    }  globfree(&results);
+  for (int i = 0; i < results.gl_pathc; i++) {
+    Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+  }
+  globfree(&results);
 }

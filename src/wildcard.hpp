@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __WILDCARD_HPP__
-#define __WILDCARD_HPP__
+#ifndef WILDCARD_HPP_
+#define WILDCARD_HPP_
+/* C includes */
+#include <glob.h>
+
 /* STL (C++) includes */
 #include <algorithm>
 #include <iostream>
-#include <glob.h>
+#include <memory>
 
 #include "command.hpp"
 
 #define MAXLEN 1024
 
 void wildcard_expand(std::shared_ptr<char> arg);
-#endif
+#endif  // WILDCARD_HPP_
