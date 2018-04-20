@@ -12,7 +12,7 @@ install:
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
 script:
   - ./autogen.sh
-  - ./configure --enable-debug=yes
+  - ./configure
   - make -j$(nproc)
   - ln -sf $(pwd)/src/yash $(pwd)/shell
   - cd test
