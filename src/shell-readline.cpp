@@ -634,17 +634,20 @@ bool read_line::handle_ctrl_del(std::string & _line)
   /* pop off stack until a space, or the end */
   for (char c = 'a'; c != ' ' && m_buff.size(); c = m_buff.top(), m_buff.pop()) {
   }
-  if (!m_buff.size()) {return false;}
+  if (!m_buff.size()) {
+    return false;
+  }
+  len = m_buff.size();
   /* print out the residual buffer */
   auto bspace2 = std::shared_ptr<char>(
     new char[m_buff.size()], [](auto s) {delete[] s;});
   std::stack<char> temp = m_buff;
   char c = temp.top(); temp.pop();
-  for (; write_with_error(1, c) && temp.size();
-    c = temp.top(), temp.pop())
-  {
+  for (; write_with_error(1, c) && temp.size(); ) {
+    c = temp.top();
+    temp.pop();
   }
-  memset(bspace2.get(), '\b', m_buff.size());
+  memset(bspace2.get(), '\b', len);
   return !write_with_error(1, bspace2.get(), len);
 }
 
