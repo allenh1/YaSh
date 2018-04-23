@@ -362,7 +362,7 @@ void Command::prompt()
   if (pmt) {PROMPT = std::string(pmt);} else {PROMPT = std::string("default");}
 
   if (isatty(0) && PROMPT == std::string("default")) {
-    std::string _user = std::string(getenv("USER"));
+    std::string _user = get_username();
     char buffer[100]; std::string _host;
     if (!gethostname(buffer, 100)) {_host = std::string(buffer);} else {
       _host = std::string("localhost");
