@@ -115,8 +115,8 @@ std::string tilde_expand(std::string input)
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
         [_passwd]() {
-          delete _passwd;
-        });
+            delete _passwd;
+          });
       const size_t len = 1024;
       auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwnam_r(user.c_str(), _passwd, buff.get(), len, &_passwd);
@@ -132,8 +132,8 @@ std::string tilde_expand(std::string input)
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
         [_passwd]() {
-          delete _passwd;
-        });
+            delete _passwd;
+          });
       const size_t len = 1024;
       auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
@@ -194,7 +194,9 @@ std::string replace(std::string str, const char * sb, const char * rep)
 std::string env_expand(std::string s)
 {
   const char * str = s.c_str();
-  char * temp = reinterpret_cast<char *>(calloc(1024, sizeof(char)));
+  auto t = std::shared_ptr<char>(
+    reinterpret_cast<char *>(calloc(1024, sizeof(char))), free);
+  char * temp = t.get();
   int index;
   for (index = 0; str - s.c_str() < s.size(); ++str) {
     // aight. Let's just do it.
@@ -202,24 +204,27 @@ std::string env_expand(std::string s)
       // begin expansion
       if (*(++str) != '{') {continue;}
       // @todo maybe work without braces.
-      char * temp2 = reinterpret_cast<char *>(calloc(s.size(), sizeof(char))); ++str;
+      auto t2 = std::shared_ptr<char>(
+        reinterpret_cast<char *>(calloc(s.size(), sizeof(char))),
+        free);
+      ++str;
+      char * temp2 = t2.get();
       for (char * tmp = temp2; *str && *str != '}'; *(tmp++) = *(str++)) {
       }
       if (*str == '}') {
-        ++str; char * out = getenv(temp2);
+        ++str;
+        const char * out = getenv(temp2);
         if (nullptr == out) {
           continue;
         }
-        for (char * t = out; *t; temp[index++] = *(t++)) {
+        for (const char * t = out; *t; ++t) {
+          temp[index++] = *t;
         }
       }
-      free(temp2);
     }            // if not a variable, don't expand.
     temp[index++] = *str;
   }
-  std::string ret = std::string(temp);
-  free(temp);
-  return ret;
+  return std::string(temp);
 }
 
 /**
@@ -233,22 +238,19 @@ std::string env_expand(std::string s)
 bool changedir(std::string & s)
 {
   /* verify that the directory exists */
-  char * cpy = strndup(s.c_str(), s.size());
   DIR * _dir;
 
-  if (!s.empty() && (_dir = opendir(cpy))) {
+  if (!s.empty() && (_dir = opendir(s.c_str()))) {
     /* directory is there */
     closedir(_dir);
   } else if (!s.empty() && errno == ENOENT) {
     /* directory doesn't exist! */
     std::cerr << u8"¯\\_(ツ)_/¯" << std::endl;
     std::cerr << "No such file or directory" << std::endl;
-    free(cpy);
     return false;
   } else if (!s.empty()) {
     /* cd failed because... ¯\_(ツ)_/¯ */
     std::cerr << u8"¯\\_(ツ)_/¯" << std::endl;
-    free(cpy);
     return false;
   }
 
@@ -263,8 +265,8 @@ bool changedir(std::string & s)
     passwd * _passwd = new passwd();
     auto at_exit = make_scope_exit(
       [_passwd]() {
-        delete _passwd;
-      });
+          delete _passwd;
+        });
     const size_t len = 1024;
     auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
     int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
@@ -272,12 +274,10 @@ bool changedir(std::string & s)
       return true;
     }
     std::string user_home = _passwd->pw_dir;
-    free(cpy);
     return chdir(user_home.c_str()) == 0;
   }
   for (; *s.c_str() != '/' && s.back() == '/'; s.pop_back()) {
   }
-  free(cpy);
   return chdir(s.c_str()) == 0;
 }
 
