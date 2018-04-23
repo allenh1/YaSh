@@ -147,6 +147,22 @@ std::string tilde_expand(std::string input)
   return input;
 }
 
+std::string get_username()
+{
+  passwd * _passwd = new passwd();
+  auto at_exit = make_scope_exit(
+    [_passwd]() {
+        delete _passwd;
+      });
+  const size_t len = 1024;
+  auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
+  int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
+  if (ret || nullptr == _passwd) {
+    return std::string("<unknown user>");
+  }
+  return std::string(_passwd->pw_name);
+}
+
 /**
  * String replace function.
  *
