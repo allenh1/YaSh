@@ -17,4 +17,5 @@ script:
   - ln -sf $(pwd)/src/yash $(pwd)/shell
   - cd test
   - export LC_COLLATE="C"
+  - export IS_TRAVIS="YES"
   - ./testall
