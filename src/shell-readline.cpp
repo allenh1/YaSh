@@ -206,8 +206,13 @@ bool read_line::handle_ctrl_a(std::string & _line)
       } else if (!write_with_error(1, _line.c_str(), term_width - 3)) {return false;}
 
       for (size_t k = 0; k < term_width - 2; ++k) {
-        if (!write_with_error(1, "\b", 1)) {return true;}}
-    } else if (!write_with_error(1, "\b", 1)) {return false;}
+        if (!write_with_error(1, "\b", 1)) {
+          return true;
+        }
+      }
+    } else if (!write_with_error(1, "\b", 1)) {
+      return false;
+    }
   }
   return false;
 }
