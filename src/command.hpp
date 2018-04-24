@@ -68,7 +68,7 @@ public:
   void setBackground(const bool & bg) {background = bg;}
 
   static Command currentCommand;
-  static std::shared_ptr<SimpleCommand> currentSimpleCommand;
+  static std::shared_ptr<SimpleCommand> currentSimpleCommand = nullptr;
 
   const int & get_stdin() {return m_stdin;}
   const int & get_stdout() {return m_stdout;}

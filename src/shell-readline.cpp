@@ -320,6 +320,7 @@ bool read_line::handle_ctrl_d(std::string & _line)
 bool read_line::handle_tab(std::string & _line)
 {
   Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
+
   /* Part 1: add a '*' to the end of the stream. */
   std::string _temp;
 
@@ -327,10 +328,10 @@ bool read_line::handle_tab(std::string & _line)
   if (_line.size()) {
     _split = string_split(_line, ' ');
     _temp = tilde_expand(_split.back()) + "*";
-  } else {_temp = "*";}
-
+  } else {
+      _temp = "*";
+  }
   auto _complete_me = std::shared_ptr<char>(strndup(_temp.c_str(), _temp.size()), free);
-
   /* Part 2: Invoke wildcard expand */
   wildcard_expand(_complete_me);
 
@@ -338,9 +339,9 @@ bool read_line::handle_tab(std::string & _line)
    * Part 3: If wc_collector.size() <= 1, then complete the tab.
    *         otherwise, run "echo <text>*"
    */
-  std::string * array = Command::currentCommand.wc_collector.data();
-  std::sort(array, array + Command::currentCommand.wc_collector.size());
-
+  std::sort(
+    Command::currentCommand.wc_collector.begin(), Command::currentCommand.wc_collector.end());
+  /* TODO(allenh1): for some reason, wc_collector has no elements upon upstart tab */
   if (Command::currentCommand.wc_collector.size() == 1) {
     /* First check if the line has any spaces! */
     /*     If so, we will wrap in quotes!      */
@@ -354,21 +355,30 @@ bool read_line::handle_tab(std::string & _line)
     char ch[_line.size() + 1]; char sp[_line.size() + 1];
     ch[_line.size()] = '\0'; sp[_line.size()] = '\0';
     memset(ch, '\b', _line.size()); memset(sp, ' ', _line.size());
-    if (!write_with_error(1, ch, _line.size())) {return false;}
-    if (!write_with_error(1, sp, _line.size())) {return false;}
-    if (!write_with_error(1, ch, _line.size())) {return false;}
+    if (!write_with_error(1, ch, _line.size())) {
+      return false;
+    }
+    if (!write_with_error(1, sp, _line.size())) {
+      return false;
+    }
+    if (!write_with_error(1, ch, _line.size())) {
+      return false;
+    }
     _line = "";
-    for (size_t x = 0; x < _split.size() - 1; _line += _split[x++] + " ") {
+    for (const auto & x : _split) {
+      _line += x + " ";
     }
     _line += Command::currentCommand.wc_collector[0];
-    if (quote_wrap) {_line = _line + "\"";}
+    if (quote_wrap) {
+      _line = _line + "\"";
+    }
     m_current_line_copy = _line;
     Command::currentCommand.wc_collector.clear();
     Command::currentCommand.wc_collector.shrink_to_fit();
   } else if (Command::currentCommand.wc_collector.size() == 0) {
     /* now we check the binaries! */
-    char * _path = getenv("PATH");
-    if (!_path) {
+    const char * _path = getenv("PATH");
+    if (nullptr == _path) {
       /* if path isn't set, continue */
       return false;
     }
