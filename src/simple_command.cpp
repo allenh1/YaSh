@@ -260,7 +260,16 @@ void SimpleCommand::handle_ls()
 void SimpleCommand::handle_grep()
 {
   if (arguments[0] == std::string("grep")) {
-    char ** temp = new char *[arguments.size() + 1];
+    size_t len = arguments.size() + 1;
+    auto t = std::shared_ptr<char *>(
+      new char *[len],
+      [=](char ** s){
+          for (size_t y = 0; y < len; ++y) {
+              free(s[y]);
+            }
+          delete[] s;
+        });
+    char ** temp = t.get();
     for (size_t y = 0; y < arguments.size() - 1; ++y) {
       temp[y] = strdup(arguments[y]);
     }
