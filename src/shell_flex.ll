@@ -217,9 +217,9 @@ void strbufWrite(char c) {
     yylval.string_val = new char[strlen(yytext) + 1];
     strcpy(yylval.string_val, yytext);
     size_t strs_len = strlen(yylval.string_val);
-    for( int i = 0; i < strs_len; i++ ) {
-        if( yylval.string_val[i] == '\\' ) {
-            for( int j = i; j < strs_len; j++ ) {
+    for(size_t i = 0; i < strs_len; ++i) {
+        if(yylval.string_val[i] == '\\') {
+            for(size_t j = i; j < strs_len; ++j) {
                 yylval.string_val[j] = yylval.string_val[j+1];
             }
         }

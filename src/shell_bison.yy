@@ -133,9 +133,8 @@ WORD {
 	wildcard_expand(expand_upon_me);
 
 	if(fg) {
-		pid_t current = tcgetpgrp(0);
 		try {
-			int as_num = std::stoi(std::string($1));
+			size_t as_num = static_cast<size_t>(std::stoi(std::string($1)));
 			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				std::cerr<<"fg: no such job"<<std::endl;
 			} else {
@@ -148,7 +147,7 @@ WORD {
 		} fg=false;
 	} else if(bg) {
 		try {
-			int as_num = std::stoi(std::string($1));
+			size_t as_num = static_cast<size_t>(std::stoi(std::string($1)));
 			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				job _back = Command::currentCommand.m_p_jobs->at(as_num);
 				/* erase */

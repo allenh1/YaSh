@@ -157,7 +157,7 @@ bool SimpleCommand::handle_cd(
     save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
     setup_process_io(fdin, fdout, fderr);
     std::string curr_dir = std::string(getenv("PWD"));
-    int cd; std::string new_dir;
+    std::string new_dir;
 
     if (arguments.size() == 4) {
       char * to_replace = strdup(arguments[1]);
@@ -244,7 +244,7 @@ void SimpleCommand::handle_ls()
 {
   if (arguments[0] == std::string("ls")) {
     char ** temp = new char *[arguments.size() + 2];
-    for (int y = 2; y < arguments.size(); ++y) {
+    for (size_t y = 2; y < arguments.size(); ++y) {
       temp[y] = strdup(arguments[y - 1]);
     }     // ... still better than managing myself!
     temp[0] = strdup("ls");
@@ -261,7 +261,7 @@ void SimpleCommand::handle_grep()
 {
   if (arguments[0] == std::string("grep")) {
     char ** temp = new char *[arguments.size() + 1];
-    for (int y = 0; y < arguments.size() - 1; ++y) {
+    for (size_t y = 0; y < arguments.size() - 1; ++y) {
       temp[y] = strdup(arguments[y]);
     }
     temp[arguments.size() - 1] = strdup("--color");

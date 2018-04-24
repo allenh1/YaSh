@@ -79,7 +79,7 @@ bool read_line::write_with_error(int _fd, char & c)
  */
 bool read_line::write_with_error(int _fd, const char * s)
 {
-  if (write(_fd, s, strlen(s)) != strlen(s)) {
+  if (static_cast<size_t>(write(_fd, s, strlen(s))) != strlen(s)) {
     perror("write");
     return false;
   }
@@ -101,7 +101,7 @@ bool read_line::write_with_error(int _fd, const char * s)
  */
 bool read_line::write_with_error(int _fd, const char * s, const size_t & len)
 {
-  if (write(_fd, s, len) != len) {
+  if (static_cast<size_t>(write(_fd, s, len)) != len) {
     perror("write");
     return false;
   }
@@ -118,10 +118,10 @@ bool read_line::write_with_error(int _fd, const char * s, const size_t & len)
  *
  * @return True upon successful read.
  */
-bool read_line::read_with_error(int _fd, char & c)
+bool read_line::read_with_error(const int & _fd, char & c)
 {
   char d;   /* temp, for reading */
-  if (!read(0, &d, 1)) {
+  if (!read(_fd, &d, 1)) {
     perror("read");
     return false;
   } else {
@@ -284,7 +284,6 @@ bool read_line::handle_ctrl_d(std::string & _line)
         return false;
       }
     }
-    char b = ' ';
     if (!(write_with_error(1, " ", 1) && write_with_error(1, "\b", 1))) {
       return false;
     }
@@ -529,7 +528,7 @@ bool read_line::handle_ctrl_arrow(std::string & _line)
  *
  * @return False upon error.
  */
-bool read_line::handle_ctrl_k(std::string & _line)
+bool read_line::handle_ctrl_k()
 {
   if (!m_buff.size()) {return false;}
   size_t count = m_buff.size() + 1;
@@ -620,7 +619,7 @@ bool read_line::handle_backspace(std::string & _line)
   return false;
 }
 
-bool read_line::handle_ctrl_del(std::string & _line)
+bool read_line::handle_ctrl_del()
 {
   char ch4, ch5;
   /* read the 53 and the 126 char */
@@ -696,7 +695,6 @@ bool read_line::handle_delete(std::string & _line)
       d = temp.top(); temp.pop();
       if (!write_with_error(1, d)) {return false;}
     }
-    char b = ' ';
     if (!write_with_error(1, " ", 1)) {return false;} else if (!write_with_error(1, "\b", 1)) {
       return false;
     }
@@ -802,7 +800,7 @@ bool read_line::handle_up_arrow(std::string & _line)
       m_rev_search.shrink_to_fit();
       hist = &m_rev_search;
       search_str = _line;
-      auto it = std::copy_if(
+      std::copy_if(
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
@@ -885,7 +883,7 @@ bool read_line::handle_down_arrow(std::string & _line)
       m_rev_search.shrink_to_fit();
       hist = &m_rev_search;
       search_str = _line;
-      auto it = std::copy_if(
+      std::copy_if(
         m_history->begin(), m_history->end(),
         std::back_inserter(*hist),
         [_line](const auto & s) {
@@ -897,7 +895,7 @@ bool read_line::handle_down_arrow(std::string & _line)
     index = &search_index;
   }
 
-  if (*index == hist->size()) {return false;}
+  if (static_cast<size_t>(*index) == hist->size()) {return false;}
 
 
   /* clear input so far */
@@ -917,7 +915,7 @@ bool read_line::handle_down_arrow(std::string & _line)
   } else if (!write_with_error(1, ch, _line.size())) {return false;}
 
   /* don't increment past the last command */
-  if (((*index)) != hist->size() - 1) {
+  if (static_cast<size_t>((*index)) != hist->size() - 1) {
     (*index)++;
     _line = hist->at(*index);
     _line.pop_back();
@@ -1028,7 +1026,7 @@ void read_line::load_history()
 {
   /* load history from ~/.cache/yash-history */
   std::ifstream history_file(tilde_expand("~/.cache/yash_history"));
-  std::string _line; int x = 0;
+  std::string _line;
   for (; std::getline(history_file, _line); history_index++, m_history->push_back(_line + "\n")) {
   }
 }

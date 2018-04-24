@@ -82,7 +82,6 @@ void printEvenly(std::vector<std::string> & _vct)
   /* Otherwise, print the strings evenly. */
   for (; longst < w.ws_col && (w.ws_col % longst); ++longst) {
   }
-  int inc = _vct.size() / longst;
   for (size_t x = 0; x < _vct.size(); ) {
     for (size_t width = 0; width != w.ws_col; width += longst) {
       if (x == _vct.size()) {break;}
@@ -198,7 +197,7 @@ std::string env_expand(std::string s)
     reinterpret_cast<char *>(calloc(1024, sizeof(char))), free);
   char * temp = t.get();
   int index;
-  for (index = 0; str - s.c_str() < s.size(); ++str) {
+  for (index = 0; static_cast<size_t>(str - s.c_str()) < s.size(); ++str) {
     // aight. Let's just do it.
     if (*str == '$') {
       // begin expansion

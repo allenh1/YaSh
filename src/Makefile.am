@@ -2,11 +2,11 @@
 BUILT_SOURCES = shell_bison.hh
 
 if DEBUG
-AM_CFLAGS = -ggdb3 -fsanitize=address -O0 -lpthread -std=c++17
-AM_CXXFLAGS = -ggdb3 -O0 -fsanitize=address -lpthread -std=c++17
+AM_CFLAGS = -ggdb3 -fsanitize=address -Wall -Wextra -O0 -lpthread -std=c++17
+AM_CXXFLAGS = -ggdb3 -O0 -fsanitize=address -Wall -Wextra -lpthread -std=c++17
 else
-AM_CFLAGS =  -O2 -lpthread
-AM_CXXFLAGS = -O2 -lpthread -std=c++17
+AM_CFLAGS =  -O2 -Wall -Wextra -lpthread
+AM_CXXFLAGS = -O2 -Wall -Wextra -lpthread -std=c++17
 endif
 
 AM_YFLAGS = -d
