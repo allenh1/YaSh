@@ -11,11 +11,13 @@ install:
   - sudo apt-get install -qq g++-6
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
 script:
-  - ./autogen.sh
-  - ./configure
+  - mkdir build
+  - cd build
+  - cmake ..
   - make -j$(nproc)
-  - ln -sf $(pwd)/src/yash $(pwd)/shell
-  - cd test
+  - ln -sf $(pwd)/yash $(pwd)/../shell
+  - ln -sf $(pwd)/yash $(pwd)/../src/yash
+  - cd ../test
   - export LC_COLLATE="C"
   - export IS_TRAVIS="YES"
   - ./testall
