@@ -46,3 +46,5 @@ test/err2
 "test/p\253\324\001"
 test/shell-in
 build
+Debug
+Release
