@@ -283,13 +283,7 @@ bool changedir(std::string & s)
 bool is_directory(std::string str)
 {
   struct stat s;
-  char * c = strndup(str.c_str(), str.size());
-
-  if (stat(c, &s)) {goto not_directory;} else if (s.st_mode & S_IFDIR) {
-    free(c); return true;
-  }
-not_directory:
-  free(c); return false;
+  return !stat(str.c_str(), &s) && s.st_mode & S_IFDIR;
 }
 
 std::vector<std::string> vector_split(std::string s, char delim)
