@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* remove register keyword */
+#define register
+
 #include <string.h>
 #include "shell_bison.hh"
 #include "shell-readline.hpp"
