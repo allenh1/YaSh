@@ -318,7 +318,7 @@ bool read_line::handle_ctrl_d(std::string & _line)
  */
 bool read_line::handle_tab(std::string & _line)
 {
-  Command::currentSimpleCommand = std::unique_ptr<SimpleCommand>(new SimpleCommand());
+  Command::currentSimpleCommand = std::make_unique<SimpleCommand>();
 
   /* Part 1: add a '*' to the end of the stream. */
   std::string _temp;
@@ -364,8 +364,8 @@ bool read_line::handle_tab(std::string & _line)
       return false;
     }
     _line = "";
-    for (const auto & x : _split) {
-      _line += x + " ";
+    for (size_t x = 0; x < _split.size() - 1; ++x) {
+      _line += _split[x] + " ";
     }
     _line += Command::currentCommand.wc_collector[0];
     if (quote_wrap) {
