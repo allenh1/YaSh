@@ -81,7 +81,7 @@ void printEvenly(std::vector<std::string> & _vct)
   }
 
   /* Otherwise, print the strings evenly. */
-  for (; longst < w.ws_col && (w.ws_col % longst); ++longst) {
+  for (; longst < w.ws_col && (w.ws_col % (longst + 1)); ++longst) {
   }
   for (size_t x = 0; x < _vct.size(); ) {
     for (size_t width = 0; width != w.ws_col; width += longst) {
@@ -89,7 +89,7 @@ void printEvenly(std::vector<std::string> & _vct)
         break;
       }
       y = std::make_shared<std::string>(_vct[x++]);
-      for (; y->size() < longst; *y += " ") {
+      for (; y->size() <= longst; *y += " ") {
       }
       std::cout << *y;
     }
