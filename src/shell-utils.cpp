@@ -68,12 +68,13 @@ size_t size_of_longest(const std::vector<std::string> & _vct)
  */
 void printEvenly(std::vector<std::string> & _vct)
 {
-  size_t longst = size_of_longest(_vct); std::string * y;
+  size_t longst = size_of_longest(_vct);
+  std::shared_ptr<std::string> y = nullptr;
   struct winsize w; ioctl(1, TIOCGWINSZ, &w);
 
   /* If the length is too long, print on its own line */
   if (longst >= w.ws_col) {
-    for (auto && x : _vct) {
+    for (const auto & x : _vct) {
       std::cout << x << std::endl;
     }
     return;
@@ -84,11 +85,13 @@ void printEvenly(std::vector<std::string> & _vct)
   }
   for (size_t x = 0; x < _vct.size(); ) {
     for (size_t width = 0; width != w.ws_col; width += longst) {
-      if (x == _vct.size()) {break;}
-      y = new std::string(_vct[x++]);
+      if (x == _vct.size()) {
+        break;
+      }
+      y = std::make_shared<std::string>(_vct[x++]);
       for (; y->size() < longst; *y += " ") {
       }
-      std::cout << *y; delete y;
+      std::cout << *y;
     }
     std::cout << std::endl;
   }
