@@ -60,7 +60,7 @@ public:
   bool write_with_error(int _fd, const char * s);
   bool write_with_error(int _fd, const char * s, const size_t & len);
 
-  bool read_with_error(int _fd, char & c);
+  bool read_with_error(const int & _fd, char & c);
   size_t get_term_width();
 
   bool handle_enter(std::string & _line, char & input);
@@ -72,8 +72,8 @@ public:
   bool handle_ctrl_a(std::string & _line);
   bool handle_ctrl_d(std::string & _line);
   bool handle_ctrl_e(std::string & _line);
-  bool handle_ctrl_k(std::string & _line);
-  bool handle_ctrl_del(std::string & _line);
+  bool handle_ctrl_k();
+  bool handle_ctrl_del();
   bool handle_ctrl_arrow(std::string & _line);
 
   bool handle_up_arrow(std::string & _line);
@@ -133,7 +133,7 @@ public:
       } else if (input == 5 && !handle_ctrl_e(_line)) {
         continue;
       } else if (input == 4 && !handle_ctrl_d(_line)) {continue;} else if (input == 11) {
-        if (!handle_ctrl_k(_line)) {continue;} else {break;}
+        if (!handle_ctrl_k()) {continue;} else {break;}
       } else if ((input == 8 || input == 127) && !handle_backspace(_line)) {
         continue;
       } else if (input == 9 && !handle_tab(_line)) {continue;} else if (input == 27) {
@@ -147,7 +147,7 @@ public:
           continue;
         } else if (ch1 == 91 && ch2 == 51 && ch3 == 126 &&
           !handle_delete(_line)) {continue;} else if (ch1 == 91 && ch2 == 51 && ch3 == 59 &&
-          !handle_ctrl_del(_line)) {continue;}
+          !handle_ctrl_del()) {continue;}
         if (ch1 == 91 && ch2 == 65 && !handle_up_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 67 && !handle_right_arrow(_line)) {continue;}

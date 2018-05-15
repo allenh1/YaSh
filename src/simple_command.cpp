@@ -157,7 +157,7 @@ bool SimpleCommand::handle_cd(
     save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
     setup_process_io(fdin, fdout, fderr);
     std::string curr_dir = std::string(getenv("PWD"));
-    int cd; std::string new_dir;
+    std::string new_dir;
 
     if (arguments.size() == 4) {
       char * to_replace = strdup(arguments[1]);
@@ -166,7 +166,7 @@ bool SimpleCommand::handle_cd(
       char * sub = strstr(replace_in, to_replace);
 
       /* Desired replacement wasn't found, so error and exit */
-      if (sub == nullptr) {
+      if (nullptr == sub) {
         perror("cd");
 
         free(to_replace);
@@ -218,19 +218,22 @@ bool SimpleCommand::handle_cd(
       }
       setenv("PWD", getenv("HOME"), 1);
     } else {
-      if (arguments[1] == std::string("pwd") ||
-        arguments[1] == std::string("/bin/pwd"))
-      {
+      if (arguments[1] == std::string("pwd") || arguments[1] == std::string("/bin/pwd")) {
+        /* TODO(allenh1): wtf? Why is this even here? */
       } else if (*arguments[1] != '/') {
         new_dir = std::string(getenv("PWD"));
         for (; new_dir.back() == '/'; new_dir.pop_back()) {
         }
         new_dir += "/" + std::string(arguments[1]);
-      } else {new_dir = std::string(arguments[1]);}
+      } else {
+        new_dir = std::string(arguments[1]);
+      }
 
       for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back()) {
       }
-      if (changedir(new_dir)) {setenv("PWD", new_dir.c_str(), 1);}
+      if (changedir(new_dir)) {
+        setenv("PWD", new_dir.c_str(), 1);
+      }
     }
     setenv("PWD", curr_dir.c_str(), 1);
     // Regardless of errors, cd has finished.
@@ -244,7 +247,7 @@ void SimpleCommand::handle_ls()
 {
   if (arguments[0] == std::string("ls")) {
     char ** temp = new char *[arguments.size() + 2];
-    for (int y = 2; y < arguments.size(); ++y) {
+    for (size_t y = 2; y < arguments.size(); ++y) {
       temp[y] = strdup(arguments[y - 1]);
     }     // ... still better than managing myself!
     temp[0] = strdup("ls");
@@ -260,8 +263,17 @@ void SimpleCommand::handle_ls()
 void SimpleCommand::handle_grep()
 {
   if (arguments[0] == std::string("grep")) {
-    char ** temp = new char *[arguments.size() + 1];
-    for (int y = 0; y < arguments.size() - 1; ++y) {
+    size_t len = arguments.size() + 1;
+    auto t = std::shared_ptr<char *>(
+      new char *[len],
+      [=](char ** s){
+          for (size_t y = 0; y < len; ++y) {
+              free(s[y]);
+            }
+          delete[] s;
+        });
+    char ** temp = t.get();
+    for (size_t y = 0; y < arguments.size() - 1; ++y) {
       temp[y] = strdup(arguments[y]);
     }
     temp[arguments.size() - 1] = strdup("--color");

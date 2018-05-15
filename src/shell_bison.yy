@@ -111,12 +111,11 @@ command_word argument_list {
 
 command_word:
 WORD {
-	Command::currentSimpleCommand =
-		std::unique_ptr<SimpleCommand>(new SimpleCommand());
-        auto _ptr = std::shared_ptr<char>($1, [](auto s){ delete[] s; });
-	if(!strcmp(_ptr.get(), "fg")) fg=true;
-	else if(!strcmp(_ptr.get(), "bg")) bg=true;
-	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
+	Command::currentSimpleCommand = std::make_unique<SimpleCommand>();
+        auto _ptr = std::shared_ptr<char>(strdup($1), free);
+	if(!strcmp($1, "fg")) fg=true;
+	else if(!strcmp($1, "bg")) bg=true;
+	else if(!strcmp($1, "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
 }
 ;
@@ -133,9 +132,8 @@ WORD {
 	wildcard_expand(expand_upon_me);
 
 	if(fg) {
-		pid_t current = tcgetpgrp(0);
 		try {
-			int as_num = std::stoi(std::string($1));
+			size_t as_num = static_cast<size_t>(std::stoi(std::string($1)));
 			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				std::cerr<<"fg: no such job"<<std::endl;
 			} else {
@@ -148,7 +146,7 @@ WORD {
 		} fg=false;
 	} else if(bg) {
 		try {
-			int as_num = std::stoi(std::string($1));
+			size_t as_num = static_cast<size_t>(std::stoi(std::string($1)));
 			if (as_num >= Command::currentCommand.m_p_jobs->size()) {
 				job _back = Command::currentCommand.m_p_jobs->at(as_num);
 				/* erase */

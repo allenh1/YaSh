@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8.2)
-project(yash)
+project(yash VERSION 0.0.8)
 
 # find flex and bison
 find_package(BISON)

@@ -68,28 +68,30 @@ size_t size_of_longest(const std::vector<std::string> & _vct)
  */
 void printEvenly(std::vector<std::string> & _vct)
 {
-  size_t longst = size_of_longest(_vct); std::string * y;
+  size_t longst = size_of_longest(_vct);
+  std::shared_ptr<std::string> y = nullptr;
   struct winsize w; ioctl(1, TIOCGWINSZ, &w);
 
   /* If the length is too long, print on its own line */
   if (longst >= w.ws_col) {
-    for (auto && x : _vct) {
+    for (const auto & x : _vct) {
       std::cout << x << std::endl;
     }
     return;
   }
 
   /* Otherwise, print the strings evenly. */
-  for (; longst < w.ws_col && (w.ws_col % longst); ++longst) {
+  for (; longst < w.ws_col && (w.ws_col % (longst + 1)); ++longst) {
   }
-  int inc = _vct.size() / longst;
   for (size_t x = 0; x < _vct.size(); ) {
     for (size_t width = 0; width != w.ws_col; width += longst) {
-      if (x == _vct.size()) {break;}
-      y = new std::string(_vct[x++]);
-      for (; y->size() < longst; *y += " ") {
+      if (x == _vct.size()) {
+        break;
       }
-      std::cout << *y; delete y;
+      y = std::make_shared<std::string>(_vct[x++]);
+      for (; y->size() <= longst; *y += " ") {
+      }
+      std::cout << *y;
     }
     std::cout << std::endl;
   }
@@ -115,8 +117,8 @@ std::string tilde_expand(std::string input)
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
         [_passwd]() {
-          delete _passwd;
-        });
+            delete _passwd;
+          });
       const size_t len = 1024;
       auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwnam_r(user.c_str(), _passwd, buff.get(), len, &_passwd);
@@ -132,8 +134,8 @@ std::string tilde_expand(std::string input)
       passwd * _passwd = new passwd();
       auto at_exit = make_scope_exit(
         [_passwd]() {
-          delete _passwd;
-        });
+            delete _passwd;
+          });
       const size_t len = 1024;
       auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
       int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
@@ -175,13 +177,13 @@ std::string get_username()
 std::string replace(std::string str, const char * sb, const char * rep)
 {
   std::string sub = std::string(sb);
-  size_t pos = str.find(rep);
-  if (pos != std::string::npos) {
+  if (auto pos = str.find(rep); pos != std::string::npos) {
     std::string p1 = str.substr(0, pos - 1);
     std::string p2 = str.substr(pos + std::string(sub).size() - 1);
     std::string tStr = p1 + rep + p2;
     return tStr;
-  } else {return str;}
+  }
+  return str;
 }
 
 /**
@@ -194,32 +196,37 @@ std::string replace(std::string str, const char * sb, const char * rep)
 std::string env_expand(std::string s)
 {
   const char * str = s.c_str();
-  char * temp = reinterpret_cast<char *>(calloc(1024, sizeof(char)));
+  auto t = std::shared_ptr<char>(
+    reinterpret_cast<char *>(calloc(1024, sizeof(char))), free);
+  char * temp = t.get();
   int index;
-  for (index = 0; str - s.c_str() < s.size(); ++str) {
+  for (index = 0; static_cast<size_t>(str - s.c_str()) < s.size(); ++str) {
     // aight. Let's just do it.
     if (*str == '$') {
       // begin expansion
       if (*(++str) != '{') {continue;}
       // @todo maybe work without braces.
-      char * temp2 = reinterpret_cast<char *>(calloc(s.size(), sizeof(char))); ++str;
+      auto t2 = std::shared_ptr<char>(
+        reinterpret_cast<char *>(calloc(s.size(), sizeof(char))),
+        free);
+      ++str;
+      char * temp2 = t2.get();
       for (char * tmp = temp2; *str && *str != '}'; *(tmp++) = *(str++)) {
       }
       if (*str == '}') {
-        ++str; char * out = getenv(temp2);
+        ++str;
+        const char * out = getenv(temp2);
         if (nullptr == out) {
           continue;
         }
-        for (char * t = out; *t; temp[index++] = *(t++)) {
+        for (const char * t = out; *t; ++t) {
+          temp[index++] = *t;
         }
       }
-      free(temp2);
     }            // if not a variable, don't expand.
     temp[index++] = *str;
   }
-  std::string ret = std::string(temp);
-  free(temp);
-  return ret;
+  return std::string(temp);
 }
 
 /**
@@ -233,22 +240,19 @@ std::string env_expand(std::string s)
 bool changedir(std::string & s)
 {
   /* verify that the directory exists */
-  char * cpy = strndup(s.c_str(), s.size());
   DIR * _dir;
 
-  if (!s.empty() && (_dir = opendir(cpy))) {
+  if (!s.empty() && (_dir = opendir(s.c_str()))) {
     /* directory is there */
     closedir(_dir);
   } else if (!s.empty() && errno == ENOENT) {
     /* directory doesn't exist! */
     std::cerr << u8"¯\\_(ツ)_/¯" << std::endl;
     std::cerr << "No such file or directory" << std::endl;
-    free(cpy);
     return false;
   } else if (!s.empty()) {
     /* cd failed because... ¯\_(ツ)_/¯ */
     std::cerr << u8"¯\\_(ツ)_/¯" << std::endl;
-    free(cpy);
     return false;
   }
 
@@ -263,8 +267,8 @@ bool changedir(std::string & s)
     passwd * _passwd = new passwd();
     auto at_exit = make_scope_exit(
       [_passwd]() {
-        delete _passwd;
-      });
+          delete _passwd;
+        });
     const size_t len = 1024;
     auto buff = std::shared_ptr<char>(new char[len], [](auto s) {delete[] s;});
     int ret = getpwuid_r(getuid(), _passwd, buff.get(), len, &_passwd);
@@ -272,25 +276,17 @@ bool changedir(std::string & s)
       return true;
     }
     std::string user_home = _passwd->pw_dir;
-    free(cpy);
     return chdir(user_home.c_str()) == 0;
   }
   for (; *s.c_str() != '/' && s.back() == '/'; s.pop_back()) {
   }
-  free(cpy);
   return chdir(s.c_str()) == 0;
 }
 
 bool is_directory(std::string str)
 {
   struct stat s;
-  char * c = strndup(str.c_str(), str.size());
-
-  if (stat(c, &s)) {goto not_directory;} else if (s.st_mode & S_IFDIR) {
-    free(c); return true;
-  }
-not_directory:
-  free(c); return false;
+  return !stat(str.c_str(), &s) && s.st_mode & S_IFDIR;
 }
 
 std::vector<std::string> vector_split(std::string s, char delim)

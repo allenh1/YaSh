@@ -64,7 +64,7 @@ inline int eval_to_buffer(char * const * cmd, char * outBuff, size_t buffSize)
   } else {
     /** Parent Process: read from the pipe **/
     close(fdpipe[1]);       // close unused write end
-    for (memset(outBuff, 0, buffSize); x = read(fdpipe[0], outBuff, buffSize); ) {
+    for (memset(outBuff, 0, buffSize); (x = read(fdpipe[0], outBuff, buffSize)); ) {
     }
     if (x == buffSize) {
       close(fdpipe[0]);
@@ -139,12 +139,16 @@ void Command::insertSimpleCommand(std::shared_ptr<SimpleCommand> simpleCommand)
 
 void Command::clear()
 {
-  if (m_stdin != 0) {close(m_stdin);}
-  if (m_stdout != 1) {close(m_stdout);}
-  if (m_stderr != 2) {close(m_stderr);}
-
+  if (m_stdin != 0) {
+    close(m_stdin);
+  }
+  if (m_stdout != 1) {
+    close(m_stdout);
+  }
+  if (m_stderr != 2) {
+    close(m_stderr);
+  }
   m_stdin = 0, m_stdout = 1, m_stderr = 2;
-
   simpleCommands.clear(),
     background = append = false,
     numOfSimpleCommands = 0, m_pgid = 0,
@@ -188,7 +192,6 @@ void Command::execute()
 
   time_t rs, us, ss;
   int rsf, usf, ssf;
-  int cpu;
 
   struct rusage selfb, selfa;
   struct rusage kidsb, kidsa;
@@ -235,9 +238,7 @@ void Command::execute()
   for (int x = 0; x < numOfSimpleCommands; ++x) {
     /* manage commands */
     std::vector<char *> curr = simpleCommands.at(x).get()->arguments;
-    char ** d_args;
     curr.push_back(nullptr);
-    d_args = curr.data();
 
     /* add nullptr to the end of the simple command (for exec) */
     simpleCommands.at(x).get()->arguments.push_back(nullptr);
@@ -367,7 +368,7 @@ void Command::prompt()
     if (!gethostname(buffer, 100)) {_host = std::string(buffer);} else {
       _host = std::string("localhost");
     }
-    char * _wd = nullptr, * _hme = nullptr;
+    char* _hme = nullptr;
     auto _pwd = std::shared_ptr<char>(
       new char[4], [](auto s) {delete[] s;});
     snprintf(_pwd.get(), sizeof(_pwd.get()), "pwd");
@@ -489,7 +490,6 @@ void Command::send_to_foreground(
   bool & fg,
   termios & _oldtermios)
 {
-  pid_t current = m_shell_pgid;
   if (m_p_jobs->size()) {
     /* did they pass an argument? */
     job_num = (job_num < 0) ? m_p_jobs->size() - 1 : job_num;
