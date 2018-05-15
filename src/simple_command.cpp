@@ -166,7 +166,7 @@ bool SimpleCommand::handle_cd(
       char * sub = strstr(replace_in, to_replace);
 
       /* Desired replacement wasn't found, so error and exit */
-      if (sub == nullptr) {
+      if (nullptr == sub) {
         perror("cd");
 
         free(to_replace);
@@ -218,19 +218,22 @@ bool SimpleCommand::handle_cd(
       }
       setenv("PWD", getenv("HOME"), 1);
     } else {
-      if (arguments[1] == std::string("pwd") ||
-        arguments[1] == std::string("/bin/pwd"))
-      {
+      if (arguments[1] == std::string("pwd") || arguments[1] == std::string("/bin/pwd")) {
+        /* TODO(allenh1): wtf? Why is this even here? */
       } else if (*arguments[1] != '/') {
         new_dir = std::string(getenv("PWD"));
         for (; new_dir.back() == '/'; new_dir.pop_back()) {
         }
         new_dir += "/" + std::string(arguments[1]);
-      } else {new_dir = std::string(arguments[1]);}
+      } else {
+        new_dir = std::string(arguments[1]);
+      }
 
       for (; *new_dir.c_str() != '/' && new_dir.back() == '/'; new_dir.pop_back()) {
       }
-      if (changedir(new_dir)) {setenv("PWD", new_dir.c_str(), 1);}
+      if (changedir(new_dir)) {
+        setenv("PWD", new_dir.c_str(), 1);
+      }
     }
     setenv("PWD", curr_dir.c_str(), 1);
     // Regardless of errors, cd has finished.

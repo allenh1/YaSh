@@ -111,12 +111,11 @@ command_word argument_list {
 
 command_word:
 WORD {
-	Command::currentSimpleCommand =
-		std::unique_ptr<SimpleCommand>(new SimpleCommand());
-        auto _ptr = std::shared_ptr<char>($1, [](auto s){ delete[] s; });
-	if(!strcmp(_ptr.get(), "fg")) fg=true;
-	else if(!strcmp(_ptr.get(), "bg")) bg=true;
-	else if(!strcmp(_ptr.get(), "pushd")) pushd=true;
+	Command::currentSimpleCommand = std::make_unique<SimpleCommand>();
+        auto _ptr = std::shared_ptr<char>(strdup($1), free);
+	if(!strcmp($1, "fg")) fg=true;
+	else if(!strcmp($1, "bg")) bg=true;
+	else if(!strcmp($1, "pushd")) pushd=true;
 	else Command::currentSimpleCommand->insertArgument(_ptr);
 }
 ;
