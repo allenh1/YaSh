@@ -32,7 +32,7 @@ New:
 ```
  $ mkdir build
  $ cd build
- $ cmake .. -DCMAKE_PREFIX=<prefix>
+ $ cmake .. -DCMAKE_INSTALL_PREFIX=<prefix>
  $ make
  $ sudo make install
 ```
