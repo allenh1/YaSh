@@ -373,7 +373,7 @@ bool SimpleCommand::handle_cl(
       temp[1] = nullptr;
 #else
       char ** temp = new char *[arguments.size() + 2];
-      size_t temp_size = arguments.size() + 1;
+      size_t temp_size = 2;
       temp[0] = strdup("ls");
       temp[1] = strdup("--color=auto");
       temp[2] = nullptr;
