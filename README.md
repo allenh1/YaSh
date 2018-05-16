@@ -15,8 +15,11 @@ as below.
 
 Installation:
 =============
-Installation is as you would expect (well, for a source installation).
+Installation has two methods, supporting older systems (and strongly encouraging
+newer systems).
 
+Old:
+-----
 ```
  $ ./autogen.sh
  $ ./configure --prefix=<prefix>
@@ -24,9 +27,21 @@ Installation is as you would expect (well, for a source installation).
  $ sudo make install
 ```
 
+New:
+-----
+```
+ $ mkdir build
+ $ cd build
+ $ cmake .. -DCMAKE_PREFIX=<prefix>
+ $ make
+ $ sudo make install
+```
+
 If you are installing it in your home directory (you know, if you're at school
 or something), then you might do the following instead.
 
+Old:
+-----
 ```
  $ ./autogen.sh
  $ echo "export PATH=~/bin:${PATH}" >> ~/.bashrc
@@ -34,6 +49,11 @@ or something), then you might do the following instead.
  $ make
  $ make install
 ```
+
+New:
+-----
+If you are at Purdue (and CMake is _still_ less than 3.8.2), then just use the
+old. Otherwise, please PR to complete this section!
 
 Uninstall:
 ==========
@@ -61,7 +81,8 @@ In YaSh, one can...
  * ctrl + c to send a kill signal to a process
  * ctrl + d to delete a character (backspace and delete keys also work)
  * ctrl + right arrow to go to the next space
- * ctrl + left arrow  to go to the previous space. 
+ * ctrl + left arrow  to go to the previous space
+ * ctrl + delete to remove the word to the right of the cursor
  * use arrow keys to move through history
 
 History:
@@ -79,6 +100,11 @@ So, if you want to be boring, you can do the following.
 ```
  $ setenv PROMPT "YaSh => "
 ```
+
+OSX Installation:
+==================
+OS X is, more or less, working. Follow the install guide above and be patient.
+There will be more patches to come!
 
 Windows Installation (By Harrison Chen @mechaHarry):
 ====================================================
