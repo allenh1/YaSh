@@ -177,7 +177,8 @@ std::string get_username()
 std::string replace(std::string str, const char * sb, const char * rep)
 {
   std::string sub = std::string(sb);
-  if (auto pos = str.find(rep); pos != std::string::npos) {
+  auto pos = str.find(rep);
+  if (pos != std::string::npos) {
     std::string p1 = str.substr(0, pos - 1);
     std::string p2 = str.substr(pos + std::string(sub).size() - 1);
     std::string tStr = p1 + rep + p2;

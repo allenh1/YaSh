@@ -287,6 +287,7 @@ void SimpleCommand::handle_grep()
 
 void SimpleCommand::handle_printenv()
 {
+  extern char ** environ;
   if (arguments[0] == std::string("printenv")) {
     char ** _env = environ;
     for (; *_env; ++_env) {

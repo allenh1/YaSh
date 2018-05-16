@@ -17,6 +17,16 @@
 /* C includes */
 #include <glob.h>
 
+/*
+ * Note(allenh1): This is needed, since GLOB_PERIOD is not on OS X.
+ * This macro comes from the bug report on another project.
+ *   https://sft.its.cern.ch/jira/si/jira.issueviews:issue-html/CVM-927/CVM-927.html
+ * This can potentially be removed in the future.
+ */
+#ifdef __APPLE__
+#define GLOB_PERIOD (1 << 7)
+#endif
+
 /* STL (C++) includes */
 #include <algorithm>
 #include <iostream>
