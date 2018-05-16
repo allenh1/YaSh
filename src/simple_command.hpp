@@ -55,6 +55,12 @@
 #include "wildcard.hpp"
 #include "job.hpp"
 
+#ifdef __APPLE__
+constexpr bool is_os_x = true;
+#else
+constexpr bool is_os_x = false;
+#endif
+
 /* Command Data Structure */
 struct SimpleCommand
 {

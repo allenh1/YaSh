@@ -246,14 +246,18 @@ bool SimpleCommand::handle_cd(
 void SimpleCommand::handle_ls()
 {
   if (arguments[0] == std::string("ls")) {
-    char ** temp = new char *[arguments.size() + 2];
-    for (size_t y = 2; y < arguments.size(); ++y) {
-      temp[y] = strdup(arguments[y - 1]);
-    }     // ... still better than managing myself!
-    temp[0] = strdup("ls");
-    temp[1] = strdup("--color=auto");
-    temp[arguments.size()] = nullptr;
-
+    char ** temp = nullptr;
+    if (!is_os_x) {
+      temp = new char *[arguments.size() + 2];
+      for (size_t y = 2; y < arguments.size(); ++y) {
+	temp[y] = strdup(arguments[y - 1]);
+      }     // ... still better than managing myself!
+      temp[0] = strdup("ls");
+      temp[1] = strdup("--color=auto");
+      temp[arguments.size()] = nullptr;
+    } else {
+      temp = arguments.data();
+    }
     execvp(temp[0], temp);
     perror("execvp");
     exit(2);
@@ -362,10 +366,18 @@ bool SimpleCommand::handle_cl(
       int saved_fderr;
       save_io(fdin, fdout, fderr, saved_fdin, saved_fdout, saved_fderr);
       setup_process_io(fdin, fdout, fderr);
+#ifdef __APPLE__
+      char ** temp = new char *[arguments.size() + 1];
+      size_t temp_size = 1;
+      temp[0] = strdup("ls");
+      temp[1] = nullptr;
+#else
       char ** temp = new char *[arguments.size() + 2];
+      size_t temp_size = arguments.size() + 1;
       temp[0] = strdup("ls");
       temp[1] = strdup("--color=auto");
-      temp[2] = 0;
+      temp[2] = nullptr;
+#endif
       std::string dir = std::string(arguments[1]);
       changedir(dir);
 
@@ -377,7 +389,7 @@ bool SimpleCommand::handle_cl(
         _exit(1);
       }
       waitpid(pid, 0, 0);
-      for (int y = 0; y < 3; y++) {
+      for (size_t y = 0; y < temp_size; y++) {
         free(temp[y]);
         temp[y] = nullptr;
       }
