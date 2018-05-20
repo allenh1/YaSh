@@ -117,6 +117,11 @@ grade48max=5
 echo "--- issue 48 regression -- ($grade48max pts)"
 ./issue-48-test && grade48=`expr $grade48 "+" 5`
 
+grade21=0
+grade21max=5
+echo "--- issue 21 regression -- ($grade21max pts)"
+./issue-21-test && grade21=`expr $grade21 "+" 5`
+
 # grade25=0
 # grade25max=5
 # echo "--- Multi-Arg cd -- ($grade-25max pts)"
@@ -125,15 +130,16 @@ echo "--- issue 48 regression -- ($grade48max pts)"
 total=`expr $grade1 + $grade2 + $grade3 + $grade4 + $grade5 + \
             $grade6 + $grade7 + $grade8 + $grade9 + $grade10 + \
             $grade11 + $grade12 + $grade13 + $grade53 + $grade58 + \
-            $grade48`
+            $grade48 + $grade21`
 
 totalmax=`expr $grade1max + $grade2max + $grade3max + $grade4max \
             + $grade5max + $grade6max + $grade7max + $grade8max \
             + $grade9max + $grade10max + $grade11max + $grade12max \
-            + $grade13max + $grade53max + $grade58max + $grade48max`
+            + $grade13max + $grade53max + $grade58max + $grade48max \
+            + $grade21max`
 
 echo   "-------------------------------------------------"
-echo   "User:  $1 "
+echo   "YaSh Tests"
 echo   "-------------------------------------------------"
 printf "IO Redirection:          %-3d%s%-3d\n" $grade1 " of " $grade1max
 printf "Pipes:                   %-3d%s%-3d\n" $grade2 " of " $grade2max
@@ -151,6 +157,7 @@ printf "issue 33:                %-3d%s%-3d\n" $grade13 " of " $grade13max
 printf "issue 53:                %-3d%s%-3d\n" $grade53 " of " $grade53max
 printf "issue 58:                %-3d%s%-3d\n" $grade58 " of " $grade58max
 printf "issue 48:                %-3d%s%-3d\n" $grade48 " of " $grade48max
+printf "issue 21:                %-3d%s%-3d\n" $grade21 " of " $grade21max
 echo   "--------------------------------------------------"
 printf "Total:                   %-3d%s%-3d\n" $total " of " $totalmax
 
