@@ -120,7 +120,7 @@ echo "--- issue 48 regression -- ($grade48max pts)"
 grade21=0
 grade21max=5
 echo "--- issue 21 regression -- ($grade21max pts)"
-./issue-21-test && grade48=`expr $grade21 "+" 5`
+./issue-21-test && grade21=`expr $grade21 "+" 5`
 
 # grade25=0
 # grade25max=5
