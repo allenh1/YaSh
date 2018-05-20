@@ -9,7 +9,7 @@ cd_cmd="cd .././././././././././././././././././././././././././././././././././
 echo "cd ../../" >> simple_cd
 echo "pwd" >> simple_cd
 
-echo cd_cmd >> shane_cd
+echo ${cd_cmd} >> shane_cd
 echo "pwd" >> shane_cd
 
 ../src/yash < simple_cd &>> simple_out
