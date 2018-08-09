@@ -73,6 +73,7 @@ public:
   bool handle_ctrl_d(std::string & _line);
   bool handle_ctrl_e(std::string & _line);
   bool handle_ctrl_k();
+  bool handle_ctrl_l();
   bool handle_ctrl_del();
   bool handle_ctrl_arrow(std::string & _line);
 
@@ -132,11 +133,17 @@ public:
         if (handle_ctrl_a(_line)) {break;} else {continue;}
       } else if (input == 5 && !handle_ctrl_e(_line)) {
         continue;
-      } else if (input == 4 && !handle_ctrl_d(_line)) {continue;} else if (input == 11) {
+      } else if (input == 4 && !handle_ctrl_d(_line)) {
+        continue;
+      } else if (input == 11) {
         if (!handle_ctrl_k()) {continue;} else {break;}
       } else if ((input == 8 || input == 127) && !handle_backspace(_line)) {
         continue;
-      } else if (input == 9 && !handle_tab(_line)) {continue;} else if (input == 27) {
+      } else if (input == 12 && !handle_ctrl_l()) {
+        continue;
+      } else if (input == 9 && !handle_tab(_line)) {
+        continue;
+      } else if (input == 27) {
         char ch1, ch2, ch3;
         // Read the next two chars
         if (!read_with_error(0, ch1)) {continue;} else if (!read_with_error(0, ch2)) {
