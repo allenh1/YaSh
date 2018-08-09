@@ -243,6 +243,29 @@ bool read_line::handle_ctrl_e(std::string & _line)
 }
 
 /**
+ * @brief Handle ctrl + l
+ *
+ * ctrl + l should run 'clear' in the current
+ * prompt.
+ *
+ * @return False, for uniformity
+ */
+bool read_line::handle_ctrl_l()
+{
+  pid_t ret = fork();
+  if (ret == -1) {
+    perror("fork");
+    return false;
+  } else if (ret == 0) {
+    execlp("clear", "clear", nullptr);
+    _exit(1);
+  }
+  waitpid(ret, nullptr, WEXITED);
+  Command::currentCommand.prompt();
+  return false;
+}
+
+/**
  * @brief Handle ctrl + d
  *
  * This is how the shell responds to the
