@@ -250,7 +250,7 @@ bool read_line::handle_ctrl_e(std::string & _line)
  *
  * @return False, for uniformity
  */
-bool read_line::handle_ctrl_l()
+bool read_line::handle_ctrl_l(std::string & _line)
 {
   pid_t ret = fork();
   if (ret == -1) {
@@ -262,7 +262,20 @@ bool read_line::handle_ctrl_l()
   }
   waitpid(ret, nullptr, WEXITED);
   Command::currentCommand.prompt();
-  return false;
+  /* write back current text */
+  std::stack copy = m_buff;
+  std::string line = _line;
+  for (; copy.size();) {
+    line += copy.top();
+    copy.pop();
+  }
+  /* write _line + m_buff to stdout */
+  if (!write_with_error(1, line.c_str(), line.size())) {
+  }
+  /* write back spaces for m_buff.len() */
+  std::unique_ptr<char> bspace(new char[m_buff.size()]);
+  memset(bspace.get(), '\b', m_buff.size());
+  return !write_with_error(1, bspace.get(), m_buff.size());
 }
 
 /**
