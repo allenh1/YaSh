@@ -72,8 +72,8 @@ public:
   bool handle_ctrl_a(std::string & _line);
   bool handle_ctrl_d(std::string & _line);
   bool handle_ctrl_e(std::string & _line);
+  bool handle_ctrl_l(std::string & _line);
   bool handle_ctrl_k();
-  bool handle_ctrl_l();
   bool handle_ctrl_del();
   bool handle_ctrl_arrow(std::string & _line);
 
@@ -139,7 +139,7 @@ public:
         if (!handle_ctrl_k()) {continue;} else {break;}
       } else if ((input == 8 || input == 127) && !handle_backspace(_line)) {
         continue;
-      } else if (input == 12 && !handle_ctrl_l()) {
+      } else if (input == 12 && !handle_ctrl_l(_line)) {
         continue;
       } else if (input == 9 && !handle_tab(_line)) {
         continue;
