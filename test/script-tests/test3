@@ -1,0 +1,19 @@
+#!/bin/sh
+rm -f err1 err2
+
+echo "Test3: Error redirection"
+echo "ls /none >& err1" > yash-in
+echo "ls /none &> err2" > bash-in
+
+/bin/bash < bash-in
+${SHELL_BIN} < yash-in
+
+diff ./err1 ./err2
+
+if [ $? -ne 0 ]
+then
+    echo "Test3 failed"
+    exit 1
+fi
+echo Test3 OK
+exit 0

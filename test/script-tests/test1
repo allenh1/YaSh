@@ -1,0 +1,17 @@
+#!/bin/sh
+echo "Test1: Output redirection"
+rm -f out1 out2
+echo "ls files > out1" > yash-in
+echo "ls files > out2" > csh-in
+/bin/sh < csh-in > csh-out
+${SHELL_BIN} < yash-in > yash-out
+
+diff out1 out2 
+if [ $? -ne 0 ]
+then
+  echo "Test1 failed"
+  exit -1
+fi
+echo Test1 OK
+exit 0
+

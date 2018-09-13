@@ -17,7 +17,8 @@ script:
   - make -j$(nproc)
   - ln -sf $(pwd)/yash $(pwd)/../shell
   - ln -sf $(pwd)/yash $(pwd)/../src/yash
-  - cd ../test
+  - export SHELL_BIN=$(pwd)/yash
+  - cd ../test/script-tests
   - export LC_COLLATE="C"
   - export IS_TRAVIS="YES"
   - ./testall

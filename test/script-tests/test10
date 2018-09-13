@@ -1,0 +1,28 @@
+#!/bin/bash
+
+rm -f shell-out
+echo "Test10: Zombie processes"
+
+before=$(/bin/ps -u ${USER} | grep -c defunc)
+
+echo "ls &" > shell-in
+echo "ls &" >> shell-in
+echo "ls &" >> shell-in
+echo "ls &" >> shell-in
+echo "ls &" >> shell-in
+echo "ls &" >> shell-in
+echo "ls &" >> shell-in
+echo "sleep 5" >> shell-in
+
+${SHELL_BIN} < shell-in > shell-out &
+
+sleep 5
+
+after=$(/bin/ps -u ${USER} | grep -c defunc)
+
+if [[ $before -ne $after ]]; then
+    echo "Test10 failed. Zombie processes still around ($before, $after)"
+    exit 2
+fi
+echo Test10 OK
+exit 0

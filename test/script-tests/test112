@@ -1,0 +1,29 @@
+#!/bin/bash
+
+rm -f csh-out yash-out
+echo "Test112: echo /etc/r*/*s* "
+echo "echo /etc/r*/*s*" > yash-in
+
+/bin/bash < yash-in > bash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
+
+yash_out=$(sort yash-out)
+bash_out=$(sort bash-out)
+
+echo $yash_out > yash-out
+echo $bash_out > bash-out
+
+_diff=$(diff yash-out bash-out)
+
+if [[ $? -ne 0 ]]; then
+    echo "Test112 failed"
+    echo "========= Got =========="
+    echo $yash_out
+    echo "======= Expected ======="
+    echo $bash_out
+    echo "======== Diff =========="
+    echo ${_diff}
+    exit 1
+fi
+echo Test112 OK
+exit 0

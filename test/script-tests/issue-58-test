@@ -1,0 +1,24 @@
+#!/bin/bash
+
+rm -f csh-out shell-out
+echo "issue-58: echo \"hi\" > ~/test.txt"
+touch yash-in bash-in bash-out yash-out
+
+echo "echo \"hi\" > ~/test.txt" > yash-in
+echo "cat ~/test.txt" >> yash-in
+echo "rm -f ~/test.txt" >> yash-in
+echo "echo \"hi\" > ~/test.txt" > bash-in
+echo "cat ~/test.txt" >> bash-in
+echo "rm -f ~/test.txt" >> bash-in
+
+/bin/bash < bash-in > bash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
+
+diff yash-out bash-out
+if [ $? -ne 0 ]
+then
+    echo "Issue 58 regression test failed"
+    exit -1
+fi
+echo issue-58-test OK
+exit 0
