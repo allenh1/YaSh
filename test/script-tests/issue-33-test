@@ -9,8 +9,8 @@ mkdir -p a
 
 echo "cd a" > yash-in
 echo "cd a" > bash-in
-echo "echo ../../test/*" >> yash-in
-echo "echo ../../test/*" >> bash-in
+echo "echo ../../script-tests/*" >> yash-in
+echo "echo ../../script-tests/*" >> bash-in
 
 /bin/bash < bash-in > bash-out 2>&1
 ${SHELL_BIN} < yash-in > yash-out 2>&1
