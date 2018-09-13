@@ -5,7 +5,7 @@ echo "Test112-2: echo /usr/lib/lib?.a"
 echo "echo /usr/lib/lib?.a" > shell-in
 
 /bin/sh < shell-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff shell-out csh-out
 if [ $? -ne 0 ]

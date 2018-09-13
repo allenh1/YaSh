@@ -32,7 +32,7 @@ echo "ls " >> shell-in
 echo "ls " >> shell-in
 
 /bin/sh < shell-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff csh-out shell-out > temp-out 2>&1
 if [ $? -ne 0 ]

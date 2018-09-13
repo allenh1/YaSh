@@ -10,7 +10,7 @@ echo "ls ~cs180 >> out2" >> shell-in
 echo "ls ~cs180/share >> out2" >> shell-in
 
 /bin/bash < csh-in > csh-out 
-../shell < shell-in > shell-out 
+${SHELL_BIN} < shell-in > shell-out 
 
 
 diff out1 out2 > /dev/null 2>&1

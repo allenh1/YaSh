@@ -4,7 +4,7 @@ echo "Test8: Pipes and error redirection"
 echo "cat file1.cc | ls nonexisting >& err1" > shell-in
 echo "cat file1.cc | ls nonexisting > err2 2>&1" > csh-in
 /bin/sh < csh-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff err1 err2
 if [ $? -ne 0 ]

@@ -2,7 +2,7 @@
 echo "Test201: test ctrl-c"
 echo "sleep 10" > shell-in
 
-../shell < shell-in > shell-out &
+${SHELL_BIN} < shell-in > shell-out &
 
 # Send ctrl-c to process
 sleep 1

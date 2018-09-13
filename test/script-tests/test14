@@ -7,7 +7,7 @@ echo "printenv" >> shell-in
 echo "unsetenv aaa" >> shell-in
 echo "printenv" >> shell-in
 
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 res=`grep -c aaa= shell-out`
 if [ $res -ne 1 ]

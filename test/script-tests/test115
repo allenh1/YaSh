@@ -6,7 +6,7 @@ echo "Test115: touch \"hello world\""
 echo "touch \"hello world\"" > shell-in
 echo "ls" >>  shell-in
 
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 if [ ! -f "hello world" ]
 then

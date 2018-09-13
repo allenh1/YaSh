@@ -6,7 +6,7 @@ echo "setenv C ap" > shell-in
 echo "setenv D le" >> shell-in
 echo "echo I like \${C}p\${D}" >> shell-in
 
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 grep "I like apple" shell-out 
 if [ $? -ne 0 ]

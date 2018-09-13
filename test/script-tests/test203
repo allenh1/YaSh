@@ -3,7 +3,7 @@ echo "Test203: test subshell"
 
 echo "ls test3* > file-list " > shell-in
 echo "ls -al \`cat file-list\` " >> shell-in
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 echo "ls test3* > file-list" > csh-in
 echo "ls -al \`cat file-list\` " >> csh-in

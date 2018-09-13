@@ -4,7 +4,7 @@ rm -f csh-out shell-out
 echo "Test5: 2 Pipes"
 echo "cat file1.cc | grep malloc" > shell-in
 /bin/sh < shell-in > csh-out
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 diff shell-out csh-out
 if [ $? -ne 0 ]

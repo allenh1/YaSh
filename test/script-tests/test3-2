@@ -9,7 +9,7 @@ echo "ls files > out2" >> csh-in
 echo "ls files >> out2" >> csh-in
 
 /bin/sh < csh-in > csh-out
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 diff out1 out2
 if [ $? -ne 0 ]

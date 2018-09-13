@@ -6,7 +6,7 @@ echo "setenv aaa bbbb" > shell-in
 echo "setenv aaa pppp" >> shell-in
 echo "printenv" >> shell-in
 
-../shell < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 grep aaa=pppp shell-out > out 2>&1
 if [ $? -ne 0 ]

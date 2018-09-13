@@ -6,7 +6,7 @@ echo "/bin/ls notfound >& err1" > shell-in
 echo "/bin/ls notfound > err2 2>&1" > csh-in
 
 /bin/sh < csh-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff err1 err2
 if [ $? -ne 0 ]
@@ -19,7 +19,7 @@ echo "ls notfound >>& err1" > shell-in
 echo "ls notfound >> err2 2>&1" > csh-in
 
 /bin/sh < csh-in > csh-out 2>&1
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff err1 err2
 if [ $? -ne 0 ]

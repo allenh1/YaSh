@@ -4,7 +4,7 @@ rm -f csh-out shell-out
 echo "Test116: Escape Chars"
 echo "echo lll\< kkkk\\\\\\ uuuu\&" > shell-in
 
-../shell < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 grep "lll< kkkk[\] uuuu&" shell-out 
 if [ $? -ne 0 ]
