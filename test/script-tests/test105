@@ -5,7 +5,7 @@ echo "Test105: cd notfound >& err1"
 echo "cd notfound >& err1" > shell-in
 echo "pwd" >> csh-in
 
-../src/yash < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 grep "No such file or directory" err1 
 if [ $? -ne 0 ]

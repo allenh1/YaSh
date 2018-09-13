@@ -5,7 +5,7 @@ echo "Test112: echo /etc/r*/*s* "
 echo "echo /etc/r*/*s*" > yash-in
 
 /bin/bash < yash-in > bash-out 2>&1
-../src/yash < yash-in > yash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
 
 yash_out=$(sort yash-out)
 bash_out=$(sort bash-out)

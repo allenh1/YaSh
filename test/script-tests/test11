@@ -5,7 +5,7 @@ echo "Test11: Enviroment: Set variable"
 echo "setenv aaa bbbb" > shell-in
 echo "printenv" >> shell-in
 
-../src/yash < shell-in > shell-out
+${SHELL_BIN} < shell-in > shell-out
 
 grep aaa=bbbb shell-out > out 2>&1
 if [ $? -ne 0 ]

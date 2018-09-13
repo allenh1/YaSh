@@ -6,7 +6,7 @@ echo "cd /etc" > shell-in
 echo "pwd" >> shell-in
 
 /bin/sh < shell-in > csh-out 2>&1
-../src/yash < shell-in > shell-out 2>&1
+${SHELL_BIN} < shell-in > shell-out 2>&1
 
 diff csh-out shell-out
 if [ $? -ne 0 ]

@@ -14,7 +14,7 @@ echo "ls &" >> shell-in
 echo "ls &" >> shell-in
 echo "sleep 5" >> shell-in
 
-../src/yash < shell-in > shell-out &
+${SHELL_BIN} < shell-in > shell-out &
 
 sleep 5
 

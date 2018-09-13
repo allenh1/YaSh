@@ -6,7 +6,7 @@ echo "ls /none >& err1" > yash-in
 echo "ls /none &> err2" > bash-in
 
 /bin/bash < bash-in
-../src/yash < yash-in
+${SHELL_BIN} < yash-in
 
 diff ./err1 ./err2
 
