@@ -13,7 +13,7 @@ echo "echo ../../test/*" >> yash-in
 echo "echo ../../test/*" >> bash-in
 
 /bin/bash < bash-in > bash-out 2>&1
-../src/yash < yash-in > yash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
 
 rm -rf a
 

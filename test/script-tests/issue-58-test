@@ -12,7 +12,7 @@ echo "cat ~/test.txt" >> bash-in
 echo "rm -f ~/test.txt" >> bash-in
 
 /bin/bash < bash-in > bash-out 2>&1
-../src/yash < yash-in > yash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
 
 diff yash-out bash-out
 if [ $? -ne 0 ]

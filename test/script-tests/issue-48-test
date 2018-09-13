@@ -9,7 +9,7 @@ echo "pwd" >> yash-in
 correct="$(pwd)/a/second"
 echo "$correct" > yash-out.org
 
-../src/yash < yash-in > yash-out 2>&1
+${SHELL_BIN} < yash-in > yash-out 2>&1
 
 rm -rf a
 

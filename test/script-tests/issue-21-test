@@ -12,8 +12,8 @@ echo "pwd" >> simple_cd
 echo ${cd_cmd} > shane_cd
 echo "pwd" >> shane_cd
 
-../src/yash < simple_cd &>> simple_out
-../src/yash < shane_cd &>> shane_out
+${SHELL_BIN} < simple_cd &>> simple_out
+${SHELL_BIN} < shane_cd &>> shane_out
 
 diff simple_out shane_out
 
