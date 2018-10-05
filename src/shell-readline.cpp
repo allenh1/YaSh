@@ -273,7 +273,7 @@ bool read_line::handle_ctrl_l(std::string & _line)
   if (!write_with_error(1, line.c_str(), line.size())) {
   }
   /* write back spaces for m_buff.len() */
-  std::unique_ptr<char> bspace(new char[m_buff.size()]);
+  auto bspace = std::make_unique<char[]>(m_buff.size());
   memset(bspace.get(), '\b', m_buff.size());
   return !write_with_error(1, bspace.get(), m_buff.size());
 }
