@@ -143,7 +143,7 @@ public:
       } else if (input == 12 && !handle_ctrl_l(_line)) {
         continue;
       } else if (input == 23 && !handle_ctrl_w(_line)) {
-	continue;
+        continue;
       } else if (input == 9 && !handle_tab(_line)) {
         continue;
       } else if (input == 27) {
@@ -162,8 +162,8 @@ public:
         if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 67 && !handle_right_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 68 && !handle_left_arrow(_line)) {continue;}
-      } else {
-	std::cerr << "unknown input '" << static_cast<int>(input) << "'" << std::endl;
+      } else if (!strcmp(getenv("KEY_VERBOSE"), "YES")) {
+        std::cerr << "unknown input '" << static_cast<int>(input) << "'" << std::endl;
       }
     }
 
