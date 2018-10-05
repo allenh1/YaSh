@@ -83,6 +83,8 @@ In YaSh, one can...
  * ctrl + right arrow to go to the next space
  * ctrl + left arrow  to go to the previous space
  * ctrl + delete to remove the word to the right of the cursor
+ * ctrl + w to remove the word to the left of the cursor
+ * ctrl + l to run the clear command
  * use arrow keys to move through history
 
 History:
