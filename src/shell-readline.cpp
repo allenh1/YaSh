@@ -279,6 +279,33 @@ bool read_line::handle_ctrl_l(std::string & _line)
 }
 
 /**
+ * @brief Handle ctrl + w
+ *
+ * Ctrl + w removes the word to the left of the cursor
+ */
+bool read_line::handle_ctrl_w(std::string & _line)
+{
+  /* first, reverse iterate to the last ' ' in the string */
+  auto it = _line.end();
+  for (; *it != ' ' && it != _line.begin(); --it) {
+    /* don't push, since we're removing this */
+  }
+  /* store number of chars to wipe */
+  size_t diff = _line.end() - it;
+  /* wipe all to the right */
+  auto b_spaces = std::make_unique<char[]>(m_buff.size());
+  auto spaces = std::make_unique<char[]>(m_buff.size());
+  ::memset(b_spaces.get(), '\b', m_buff.size());
+  ::memset(spaces.get(), ' ', m_buff.size());
+  if (!write_with_error(1, reinterpret_cast<const char *>(spaces.get()), m_buff.size())) {
+    return true;
+  } else if (!write_with_error(1, reinterpret_cast<const char *>(spaces.get()), m_buff.size())) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * @brief Handle ctrl + d
  *
  * This is how the shell responds to the

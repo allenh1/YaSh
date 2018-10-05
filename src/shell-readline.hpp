@@ -73,6 +73,7 @@ public:
   bool handle_ctrl_d(std::string & _line);
   bool handle_ctrl_e(std::string & _line);
   bool handle_ctrl_l(std::string & _line);
+  bool handle_ctrl_w(std::string & _line);
   bool handle_ctrl_k();
   bool handle_ctrl_del();
   bool handle_ctrl_arrow(std::string & _line);
@@ -141,6 +142,8 @@ public:
         continue;
       } else if (input == 12 && !handle_ctrl_l(_line)) {
         continue;
+      } else if (input == 23 && !handle_ctrl_w(_line)) {
+	continue;
       } else if (input == 9 && !handle_tab(_line)) {
         continue;
       } else if (input == 27) {
@@ -159,11 +162,13 @@ public:
         if (ch1 == 91 && ch2 == 66 && !handle_down_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 67 && !handle_right_arrow(_line)) {continue;}
         if (ch1 == 91 && ch2 == 68 && !handle_left_arrow(_line)) {continue;}
+      } else {
+	std::cerr << "unknown input '" << static_cast<int>(input) << "'" << std::endl;
       }
     }
 
     if (_line.size()) {
-      std::string _file = tilde_expand("~/.cache/yash_history");
+      const std::string _file = tilde_expand("~/.cache/yash_history");
       int history_fd = open(_file.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0600);
       if (!write_with_error(history_fd, _line.c_str(), _line.size())) {
         return;
