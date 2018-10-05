@@ -282,27 +282,61 @@ bool read_line::handle_ctrl_l(std::string & _line)
  * @brief Handle ctrl + w
  *
  * Ctrl + w removes the word to the left of the cursor
+ *
+ * @param _line The line to be mutated
+ * @return false unless bad thigns happen
  */
 bool read_line::handle_ctrl_w(std::string & _line)
 {
+  if (!_line.size()) {
+    /* this is a decidedly shorter type of no-op */
+    return false;
+  }
   /* first, reverse iterate to the last ' ' in the string */
   auto it = _line.end();
   for (; *it != ' ' && it != _line.begin(); --it) {
     /* don't push, since we're removing this */
   }
-  /* store number of chars to wipe */
-  size_t diff = _line.end() - it;
   /* wipe all to the right */
   auto b_spaces = std::make_unique<char[]>(m_buff.size());
   auto spaces = std::make_unique<char[]>(m_buff.size());
   ::memset(b_spaces.get(), '\b', m_buff.size());
   ::memset(spaces.get(), ' ', m_buff.size());
-  if (!write_with_error(1, reinterpret_cast<const char *>(spaces.get()), m_buff.size())) {
+  if (!write_with_error(1, spaces.get(), m_buff.size())) {
     return true;
-  } else if (!write_with_error(1, reinterpret_cast<const char *>(spaces.get()), m_buff.size())) {
+  } else if (!write_with_error(1, b_spaces.get(), m_buff.size())) {
     return true;
   }
-  return false;
+  const size_t diff = _line.end() - it;
+  auto b_spaces2 = std::make_unique<char[]>(diff);
+  auto spaces2 = std::make_unique<char[]>(diff);
+  ::memset(b_spaces2.get(), '\b', diff);
+  ::memset(spaces2.get(), ' ', diff);
+  /* wipe the printed argument */
+  if (!write_with_error(1, b_spaces2.get(), diff)) {
+    return true;
+  } else if (!write_with_error(1, spaces2.get(), diff)) {
+    return true;
+  } else if (!write_with_error(1, b_spaces2.get(), diff)) {
+    return true;
+  }
+  /* remove the argument from _line */
+  _line.erase(it, _line.end());
+  /* now we print out the rest of the string and backtrack */
+  char * s = spaces.get();
+  auto buff = m_buff;
+  for (; buff.size(); buff.pop()) {
+    *(s++) = buff.top();
+  }
+  if (!_line.size()) {
+    /* this is a special case like 'asdf ' + ctrl + w */
+    return !(write_with_error(1, " ") &&
+             write_with_error(1, spaces.get(), m_buff.size()) &&
+             write_with_error(1, b_spaces.get(), m_buff.size()) &&
+             write_with_error(1, "\b"));
+  }
+  return !(write_with_error(1, spaces.get(), m_buff.size()) &&
+           write_with_error(1, b_spaces.get(), m_buff.size()));
 }
 
 /**
