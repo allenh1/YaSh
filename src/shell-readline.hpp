@@ -56,6 +56,8 @@ class read_line
 public:
   read_line();
 
+  std::vector<std::string> get_binaries();
+
   bool write_with_error(int _fd, char & c);
   bool write_with_error(int _fd, const char * s);
   bool write_with_error(int _fd, const char * s, const size_t & len);

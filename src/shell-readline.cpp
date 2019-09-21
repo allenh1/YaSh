@@ -398,6 +398,24 @@ bool read_line::handle_ctrl_d(std::string & _line)
   return false;
 }
 
+std::vector<std::string> read_line::get_binaries()
+{
+  std::vector<std::string> _binaries;
+  std::vector<std::string> _paths = string_split(getenv("PATH"), ':');
+  for (const std::string &_path : _paths) {
+    auto _dir = opendir(_path.c_str());
+    while (auto _fn = readdir(_dir)) {
+      std::string _binary = _fn->d_name;
+      if (_binary[0] == '.') {
+        continue;
+      }
+      _binaries.push_back(_binary);
+    }
+  }
+
+  return _binaries;
+}
+
 /**
  * Handle the tab key.
  *
@@ -415,6 +433,16 @@ bool read_line::handle_ctrl_d(std::string & _line)
  */
 bool read_line::handle_tab(std::string & _line)
 {
+  
+  /* vector of strings of binary names for tab completion */
+  std::vector<std::string> binaries;
+
+  /* if $PATH is set with content, gather binaries. */
+  if (nullptr != (const char *)getenv("PATH")) {
+    /* vector of binaries from directories under $PATH */
+    binaries = get_binaries();
+  }
+
   Command::currentSimpleCommand = std::make_unique<SimpleCommand>();
 
   /* Part 1: add a '*' to the end of the stream. */
