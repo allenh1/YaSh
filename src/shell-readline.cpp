@@ -398,21 +398,45 @@ bool read_line::handle_ctrl_d(std::string & _line)
   return false;
 }
 
+/**
+ * Gathers binaries from $PATH.
+ *
+ * Given an env_var $PATH,
+ * splits by ':' into paths,
+ * and evaluates each path directory.
+ * Binary Names stored in vector<string>,
+ * returned after evaluating all paths.
+ * 
+ * TODO: Consider when PATH variable is unset or empty.
+ *
+ * @param nill
+ *
+ * @return Vector of binary names, empty Vector otherwise.
+ */
 std::vector<std::string> read_line::get_binaries()
 {
+  /* Vector of binary names */
   std::vector<std::string> _binaries;
+  /* Vector of paths containing binaries defined on system */
   std::vector<std::string> _paths = string_split(getenv("PATH"), ':');
+  /* For each path in paths, */
   for (const std::string &_path : _paths) {
+    /* open a context to the current path. */
     auto _dir = opendir(_path.c_str());
+    /* while the path stream is not nullptr, */
     while (auto _fn = readdir(_dir)) {
+      /* store the current stream's d_name as a string. */
       std::string _binary = _fn->d_name;
+      /* if the name is a hidden, */
       if (_binary[0] == '.') {
+        /* move onto the next name. */
         continue;
       }
+      /* otherwise, push the name onto the vector. */
       _binaries.push_back(_binary);
     }
   }
-
+  /* return either a list or empty list of binary names found. */
   return _binaries;
 }
 
