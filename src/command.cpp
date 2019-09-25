@@ -188,7 +188,7 @@ void Command::execute()
   char * lolz = getenv("LOLZ");
   if (lolz && !strcmp(lolz, "YES")) {
     /// Because why not?
-    std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
+    auto lul = std::make_shared<SimpleCommand>();
     std::shared_ptr<char> _ptr = std::shared_ptr<char>(strdup("lolcat"), free);
     lul->insertArgument(_ptr);
     if (nullptr != simpleCommands.back()->arguments[0] &&
