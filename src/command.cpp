@@ -191,11 +191,12 @@ void Command::execute()
     std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
     std::shared_ptr<char> _ptr = std::shared_ptr<char>(strdup("lolcat"), free);
     lul->insertArgument(_ptr);
-    if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "unsetenv"))
+    if (nullptr != simpleCommands.back()->arguments[0] &&
+      strcmp(simpleCommands.back()->arguments[0], "cd") &&
+      strcmp(simpleCommands.back()->arguments[0], "clear") &&
+      strcmp(simpleCommands.back()->arguments[0], "ssh") &&
+      strcmp(simpleCommands.back()->arguments[0], "setenv") &&
+      strcmp(simpleCommands.back()->arguments[0], "unsetenv"))
     {
       this->insertSimpleCommand(lul);
     }
