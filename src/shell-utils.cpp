@@ -198,8 +198,7 @@ std::string env_expand(std::string s)
 {
   const char * str = s.c_str();
   std::string temp;
-  int index;
-  for (index = 0; static_cast<size_t>(str - s.c_str()) < s.size(); ++str) {
+  for (; static_cast<size_t>(str - s.c_str()) < s.size(); ++str) {
     // aight. Let's just do it.
     if (*str == '$') {
       // begin expansion
