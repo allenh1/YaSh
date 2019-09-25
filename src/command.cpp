@@ -149,9 +149,9 @@ void Command::print()
   std::cout << "  Output       Input        Error        Background" << std::endl;
   std::cout << "  ------------ ------------ ------------ ------------" << std::endl;
   printf("  %-12s %-12s %-12s %-12s\n",
-    nullptr == outFile ? outFile->c_str() : "default",
-    nullptr == inFile ? inFile->c_str() : "default",
-    nullptr == errFile ? errFile->c_str() : "default",
+    nullptr != outFile ? outFile->c_str() : "default",
+    nullptr != inFile ? inFile->c_str() : "default",
+    nullptr != errFile ? errFile->c_str() : "default",
     background ? "YES" : "NO");
   std::cout << std::endl << std::endl;
 }
