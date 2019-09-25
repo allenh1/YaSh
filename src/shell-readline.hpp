@@ -111,7 +111,7 @@ public:
 
           /* Copy buffer and print */
           std::stack<char> temp = m_buff;
-          for (char d = 0; temp.size(); ) {
+          for (char d = 0; !temp.empty(); ) {
             d = temp.top(); temp.pop();
             if (!write_with_error(1, d)) {continue;}
           }
