@@ -56,8 +56,6 @@ public:
 
   void setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to);
 
-  int status = -1;
-
   const bool & inIsSet() {return inSet;}
   const bool & outIsSet() {return outSet;}
   const bool & errIsSet() {return errSet;}
