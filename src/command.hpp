@@ -13,7 +13,7 @@
 // limitations under the License.
 #ifndef COMMAND_HPP_
 #define COMMAND_HPP_
-#pragma once
+
 #include <memory>
 #include <string>
 #include <vector>

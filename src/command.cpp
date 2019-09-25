@@ -20,34 +20,6 @@
 
 std::vector<int> m_background;
 
-SimpleCommand::SimpleCommand()
-{SimpleCommand::p_jobs = Command::currentCommand.m_p_jobs;}
-
-void SimpleCommand::insertArgument(const std::shared_ptr<char> argument)
-{
-  std::string as_string(argument.get());
-
-  auto exists = Command::currentCommand.m_aliases.find(as_string);
-
-  /* exists == m_aliases.end() => we are inserting an alias */
-  if (exists != Command::currentCommand.m_aliases.end()) {
-    auto to_insert = exists->second;
-    for (auto && str : to_insert) {
-      char * toPush = strndup(str.c_str(), str.size());
-      arguments.push_back(toPush); ++numOfArguments;
-    }
-  } else {
-    std::string arga = tilde_expand(as_string);
-    std::string arg = env_expand(arga);
-
-    char * str = new char[arg.size() + 1];
-    memcpy(str, arg.c_str(), arg.size());
-    str[arg.size()] = '\0';
-
-    arguments.push_back(str), ++numOfArguments;
-  }
-}
-
 inline int eval_to_buffer(char * const * cmd, char * outBuff, size_t buffSize)
 {
   int fdpipe[2]; int pid = -1; size_t x = 0;
