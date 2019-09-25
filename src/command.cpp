@@ -341,12 +341,9 @@ void Command::prompt()
       _host = std::string("localhost");
     }
     char* _hme = nullptr;
-    auto _pwd = std::shared_ptr<char>(
-      new char[4], [](auto s) {delete[] s;});
-    snprintf(_pwd.get(), sizeof(_pwd.get()), "pwd");
     char cdirbuff[2048];
     char * const pwd[2] = {
-      _pwd.get(),
+      const_cast<char *>("pwd"),
       nullptr
     };
     eval_to_buffer(pwd, cdirbuff, 2048);
