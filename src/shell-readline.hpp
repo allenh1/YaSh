@@ -226,6 +226,11 @@ public:
 
     char * file = strndup(expanded_home.c_str(), expanded_home.size());
 
+    if (nullptr == file) {
+      perror("strndup");
+      return;
+    }
+
     yyin = fopen(file, "r"); free(file);
 
     if (yyin != nullptr) {
