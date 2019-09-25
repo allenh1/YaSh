@@ -194,6 +194,14 @@ bool SimpleCommand::handle_cd(
       char * to_replace = strdup(arguments[1]);
       char * replace_to = strdup(arguments[2]);
       char * replace_in = strndup(curr_dir.c_str(), curr_dir.size());
+      if (nullptr == replace_in) {
+        perror("cd");
+
+        free(to_replace);
+        free(replace_to);
+        free(replace_in);
+        return true;        
+      }
       char * sub = strstr(replace_in, to_replace);
 
       /* Desired replacement wasn't found, so error and exit */
