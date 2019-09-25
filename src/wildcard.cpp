@@ -31,7 +31,7 @@ void wildcard_expand(const std::shared_ptr<char> arg)
 
   for (int i = 0; *(a + 1); a++, i++) {
     if ((*a == '/' && (*(a + 1) == '.' || *(a + 1) == '*')) ||
-      (i == 0 && *(a) == '.' && *(a + 1) == '*'))
+      (i == 0 && (*(a + 1) == '.' || *(a + 1) == '*')))
     {
       hidden = true;
     }
