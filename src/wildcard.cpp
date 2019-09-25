@@ -49,7 +49,9 @@ void wildcard_expand(const std::shared_ptr<char> arg)
   Command::currentCommand.wc_collector.shrink_to_fit();
 
   for (size_t i = 0; i < results.gl_pathc; i++) {
-    Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+    if (*(strrchr(results.gl_pathv[i], '/') + 1) != '.') {
+      Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+    }
   }
   globfree(&results);
 }
