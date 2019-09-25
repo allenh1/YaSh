@@ -30,7 +30,7 @@ void wildcard_expand(const std::shared_ptr<char> arg)
   char * a = arg.get();
 
   for (int i = 0; *(a + 1); a++, i++) {
-    if ((*a == '/' && *(a + 1) == '.' && *(a + 1) == '*') ||
+    if ((*a == '/' && ((*(a + 1) == '.') || (*(a + 1) == '*'))) ||
       (i == 0 && *(a) == '.' && *(a + 1) == '*'))
     {
       hidden = true;
@@ -38,15 +38,23 @@ void wildcard_expand(const std::shared_ptr<char> arg)
   }
 
   glob_t results;
+
   if (hidden) {
     glob(arg.get(), GLOB_PERIOD, nullptr, &results);
-  } else {glob(arg.get(), GLOB_ERR, nullptr, &results);}
+  } else {
+    glob(arg.get(), GLOB_ERR, nullptr, &results);
+  }
 
   Command::currentCommand.wc_collector.clear();
   Command::currentCommand.wc_collector.shrink_to_fit();
 
   for (size_t i = 0; i < results.gl_pathc; i++) {
-    Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+    char * last_slash = strrchr(results.gl_pathv[i], '/');
+    if ((last_slash) && (*(last_slash + 1) != '.')) {
+      Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+    } else if (!(last_slash) && (results.gl_pathv[i][0] != '.')) {
+      Command::currentCommand.wc_collector.push_back(results.gl_pathv[i]);
+    }
   }
   globfree(&results);
 }

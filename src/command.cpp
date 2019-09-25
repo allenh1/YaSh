@@ -20,34 +20,6 @@
 
 std::vector<int> m_background;
 
-SimpleCommand::SimpleCommand()
-{SimpleCommand::p_jobs = Command::currentCommand.m_p_jobs;}
-
-void SimpleCommand::insertArgument(const std::shared_ptr<char> argument)
-{
-  std::string as_string(argument.get());
-
-  auto exists = Command::currentCommand.m_aliases.find(as_string);
-
-  /* exists == m_aliases.end() => we are inserting an alias */
-  if (exists != Command::currentCommand.m_aliases.end()) {
-    auto to_insert = exists->second;
-    for (auto && str : to_insert) {
-      char * toPush = strndup(str.c_str(), str.size());
-      arguments.push_back(toPush); ++numOfArguments;
-    }
-  } else {
-    std::string arga = tilde_expand(as_string);
-    std::string arg = env_expand(arga);
-
-    char * str = new char[arg.size() + 1];
-    memcpy(str, arg.c_str(), arg.size());
-    str[arg.size()] = '\0';
-
-    arguments.push_back(str), ++numOfArguments;
-  }
-}
-
 inline int eval_to_buffer(char * const * cmd, char * outBuff, size_t buffSize)
 {
   int fdpipe[2]; int pid = -1; size_t x = 0;
@@ -177,9 +149,9 @@ void Command::print()
   std::cout << "  Output       Input        Error        Background" << std::endl;
   std::cout << "  ------------ ------------ ------------ ------------" << std::endl;
   printf("  %-12s %-12s %-12s %-12s\n",
-    nullptr == outFile ? outFile->c_str() : "default",
-    nullptr == inFile ? inFile->c_str() : "default",
-    nullptr == errFile ? errFile->c_str() : "default",
+    nullptr != outFile ? outFile->c_str() : "default",
+    nullptr != inFile ? inFile->c_str() : "default",
+    nullptr != errFile ? errFile->c_str() : "default",
     background ? "YES" : "NO");
   std::cout << std::endl << std::endl;
 }
@@ -216,14 +188,15 @@ void Command::execute()
   char * lolz = getenv("LOLZ");
   if (lolz && !strcmp(lolz, "YES")) {
     /// Because why not?
-    std::shared_ptr<SimpleCommand> lul(new SimpleCommand());
+    auto lul = std::make_shared<SimpleCommand>();
     std::shared_ptr<char> _ptr = std::shared_ptr<char>(strdup("lolcat"), free);
     lul->insertArgument(_ptr);
-    if (strcmp(simpleCommands.back().get()->arguments[0], "cd") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "clear") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "ssh") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "setenv") &&
-      strcmp(simpleCommands.back().get()->arguments[0], "unsetenv"))
+    if (nullptr != simpleCommands.back()->arguments[0] &&
+      strcmp(simpleCommands.back()->arguments[0], "cd") &&
+      strcmp(simpleCommands.back()->arguments[0], "clear") &&
+      strcmp(simpleCommands.back()->arguments[0], "ssh") &&
+      strcmp(simpleCommands.back()->arguments[0], "setenv") &&
+      strcmp(simpleCommands.back()->arguments[0], "unsetenv"))
     {
       this->insertSimpleCommand(lul);
     }
@@ -369,12 +342,9 @@ void Command::prompt()
       _host = std::string("localhost");
     }
     char* _hme = nullptr;
-    auto _pwd = std::shared_ptr<char>(
-      new char[4], [](auto s) {delete[] s;});
-    snprintf(_pwd.get(), sizeof(_pwd.get()), "pwd");
     char cdirbuff[2048];
     char * const pwd[2] = {
-      _pwd.get(),
+      const_cast<char *>("pwd"),
       nullptr
     };
     eval_to_buffer(pwd, cdirbuff, 2048);

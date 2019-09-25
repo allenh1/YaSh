@@ -111,7 +111,7 @@ public:
 
           /* Copy buffer and print */
           std::stack<char> temp = m_buff;
-          for (char d = 0; temp.size(); ) {
+          for (char d = 0; !temp.empty(); ) {
             d = temp.top(); temp.pop();
             if (!write_with_error(1, d)) {continue;}
           }
@@ -225,6 +225,11 @@ public:
     std::string expanded_home = tilde_expand(_filename.c_str());
 
     char * file = strndup(expanded_home.c_str(), expanded_home.size());
+
+    if (nullptr == file) {
+      perror("strndup");
+      return;
+    }
 
     yyin = fopen(file, "r"); free(file);
 

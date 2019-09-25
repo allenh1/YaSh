@@ -13,7 +13,7 @@
 // limitations under the License.
 #ifndef COMMAND_HPP_
 #define COMMAND_HPP_
-#pragma once
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,8 +55,6 @@ public:
     termios & _oldtermios);
 
   void setAlias(const std::shared_ptr<char> _from, const std::shared_ptr<char> _to);
-
-  int status = -1;
 
   const bool & inIsSet() {return inSet;}
   const bool & outIsSet() {return outSet;}
