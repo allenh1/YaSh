@@ -42,8 +42,8 @@ void wildcard_expand(const std::shared_ptr<char> arg)
   if (hidden) {
     glob(arg.get(), GLOB_PERIOD, nullptr, &results);
   } else {
-		glob(arg.get(), GLOB_ERR, nullptr, &results);
-	}
+    glob(arg.get(), GLOB_ERR, nullptr, &results);
+  }
 
   Command::currentCommand.wc_collector.clear();
   Command::currentCommand.wc_collector.shrink_to_fit();
