@@ -30,17 +30,20 @@ void wildcard_expand(const std::shared_ptr<char> arg)
   char * a = arg.get();
 
   for (int i = 0; *(a + 1); a++, i++) {
-    if ((*a == '/' && (*(a + 1) == '.' || *(a + 1) == '*')) ||
-      (i == 0 && (*(a + 1) == '.' || *(a + 1) == '*')))
+    if ((*a == '/' && ((*(a + 1) == '.') || (*(a + 1) == '*'))) ||
+      (i == 0 && *(a) == '.' && *(a + 1) == '*'))
     {
       hidden = true;
     }
   }
 
   glob_t results;
+
   if (hidden) {
     glob(arg.get(), GLOB_PERIOD, nullptr, &results);
-  } else {glob(arg.get(), GLOB_ERR, nullptr, &results);}
+  } else {
+		glob(arg.get(), GLOB_ERR, nullptr, &results);
+	}
 
   Command::currentCommand.wc_collector.clear();
   Command::currentCommand.wc_collector.shrink_to_fit();
